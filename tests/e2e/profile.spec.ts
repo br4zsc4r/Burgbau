@@ -78,6 +78,7 @@ test('Sammlung: eigene Burgen, alle Burgen und Ansicht in voller Größe', async
   test.setTimeout(90_000);
   await startGame(page, 'Lena');
   await buildWholeCastle(page);
+  await page.getByRole('button', { name: 'Burg ist fertig' }).click();
   await page.getByRole('button', { name: 'In die Sammlung' }).click();
 
   const card = page.locator('.castle-card');

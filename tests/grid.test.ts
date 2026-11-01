@@ -3,6 +3,7 @@ import {
   canAttach,
   canPlacePiece,
   createGrid,
+  pickUpAt,
   footprint,
   isPlaceable,
   pieceAt,
@@ -115,6 +116,7 @@ describe('Andocken', () => {
 
   it('Blumenkasten nur an Fenster', () => {
     expect(canAttach(build(['windowWall', 0, 0]), 'flowerBox', { col: 0, row: 0 })).toBe(true);
+    expect(canAttach(build(['windowWallBig', 0, 0]), 'flowerBox', { col: 1, row: 1 })).toBe(true);
     expect(canAttach(build(['stainedGlass', 0, 0]), 'flowerBox', { col: 0, row: 0 })).toBe(true);
     expect(canAttach(build(['wall', 0, 0]), 'flowerBox', { col: 0, row: 0 })).toBe(false);
   });
@@ -145,11 +147,11 @@ describe('Andocken', () => {
   });
 
   describe('Fahne oben drauf', () => {
-    it('passt auf Türme und Abschlüsse, nicht auf Mauern', () => {
-      for (const host of ['tower', 'chippedTower', 'battlements', 'pointedRoof', 'coneRoof'] as const) {
+    it('passt auf Türme, Dächer und Mauern (auf deren Zinnen), nicht auf Umgebung', () => {
+      for (const host of ['tower', 'chippedTower', 'pointedRoof', 'coneRoof', 'wall', 'crackedWall'] as const) {
         expect(canAttach(build([host, 0, 0]), 'flag', { col: 0, row: 0 })).toBe(true);
       }
-      expect(canAttach(build(['wall', 0, 0]), 'flag', { col: 0, row: 0 })).toBe(false);
+      expect(canAttach(build(['tree', 0, 0]), 'flag', { col: 0, row: 0 })).toBe(false);
     });
 
     it('nur ganz oben auf einem Turm', () => {
@@ -245,5 +247,42 @@ describe('placeOnGrid / removeFromGrid', () => {
     const withoutWall = removeFromGrid(build(['wall', 0, 0]), 'wall', { col: 0, row: 0 });
     expect(withoutWall.pieces).toEqual([]);
     expect(() => removeFromGrid(grid, 'tower', { col: 0, row: 0 })).toThrow();
+  });
+});
+
+describe('pickUpAt (Bearbeitungsmodus)', () => {
+  it('nimmt zuerst die oberste Dekoration: Fahne vor Front-Deko vor Efeu', () => {
+    let grid = build(['wall', 0, 0], ['ivy', 0, 0], ['torch', 0, 0], ['flag', 0, 0]);
+    let result = pickUpAt(grid, { col: 0, row: 0 });
+    expect(result.picked).toBe('flag');
+    grid = result.grid;
+    result = pickUpAt(grid, { col: 0, row: 0 });
+    expect(result.picked).toBe('torch');
+    result = pickUpAt(result.grid, { col: 0, row: 0 });
+    expect(result.picked).toBe('ivy');
+    result = pickUpAt(result.grid, { col: 0, row: 0 });
+    expect(result).toMatchObject({ picked: 'wall', fallen: [] });
+    expect(result.grid.pieces).toEqual([]);
+  });
+
+  it('was keinen Halt mehr hat, fällt mit heraus – samt Dekoration', () => {
+    const grid = build(['wall', 1, 0], ['wall', 1, 1], ['tower', 1, 2], ['pennant', 1, 2], ['ivy', 1, 1]);
+    const result = pickUpAt(grid, { col: 1, row: 0 });
+    expect(result.picked).toBe('wall');
+    expect([...result.fallen].sort()).toEqual(['ivy', 'pennant', 'tower', 'wall']);
+    expect(result.grid.pieces).toEqual([]);
+    expect(result.grid.attachments).toEqual([]);
+  });
+
+  it('Überhänge bleiben stehen, solange eine Spalte noch trägt', () => {
+    const grid = build(['wall', 1, 0], ['wall', 2, 0], ['wallWide', 1, 1]);
+    const result = pickUpAt(grid, { col: 1, row: 0 });
+    expect(result.fallen).toEqual([]);
+    expect(pieceAt(result.grid, { col: 1, row: 1 })?.piece).toBe('wallWide');
+  });
+
+  it('leere Zelle: nichts passiert', () => {
+    const grid = build(['wall', 1, 0]);
+    expect(pickUpAt(grid, { col: 3, row: 0 })).toEqual({ grid, picked: null, fallen: [] });
   });
 });

@@ -11,6 +11,7 @@ import type {
   PlacedPiece,
   Profile,
   QuizState,
+  WordBoxes,
   WordPickerState,
 } from '../types';
 
@@ -88,7 +89,15 @@ function isPicker(v: unknown): v is WordPickerState {
   );
 }
 
-const STEPS: readonly GameStep[] = ['task', 'choosing', 'placing', 'placed', 'finished'];
+const STEPS: readonly GameStep[] = ['task', 'choosing', 'placing', 'placed', 'editing', 'finished'];
+
+/** Lernfächer: nur ganze Zahlen 0–4 bleiben. */
+export function sanitizeBoxes(value: unknown): WordBoxes {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter(([, box]) => isInt(box) && box >= 0 && box <= 4),
+  ) as WordBoxes;
+}
 
 /** Laufende Partie prüfen; null, wenn sie nicht mehr verwendbar ist. */
 export function parseGameState(value: unknown): GameState | null {
@@ -107,10 +116,14 @@ export function parseGameState(value: unknown): GameState | null {
     value['offers'].every(isPieceId) &&
     (pending === null || isPieceId(pending)) &&
     STEPS.includes(value['step'] as GameStep) &&
+    Array.isArray(value['stash']) &&
+    value['stash'].every(isPieceId) &&
     (lastPlacement === null ||
-      (isRecord(lastPlacement) && isPieceId(lastPlacement['piece']) && isCell(lastPlacement['anchor'])));
+      (isRecord(lastPlacement) &&
+        isPieceId(lastPlacement['piece']) &&
+        (lastPlacement['anchor'] === null || isCell(lastPlacement['anchor']))));
   if (!valid) return null;
-  return { ...(value as unknown as GameState), grid };
+  return { ...(value as unknown as GameState), grid, boxes: sanitizeBoxes(value['boxes']) };
 }
 
 export function parseProfile(value: unknown): Profile | null {

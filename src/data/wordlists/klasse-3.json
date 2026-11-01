@@ -1,0 +1,909 @@
+{
+  "id": "klasse-3",
+  "name": "Klasse 3 – Umlaute",
+  "inputMode": "tiles",
+  "words": [
+    {
+      "id": "wand",
+      "singular": "Wand",
+      "article": "die",
+      "plural": [
+        "Wände"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "bach",
+      "singular": "Bach",
+      "article": "der",
+      "plural": [
+        "Bäche"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "dach",
+      "singular": "Dach",
+      "article": "das",
+      "plural": [
+        "Dächer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "garten",
+      "singular": "Garten",
+      "article": "der",
+      "plural": [
+        "Gärten"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schlauch",
+      "singular": "Schlauch",
+      "article": "der",
+      "plural": [
+        "Schläuche"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "kopf",
+      "singular": "Kopf",
+      "article": "der",
+      "plural": [
+        "Köpfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "topf",
+      "singular": "Topf",
+      "article": "der",
+      "plural": [
+        "Töpfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "zopf",
+      "singular": "Zopf",
+      "article": "der",
+      "plural": [
+        "Zöpfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "rock",
+      "singular": "Rock",
+      "article": "der",
+      "plural": [
+        "Röcke"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "gang",
+      "singular": "Gang",
+      "article": "der",
+      "plural": [
+        "Gänge"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "frosch",
+      "singular": "Frosch",
+      "article": "der",
+      "plural": [
+        "Frösche"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "fuchs",
+      "singular": "Fuchs",
+      "article": "der",
+      "plural": [
+        "Füchse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "wolf",
+      "singular": "Wolf",
+      "article": "der",
+      "plural": [
+        "Wölfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "turm",
+      "singular": "Turm",
+      "article": "der",
+      "plural": [
+        "Türme"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "sturm",
+      "singular": "Sturm",
+      "article": "der",
+      "plural": [
+        "Stürme"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "wurm",
+      "singular": "Wurm",
+      "article": "der",
+      "plural": [
+        "Würmer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "huhn",
+      "singular": "Huhn",
+      "article": "das",
+      "plural": [
+        "Hühner"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "loch",
+      "singular": "Loch",
+      "article": "das",
+      "plural": [
+        "Löcher"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "dorf",
+      "singular": "Dorf",
+      "article": "das",
+      "plural": [
+        "Dörfer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "wald",
+      "singular": "Wald",
+      "article": "der",
+      "plural": [
+        "Wälder"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "blatt",
+      "singular": "Blatt",
+      "article": "das",
+      "plural": [
+        "Blätter"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "rad",
+      "singular": "Rad",
+      "article": "das",
+      "plural": [
+        "Räder"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schloss",
+      "singular": "Schloss",
+      "article": "das",
+      "plural": [
+        "Schlösser"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "fass",
+      "singular": "Fass",
+      "article": "das",
+      "plural": [
+        "Fässer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "nagel",
+      "singular": "Nagel",
+      "article": "der",
+      "plural": [
+        "Nägel"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "mantel",
+      "singular": "Mantel",
+      "article": "der",
+      "plural": [
+        "Mäntel"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "vater",
+      "singular": "Vater",
+      "article": "der",
+      "plural": [
+        "Väter"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "laden",
+      "singular": "Laden",
+      "article": "der",
+      "plural": [
+        "Läden"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "faden",
+      "singular": "Faden",
+      "article": "der",
+      "plural": [
+        "Fäden"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "ofen",
+      "singular": "Ofen",
+      "article": "der",
+      "plural": [
+        "Öfen"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "boden",
+      "singular": "Boden",
+      "article": "der",
+      "plural": [
+        "Böden"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "kasten",
+      "singular": "Kasten",
+      "article": "der",
+      "plural": [
+        "Kästen"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "nacht",
+      "singular": "Nacht",
+      "article": "die",
+      "plural": [
+        "Nächte"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "stadt",
+      "singular": "Stadt",
+      "article": "die",
+      "plural": [
+        "Städte"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "wurst",
+      "singular": "Wurst",
+      "article": "die",
+      "plural": [
+        "Würste"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "gans",
+      "singular": "Gans",
+      "article": "die",
+      "plural": [
+        "Gänse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "laus",
+      "singular": "Laus",
+      "article": "die",
+      "plural": [
+        "Läuse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "faust",
+      "singular": "Faust",
+      "article": "die",
+      "plural": [
+        "Fäuste"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "haut",
+      "singular": "Haut",
+      "article": "die",
+      "plural": [
+        "Häute"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "braut",
+      "singular": "Braut",
+      "article": "die",
+      "plural": [
+        "Bräute"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "bauch",
+      "singular": "Bauch",
+      "article": "der",
+      "plural": [
+        "Bäuche"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "strauch",
+      "singular": "Strauch",
+      "article": "der",
+      "plural": [
+        "Sträucher"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "raum",
+      "singular": "Raum",
+      "article": "der",
+      "plural": [
+        "Räume"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "traum",
+      "singular": "Traum",
+      "article": "der",
+      "plural": [
+        "Träume"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "zaun",
+      "singular": "Zaun",
+      "article": "der",
+      "plural": [
+        "Zäune"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "floss",
+      "singular": "Floß",
+      "article": "das",
+      "plural": [
+        "Flöße"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "korb",
+      "singular": "Korb",
+      "article": "der",
+      "plural": [
+        "Körbe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schrank",
+      "singular": "Schrank",
+      "article": "der",
+      "plural": [
+        "Schränke"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "saft",
+      "singular": "Saft",
+      "article": "der",
+      "plural": [
+        "Säfte"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "gast",
+      "singular": "Gast",
+      "article": "der",
+      "plural": [
+        "Gäste"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "ast",
+      "singular": "Ast",
+      "article": "der",
+      "plural": [
+        "Äste"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "arzt",
+      "singular": "Arzt",
+      "article": "der",
+      "plural": [
+        "Ärzte"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "platz",
+      "singular": "Platz",
+      "article": "der",
+      "plural": [
+        "Plätze"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "sack",
+      "singular": "Sack",
+      "article": "der",
+      "plural": [
+        "Säcke"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schwanz",
+      "singular": "Schwanz",
+      "article": "der",
+      "plural": [
+        "Schwänze"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "kamm",
+      "singular": "Kamm",
+      "article": "der",
+      "plural": [
+        "Kämme"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "damm",
+      "singular": "Damm",
+      "article": "der",
+      "plural": [
+        "Dämme"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "koch",
+      "singular": "Koch",
+      "article": "der",
+      "plural": [
+        "Köche"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "hof",
+      "singular": "Hof",
+      "article": "der",
+      "plural": [
+        "Höfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "sohn",
+      "singular": "Sohn",
+      "article": "der",
+      "plural": [
+        "Söhne"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "tag",
+      "singular": "Tag",
+      "article": "der",
+      "plural": [
+        "Tage"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "monat",
+      "singular": "Monat",
+      "article": "der",
+      "plural": [
+        "Monate"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "jahr",
+      "singular": "Jahr",
+      "article": "das",
+      "plural": [
+        "Jahre"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "woche",
+      "singular": "Woche",
+      "article": "die",
+      "plural": [
+        "Wochen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "strasse",
+      "singular": "Straße",
+      "article": "die",
+      "plural": [
+        "Straßen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bruecke",
+      "singular": "Brücke",
+      "article": "die",
+      "plural": [
+        "Brücken"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "insel",
+      "singular": "Insel",
+      "article": "die",
+      "plural": [
+        "Inseln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zahl",
+      "singular": "Zahl",
+      "article": "die",
+      "plural": [
+        "Zahlen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "farbe",
+      "singular": "Farbe",
+      "article": "die",
+      "plural": [
+        "Farben"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "hemd",
+      "singular": "Hemd",
+      "article": "das",
+      "plural": [
+        "Hemden"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "feder",
+      "singular": "Feder",
+      "article": "die",
+      "plural": [
+        "Federn"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bauer",
+      "singular": "Bauer",
+      "article": "der",
+      "plural": [
+        "Bauern"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "nachbar",
+      "singular": "Nachbar",
+      "article": "der",
+      "plural": [
+        "Nachbarn"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "loewe",
+      "singular": "Löwe",
+      "article": "der",
+      "plural": [
+        "Löwen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "affe",
+      "singular": "Affe",
+      "article": "der",
+      "plural": [
+        "Affen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "baer",
+      "singular": "Bär",
+      "article": "der",
+      "plural": [
+        "Bären"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kino",
+      "singular": "Kino",
+      "article": "das",
+      "plural": [
+        "Kinos"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "radio",
+      "singular": "Radio",
+      "article": "das",
+      "plural": [
+        "Radios"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "foto",
+      "singular": "Foto",
+      "article": "das",
+      "plural": [
+        "Fotos"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "igel",
+      "singular": "Igel",
+      "article": "der",
+      "plural": [
+        "Igel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kaefer",
+      "singular": "Käfer",
+      "article": "der",
+      "plural": [
+        "Käfer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kissen",
+      "singular": "Kissen",
+      "article": "das",
+      "plural": [
+        "Kissen"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    }
+  ]
+}

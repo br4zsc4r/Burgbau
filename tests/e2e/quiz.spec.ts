@@ -1,17 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { startGame } from './helpers';
-import list from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
+import { currentWord, startGame } from './helpers';
 
 async function currentPlural(page: Page): Promise<string> {
-  const text = (await page.locator('.singular').textContent()) ?? '';
-  const singular = text.replace(/^(der|die|das)\s+/, '').trim();
-  const word = list.words.find((w) => w.singular === singular);
-  if (word === undefined) throw new Error(`Unbekanntes Wort: ${singular}`);
-  return word.plural[0] ?? '';
+  return (await currentWord(page)).plural[0] ?? '';
 }
 
+// Tastatur-Modus: Klasse 4 ist darauf voreingestellt.
 test.beforeEach(async ({ page }) => {
-  await startGame(page);
+  await startGame(page, 'Lena', 'klasse-4');
 });
 
 test('richtige Antwort führt zur Bauteil-Auswahl', async ({ page }) => {
@@ -71,7 +67,7 @@ test('Sonderzeichen-Leiste fügt an der Cursorposition ein', async ({ page }) =>
 });
 
 test('Tasten der Aufgabe sind mindestens 64 × 64 px groß', async ({ page }) => {
-  for (const button of await page.locator('.task-panel button').all()) {
+  for (const button of await page.locator('.task-panel button:visible').all()) {
     const box = await button.boundingBox();
     expect(box?.width).toBeGreaterThanOrEqual(64);
     expect(box?.height).toBeGreaterThanOrEqual(64);

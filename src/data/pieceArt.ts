@@ -51,9 +51,11 @@ export function damageUrl(kind: DamageKind): string {
 const FEATURES: readonly NormalPieceId[] = [
   'tower',
   'towerTall',
+  'towerBig',
   'gate',
   'gateBig',
   'windowWall',
+  'windowWallBig',
   'stainedGlass',
 ];
 
@@ -100,23 +102,48 @@ const DAMAGE: Readonly<Record<DamagedPieceId, readonly DamageOverlay[]>> = {
     { dx: 0, dy: 1, kind: 'crumbling' },
     { dx: 1, dy: 1, kind: 'crack' },
   ],
+  ruinTower: [
+    { dx: 0, dy: 0, kind: 'crack' },
+    { dx: 1, dy: 0, kind: 'planks' },
+    { dx: 0, dy: 1, kind: 'crumbling' },
+    { dx: 1, dy: 1, kind: 'chipped' },
+  ],
 };
 
 /** Bröckelige Teile haben unregelmäßige statt glatter Kanten. */
-const ROUGH: readonly DamagedPieceId[] = ['crumblingWall', 'rubble', 'crumblingWallWide', 'ruinWall'];
+const ROUGH: readonly DamagedPieceId[] = [
+  'crumblingWall',
+  'rubble',
+  'crumblingWallWide',
+  'ruinWall',
+  'ruinTower',
+];
 
 /**
  * Wo auf der obersten Zelle eines Teils eine Fahne steckt: Abstand von der Zellenoberkante
  * in Grafik-Pixeln (Turm: ganz oben, Zinnen: Oberkante der Zinnen, Dach: Spitze).
  */
 const TOP_MOUNT_OFFSET: Partial<Record<NormalPieceId, number>> = {
-  tower: 2,
-  towerTall: 2,
   battlements: 30,
   pointedRoof: 8,
   pointedRoofTall: 8,
   coneRoof: 4,
   goldenRoof: 8,
+};
+
+/** Bewegter Teil eines animierten Teils: eigene Grafik, Art der Bewegung und Drehpunkt (0–1). */
+export interface PieceAnimation {
+  image: string;
+  kind: 'flicker' | 'wave' | 'sparkle' | 'spin';
+  originX: number;
+  originY: number;
+}
+
+const ANIMATIONS: Partial<Record<NormalPieceId, Omit<PieceAnimation, 'image'>>> = {
+  fireDragon: { kind: 'flicker', originX: 62 / 96, originY: 52 / 96 },
+  giantFlag: { kind: 'wave', originX: 16 / 96, originY: 32 / 96 },
+  crystal: { kind: 'sparkle', originX: 0.5, originY: 0.5 },
+  windmill: { kind: 'spin', originX: 0.5, originY: 76 / 192 },
 };
 
 export interface PieceArt {
@@ -130,6 +157,7 @@ export interface PieceArt {
   /** Unregelmäßige Kanten und abgebrochene Zinnen. */
   rough: boolean;
   damaged: boolean;
+  animation: PieceAnimation | null;
 }
 
 export function pieceArt(id: PieceId): PieceArt {
@@ -139,6 +167,7 @@ export function pieceArt(id: PieceId): PieceArt {
   const material = piece.material ?? null;
   const image =
     material === null ? imageUrl(base) : FEATURES.includes(base) ? featureUrl(base) : null;
+  const animation = ANIMATIONS[base];
   return {
     base,
     material,
@@ -146,9 +175,19 @@ export function pieceArt(id: PieceId): PieceArt {
     damage: damaged ? DAMAGE[id as DamagedPieceId] : [],
     rough: ROUGH.includes(id as DamagedPieceId),
     damaged,
+    animation: animation === undefined ? null : { ...animation, image: `${ART_DIR}pieces/${base}-${animationSuffix(animation.kind)}.svg` },
   };
 }
 
+function animationSuffix(kind: PieceAnimation['kind']): string {
+  return { flicker: 'fire', wave: 'cloth', sparkle: 'sparkle', spin: 'blades' }[kind];
+}
+
+/**
+ * Wo eine Fahne auf dem Teil steckt (Grafik-Pixel ab Zellenoberkante, negativ = darüber):
+ * Mauern tragen sie auf ihren automatischen Zinnen.
+ */
 export function topMountOffset(id: PieceId): number {
+  if (getPiece(id).material === 'stone') return -(BATTLEMENTS_HEIGHT - 4);
   return TOP_MOUNT_OFFSET[pieceArt(id).base] ?? 0;
 }

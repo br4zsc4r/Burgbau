@@ -123,3 +123,33 @@ describe('Repository', () => {
     expect((await repo.loadCastles('p1')).map((c) => c.id)).toEqual(['a']);
   });
 });
+
+describe('Phase 6: Speicherformat', () => {
+  it('migriert eine laufende Burg aus Version 1 (ohne Speicher und Lernfächer)', async () => {
+    const store = createMemoryStore();
+    const game = createGame(['hund'], testSettings, seededRandom(1));
+    const v1 = Object.fromEntries(
+      Object.entries({ ...game, grid }).filter(([key]) => key !== 'stash' && key !== 'boxes'),
+    );
+    await store.set('game:p1', { version: 1, game: v1 });
+    const loaded = await createRepository(store).loadGame('p1');
+    expect(loaded).toMatchObject({ stash: [], boxes: {} });
+    expect(loaded?.grid).toEqual(grid);
+  });
+
+  it('akzeptiert in den Speicher gelegte Teile (anchor null)', () => {
+    const game = { ...createGame(['hund'], testSettings, seededRandom(1)), step: 'placed' as const };
+    const stashed = { ...game, stash: ['tower' as const], lastPlacement: { piece: 'tower' as const, anchor: null } };
+    expect(parseGameState(JSON.parse(JSON.stringify(stashed)))).toEqual(stashed);
+  });
+
+  it('speichert Lernfächer je Profil und Wortliste', async () => {
+    const repo = createRepository(createMemoryStore());
+    expect(await repo.loadBoxes('p1', 'klasse-3')).toEqual({});
+    await repo.saveBoxes('p1', 'klasse-3', { baum: 2 });
+    await repo.saveBoxes('p1', 'klasse-4', { museum: 0 });
+    expect(await repo.loadBoxes('p1', 'klasse-3')).toEqual({ baum: 2 });
+    expect(await repo.loadBoxes('p1', 'klasse-4')).toEqual({ museum: 0 });
+    expect(await repo.loadBoxes('p2', 'klasse-3')).toEqual({});
+  });
+});

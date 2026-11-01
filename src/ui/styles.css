@@ -57,7 +57,7 @@ body {
   position: absolute;
   top: 2.25rem;
   right: 0.75rem;
-  left: 0.75rem;
+  left: 5.5rem;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -102,11 +102,11 @@ body {
 .finished-panel {
   max-width: 40rem;
   margin: 0 auto;
-  padding: 1.25rem 1rem 1.5rem;
+  padding: 1rem 1rem 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
   background: var(--sky);
   border: 4px solid var(--border);
   border-radius: 1.5rem;
@@ -133,8 +133,8 @@ body {
 .word-image {
   display: grid;
   place-items: center;
-  width: 6rem;
-  height: 6rem;
+  width: 5rem;
+  height: 5rem;
   border-radius: 1rem;
   background: #e9dfcc;
   border: 3px dashed var(--muted);
@@ -236,7 +236,7 @@ button:focus-visible {
 }
 
 .feedback {
-  min-height: 4rem;
+  min-height: 3rem;
   text-align: center;
   font-size: 1.5rem;
 }
@@ -713,4 +713,308 @@ button:focus-visible {
   background: #fff3c4;
   border: 3px solid var(--almost);
   border-radius: 1rem;
+}
+
+/* ---------- Vorlesen ---------- */
+.word-card {
+  position: relative;
+}
+
+.speak-button {
+  position: absolute;
+  top: -1.25rem;
+  right: -1.25rem;
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  padding: 0;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.speak-button svg {
+  width: 2rem;
+  height: 2rem;
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+/* ---------- Bausteine-Modus ---------- */
+.keyboard-area,
+.tiles-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.tiles-input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.tiles-article {
+  margin-right: 0.6rem;
+  align-self: center;
+}
+
+.tiles-word {
+  display: flex;
+  align-items: stretch;
+  gap: 0.1rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.tile-letter {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: none;
+}
+
+.tile-letter.target {
+  /* Eigenes Feld mit voller Trefferfläche; Nachbarn dürfen sich nicht überdecken. */
+  min-width: var(--touch);
+  min-height: var(--touch);
+  margin: 0 0.1rem;
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 45%);
+  border-bottom: 4px dotted var(--accent);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tile-letter.dotted {
+  color: var(--highlight-ink);
+  background: var(--highlight-bg);
+  border-radius: 0.3em;
+}
+
+.tiles-input.show-targets .tile-letter.target {
+  animation: target-blink 900ms ease-in-out 2;
+}
+
+@keyframes target-blink {
+  50% {
+    background: var(--highlight-bg);
+  }
+}
+
+.ending-slot {
+  min-width: 4.5rem;
+  min-height: var(--touch);
+  margin-left: 0.3rem;
+  padding: 0 0.5rem;
+  font: inherit;
+  color: var(--highlight-ink);
+  background: rgb(255 255 255 / 50%);
+  border: 4px dashed var(--muted);
+  border-radius: 0.75rem;
+  cursor: pointer;
+}
+
+.ending-slot.filled {
+  background: var(--highlight-bg);
+  border-style: solid;
+  border-color: var(--border);
+}
+
+.tiles-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.tile {
+  min-width: var(--touch);
+  min-height: var(--touch);
+  padding: 0 0.75rem;
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.umlaut-tile {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.ending-tile.chosen {
+  background: var(--highlight-bg);
+}
+
+.tile-ghost {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.1);
+  opacity: 0.9;
+}
+
+.tiles-hint {
+  margin: 0;
+  max-width: 30rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.tiles-input.disabled .tiles-tray,
+.tiles-input.disabled .tiles-hint {
+  opacity: 0.45;
+}
+
+/* ---------- Zwischenspeicher ---------- */
+.stash-bar {
+  position: absolute;
+  top: 5.5rem;
+  left: 0.75rem;
+  bottom: 4rem;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 6.25rem;
+  padding: 0.5rem;
+  background: rgb(255 253 247 / 85%);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.stash-bar:not(.interactive) {
+  opacity: 0.75;
+}
+
+.stash-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.stash-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  padding-bottom: 0.25rem;
+}
+
+.stash-item {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  min-height: 4.5rem;
+  padding: 0.2rem;
+  background: var(--card);
+  border: 3px solid var(--border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.stash-item .piece-icon {
+  width: 3.75rem;
+  height: 3.75rem;
+}
+
+/* Hochformat: Speicher als Leiste unten. */
+@media (orientation: portrait) {
+  .stash-bar {
+    top: auto;
+    bottom: 3.5rem;
+    right: 0.75rem;
+    width: auto;
+    flex-direction: row;
+  }
+
+  .stash-items {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+.build-controls {
+  flex-wrap: wrap;
+}
+
+/* ---------- Animierte Teile auf den Karten ---------- */
+.piece-anim {
+  transform-box: view-box;
+}
+
+.anim-spin {
+  animation: piece-spin 4s linear infinite;
+}
+
+.anim-wave {
+  animation: piece-wave 1.4s ease-in-out infinite;
+}
+
+.anim-flicker {
+  animation: piece-flicker 2.2s ease-out infinite;
+}
+
+.anim-sparkle {
+  animation: piece-sparkle 1.8s ease-in-out infinite;
+}
+
+@keyframes piece-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes piece-wave {
+  50% {
+    transform: scaleX(0.82) rotate(4deg);
+  }
+}
+
+@keyframes piece-flicker {
+  0%,
+  60%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0.3);
+  }
+  15%,
+  45% {
+    opacity: 1;
+    transform: scaleX(1.1);
+  }
+}
+
+@keyframes piece-sparkle {
+  50% {
+    opacity: 0.2;
+    transform: scale(0.85) rotate(12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piece-anim,
+  .tiles-input.show-targets .tile-letter.target {
+    animation: none;
+  }
 }

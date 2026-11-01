@@ -2,21 +2,37 @@ import { GRID_SIZE_BY_TASKS } from '../data/grid';
 import { getPiece } from '../data/pieces';
 import {
   answerTask,
+  canFinishEditing,
   choosePiece,
   completedTasks,
   continueAfterPlacement,
   createGame,
+  finishEditing,
   finishTask,
-  isLastTask,
+  pickUp,
   placeAt,
+  stashPending,
+  takeFromStash,
   undoPlacement,
   withKnownWords,
 } from '../logic/game';
 import { coveredCells, createGrid, resolvePlacement, validPlacements } from '../logic/grid';
 import { addProfile, availableSymbols, canCreateProfile, possessive } from '../logic/profiles';
+import { canUseTiles } from '../logic/tiles';
 import { createBuildGame } from '../scene/createBuildGame';
 import type { Repository } from '../state/repository';
-import type { Castle, GameState, GridState, Profile, RandomFn, Settings, Word, WordList } from '../types';
+import type {
+  Castle,
+  GameState,
+  GridState,
+  InputMode,
+  Profile,
+  RandomFn,
+  Settings,
+  Word,
+  WordBoxes,
+  WordList,
+} from '../types';
 import { createBuildControls } from './buildControls';
 import { createCastleViewBar } from './castleViewBar';
 import { createCollectionScreen, type CollectionScope } from './collectionScreen';
@@ -27,6 +43,8 @@ import { createOffersPanel } from './offersPanel';
 import { createProfileHome } from './profileHome';
 import { createProfileSelect } from './profileSelect';
 import { createProgressDots } from './progressDots';
+import { createSpeaker } from './speech';
+import { createStashBar } from './stashBar';
 import { createStreakTorches } from './streakTorches';
 import { createTaskPanel } from './taskPanel';
 import { texts } from './texts';
@@ -66,7 +84,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   let profiles: Profile[] = await repository.loadProfiles();
   let profile: Profile | null = null;
   let game: GameState | null = null;
+  let boxes: WordBoxes = {};
   let screen: Screen = { kind: 'profiles' };
+  const speaker = createSpeaker();
   const thumbnails = new Map<string, string>();
 
   const report = (error: unknown): void => {
@@ -75,6 +95,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   const currentWord = (): Word | null =>
     game === null ? null : (wordsById.get(game.quiz.wordId) ?? null);
+
+  /** Bausteine nur, wenn die Liste sie vorsieht und sich das Wort damit bauen lässt. */
+  const inputModeFor = (word: Word): InputMode =>
+    list.inputMode === 'tiles' && canUseTiles(word) ? 'tiles' : 'keyboard';
 
   // ---------- Bausteine ----------
 
@@ -90,6 +114,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     onContinue: () => {
       if (game !== null) updateGame(finishTask(game, wordIds, random));
     },
+    speaker: settings.readAloud ? speaker : null,
   });
 
   const offersPanel = createOffersPanel((piece) => {
@@ -107,6 +132,16 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     onNextTask: () => {
       if (game !== null) updateGame(continueAfterPlacement(game, wordIds, random));
     },
+    onStash: () => {
+      if (game !== null) updateGame(stashPending(game));
+    },
+    onFinishEditing: () => {
+      if (game !== null) updateGame(finishEditing(game));
+    },
+  });
+
+  const stashBar = createStashBar((index) => {
+    if (game !== null) updateGame(takeFromStash(game, index));
   });
 
   const torches = createStreakTorches();
@@ -141,7 +176,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const profileHome = createProfileHome({
     onContinue: () => {
       if (game === null) return;
-      game = withKnownWords(game, wordIds, random);
+      game = { ...withKnownWords(game, wordIds, random), boxes };
       show({ kind: 'game' });
     },
     onNewCastle: () => {
@@ -188,6 +223,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     progress.element,
     torches.element,
     controls.element,
+    stashBar.element,
     pauseButton,
     gameOverlay,
     castleViewBar.element,
@@ -198,6 +234,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const scene = createBuildGame(sceneContainer, emptyGrid, {
     onPlace: (anchor) => {
       if (game !== null) updateGame(placeAt(game, anchor));
+    },
+    onPickUp: (cell) => {
+      if (game !== null) updateGame(pickUp(game, cell));
     },
   });
 
@@ -216,7 +255,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   async function openProfile(selected: Profile): Promise<void> {
     profile = selected;
-    game = await repository.loadGame(selected.id);
+    [game, boxes] = await Promise.all([
+      repository.loadGame(selected.id),
+      repository.loadBoxes(selected.id, list.id),
+    ]);
     show({ kind: 'home' });
   }
 
@@ -229,7 +271,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   function startNewGame(): void {
     if (profile === null) return;
-    game = createGame(wordIds, settings, random);
+    game = createGame(wordIds, settings, random, boxes);
     persistGame();
     show({ kind: 'game' });
   }
@@ -243,6 +285,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     const previous = game;
     game = next;
     persistGame();
+    if (profile !== null && next.boxes !== previous?.boxes) {
+      boxes = next.boxes;
+      void repository.saveBoxes(profile.id, list.id, boxes).catch(report);
+    }
     render();
     focusGame(previous === null || previous.step !== 'task' || previous.taskNumber !== next.taskNumber);
   }
@@ -317,6 +363,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     screens.hidden = inGame || screen.kind === 'castle';
     castleViewBar.element.hidden = screen.kind !== 'castle';
     pauseButton.hidden = !inGame;
+    const stash = inGame && game !== null ? game.stash : [];
+    const stashActive = step === 'placing' || step === 'editing';
+    stashBar.element.hidden = !inGame || (stash.length === 0 && !stashActive) || step === 'finished';
+    stashBar.render(stash, stashActive);
     progress.element.hidden = !inGame;
     torches.element.hidden = !inGame;
 
@@ -329,22 +379,25 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     if (inGame && game !== null) {
       renderGame(game);
     } else {
-      controls.render('task', false, false);
+      controls.render({ step: 'task', holding: false, decoration: false, stashFilled: false, canFinish: false });
       renderGrid(screen.kind === 'castle' ? screen.castle.grid : emptyGrid);
     }
   }
 
   function renderGame(state: GameState): void {
     const word = currentWord();
-    if (word !== null) taskPanel.render(state.quiz, word);
+    if (word !== null) taskPanel.render(state.quiz, word, inputModeFor(word));
     offersPanel.render(state.offers);
     if (state.step === 'finished') namingPanel.render(castleSuggestion());
-    const pending = state.step === 'placing' ? state.pendingPiece : null;
-    controls.render(
-      state.step,
-      isLastTask(state),
-      pending !== null && getPiece(pending).kind === 'attachment',
-    );
+    const canPlace = state.step === 'placing' || state.step === 'editing';
+    const pending = canPlace ? state.pendingPiece : null;
+    controls.render({
+      step: state.step,
+      holding: pending !== null,
+      decoration: pending !== null && getPiece(pending).kind === 'attachment',
+      stashFilled: state.stash.length > 0,
+      canFinish: canFinishEditing(state),
+    });
     torches.render(state.streak);
     progress.render(completedTasks(state), state.tasksTotal);
 
@@ -356,8 +409,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       resolve: (cell, preferredAnchor) =>
         pending === null ? null : resolvePlacement(grid, pending, cell, preferredAnchor),
       lastPlacementCells:
-        lastPlacement === null ? null : coveredCells(lastPlacement.piece, lastPlacement.anchor),
+        lastPlacement?.anchor == null ? null : coveredCells(lastPlacement.piece, lastPlacement.anchor),
       showGrid: true,
+      pickUp: state.step === 'editing' && pending === null,
     });
   }
 
@@ -370,8 +424,12 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       resolve: () => null,
       lastPlacementCells: null,
       showGrid: false,
+      pickUp: false,
     });
   }
+
+  // Stimmen kommen in manchen Browsern erst nach dem Start; dann den Vorlese-Knopf einblenden.
+  speaker.onVoicesChanged(render);
 
   show({ kind: 'profiles' });
 }

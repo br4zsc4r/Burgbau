@@ -1,12 +1,13 @@
 import { addCastle, newestFirst } from '../logic/collection';
-import type { Castle, GameState, Profile } from '../types';
+import type { Castle, GameState, Profile, WordBoxes } from '../types';
 import { migrate, withVersion } from './migrations';
 import type { KeyValueStore } from './storage';
-import { parseCastle, parseGameState, parseProfile } from './validate';
+import { isRecord, parseCastle, parseGameState, parseProfile, sanitizeBoxes } from './validate';
 
 const PROFILES_KEY = 'profiles';
 const gameKey = (profileId: string): string => `game:${profileId}`;
 const castlesKey = (profileId: string): string => `castles:${profileId}`;
+const progressKey = (profileId: string): string => `progress:${profileId}`;
 
 function listOf<T>(record: Record<string, unknown> | null, field: string, parse: (v: unknown) => T | null): T[] {
   const raw = record?.[field];
@@ -51,6 +52,19 @@ export function createRepository(store: KeyValueStore) {
       const castles = addCastle(await loadCastles(castle.profileId), castle);
       await store.set(castlesKey(castle.profileId), withVersion('castles', { castles }));
       return castles;
+    },
+
+    /** Lernfortschritt eines Profils für eine Wortliste (Fach je Wort). */
+    async loadBoxes(profileId: string, listId: string): Promise<WordBoxes> {
+      const record = migrate('progress', await store.get(progressKey(profileId)));
+      const lists = record?.['lists'];
+      return isRecord(lists) ? sanitizeBoxes(lists[listId]) : {};
+    },
+
+    async saveBoxes(profileId: string, listId: string, boxes: WordBoxes): Promise<void> {
+      const record = migrate('progress', await store.get(progressKey(profileId)));
+      const lists = isRecord(record?.['lists']) ? record['lists'] : {};
+      await store.set(progressKey(profileId), withVersion('progress', { lists: { ...lists, [listId]: boxes } }));
     },
 
     /** Burgen aller Profile, neueste zuerst. */

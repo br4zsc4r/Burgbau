@@ -20,10 +20,13 @@ export interface BuildView {
   lastPlacementCells: Cell[] | null;
   /** Rasterlinien zeigen (beim Bauen ja, beim Anschauen einer fertigen Burg nein). */
   showGrid: boolean;
+  /** Bearbeitungsmodus ohne Teil in der Hand: Antippen nimmt ein Teil auf. */
+  pickUp: boolean;
 }
 
 export interface BuildSceneCallbacks {
   onPlace: (anchor: Cell) => void;
+  onPickUp: (cell: Cell) => void;
 }
 
 // Platzhalter-Farben bis zu den echten Grafiken.
@@ -68,6 +71,8 @@ export class BuildScene extends Phaser.Scene {
   private hoverCell: Cell | null = null;
   private hoverAnchor: Cell | null = null;
   private gridLines!: Phaser.GameObjects.Graphics;
+  /** Bewegte Bilder der Bauszene; ihre Tweens werden vor dem Neuzeichnen beendet. */
+  private moving: Phaser.GameObjects.Image[] = [];
   private animatedPlacement: string | null = null;
   private ready = false;
   private resolveReady: () => void = () => undefined;
@@ -187,10 +192,16 @@ export class BuildScene extends Phaser.Scene {
 
   /** Antippen einer Zelle. Ziehen aus der Ablage beginnt außerhalb des Rasters und zählt nicht. */
   private handleTap(pointer: Phaser.Input.Pointer): void {
-    if (this.view?.pendingPiece == null) return;
+    const view = this.view;
+    if (view === null) return;
     const downCell = this.cellUnder(pointer.downX, pointer.downY);
     const upCell = this.cellUnder(pointer.worldX, pointer.worldY);
     if (downCell === null || upCell === null || !sameCell(downCell, upCell)) return;
+
+    if (view.pendingPiece === null) {
+      if (view.pickUp && this.isOccupied(upCell)) this.callbacks.onPickUp(upCell);
+      return;
+    }
 
     const placement = this.resolve(upCell, null);
     if (placement !== null) {
@@ -282,11 +293,29 @@ export class BuildScene extends Phaser.Scene {
     this.drawHover();
   }
 
+  private isOccupied(cell: Cell): boolean {
+    const grid = this.view?.grid;
+    if (grid === undefined) return false;
+    return (
+      pieceAt(grid, cell) !== null ||
+      grid.attachments.some((a) => a.col === cell.col && a.row === cell.row)
+    );
+  }
+
   private drawHover(): void {
     this.hover.clear();
     const cell = this.hoverCell;
-    if (cell === null || this.view?.pendingPiece == null) return;
+    if (cell === null || this.view === null) return;
     const size = this.layout.cellSize;
+    if (this.view.pendingPiece === null) {
+      // Bearbeiten: Teil unter dem Zeiger lässt sich aufnehmen.
+      if (this.view.pickUp && this.isOccupied(cell)) {
+        const { x, y } = cellOrigin(this.layout, cell);
+        this.hover.lineStyle(OUTLINE * 1.5, COLORS.valid, 1);
+        this.hover.strokeRect(x + OUTLINE, y + OUTLINE, size - 2 * OUTLINE, size - 2 * OUTLINE);
+      }
+      return;
+    }
     const placement = this.resolve(cell, this.hoverAnchor);
     if (placement !== null) {
       this.hover.fillStyle(COLORS.valid, 0.8);
@@ -336,11 +365,13 @@ export class BuildScene extends Phaser.Scene {
   }
 
   private drawPieces(view: BuildView): void {
+    this.tweens.killTweensOf(this.moving);
+    this.moving = [];
     this.layers.base.removeAll(true);
     this.layers.edges.clear();
     this.layers.top.removeAll(true);
     this.attachmentLayer.removeAll(true);
-    this.drawCastle(view.grid, this.layers, this.attachmentLayer);
+    this.moving = this.drawCastle(view.grid, this.layers, this.attachmentLayer, true);
   }
 
   /** Reihenfolge: Teile, dann Efeu und Front-Deko, zuletzt was oben drauf steckt. */
@@ -348,8 +379,10 @@ export class BuildScene extends Phaser.Scene {
     grid: GridState,
     layers: PieceLayers,
     attachmentLayer: Phaser.GameObjects.Container,
-  ): void {
+    animated = false,
+  ): Phaser.GameObjects.Image[] {
     const size = this.layout.cellSize;
+    const moving: Phaser.GameObjects.Image[] = [];
 
     const tilesByPiece = new Map<string, TileView[]>();
     for (const tile of blockTiles(grid)) {
@@ -363,7 +396,7 @@ export class BuildScene extends Phaser.Scene {
       const { x, y } = cellOrigin(this.layout, { col: placed.col, row: placed.row + height - 1 });
       const tiles = tilesByPiece.get(`${String(placed.col)}/${String(placed.row)}`) ?? [];
       // Textur in Weltkoordinaten: Nachbarblöcke setzen das Fugenmuster fort.
-      drawPiece(this, layers, placed.piece, x, y, size, tiles, { x, y });
+      moving.push(...drawPiece(this, layers, placed.piece, x, y, size, tiles, { x, y }, animated));
     }
 
     const attachmentLayers = { ...layers, base: attachmentLayer, top: attachmentLayer };
@@ -378,8 +411,11 @@ export class BuildScene extends Phaser.Scene {
         const mount = host === null ? 0 : topMountOffset(host.piece);
         offsetY = -size + (mount * size) / ART_CELL;
       }
-      drawPiece(this, attachmentLayers, attachment.piece, x, y + offsetY, size, [], null);
+      moving.push(
+        ...drawPiece(this, attachmentLayers, attachment.piece, x, y + offsetY, size, [], null, animated),
+      );
     }
+    return moving;
   }
 
   private drawHighlights(view: BuildView): void {

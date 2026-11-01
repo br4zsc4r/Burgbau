@@ -1,4 +1,4 @@
-import type { Animal, PieceId, SymbolColor } from '../types';
+import type { Animal, PieceId, PluralPattern, SymbolColor } from '../types';
 
 const pieceNames: Readonly<Record<PieceId, string>> = {
   wall: 'Mauerblock',
@@ -9,10 +9,13 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   towerTall: 'Hoher Turm',
   wallBig: 'Große Mauer',
   gateBig: 'Großes Burgtor',
+  towerBig: 'Großer Turm',
+  windowWallBig: 'Große Fenstermauer',
   battlements: 'Zinnen',
   pointedRoof: 'Spitzdach',
   coneRoof: 'Kegeldach',
   pointedRoofTall: 'Hohes Spitzdach',
+  roofBig: 'Großes Dach',
   flag: 'Fahne',
   pennant: 'Wimpel',
   balcony: 'Balkon',
@@ -28,6 +31,10 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   well: 'Brunnen',
   moat: 'Wassergraben',
   drawbridge: 'Zugbrücke',
+  fireDragon: 'Feuerdrache',
+  giantFlag: 'Riesenfahne',
+  crystal: 'Funkelkristall',
+  windmill: 'Windmühle',
   crumblingWall: 'Bröckelmauer',
   holeWall: 'Mauer mit Loch',
   crackedWall: 'Mauer mit Riss',
@@ -39,6 +46,7 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   crumblingWallWide: 'Lange Bröckelmauer',
   chippedTowerTall: 'Hoher Turm mit fehlender Ecke',
   ruinWall: 'Ruinenmauer',
+  ruinTower: 'Turmruine',
 };
 
 const animalNames: Readonly<Record<Animal, string>> = {
@@ -74,8 +82,18 @@ const colorNames: Readonly<Record<SymbolColor, string>> = {
   pink: 'Rosa',
 };
 
+const endingLabels: Readonly<Record<PluralPattern, string>> = {
+  e: '-e',
+  er: '-er',
+  n: '-n',
+  en: '-en',
+  s: '-s',
+  none: '–',
+};
+
 // Alle sichtbaren Texte zentral an einer Stelle.
 export const texts = {
+  endingLabels,
   pieceNames,
   animalNames,
   castleWords,
@@ -96,11 +114,33 @@ export const texts = {
   insertChar: (char: string): string => `${char} einfügen`,
   imageFallbackLabel: (singular: string): string => `Bild: ${singular}`,
   loadError: 'Die Wörter konnten nicht geladen werden.',
+
+  // Bausteine-Modus
+  tilesHint: 'Zieh eine Endung an das Wort. Braucht es Pünktchen? Tipp auf den Buchstaben!',
+  umlautTile: '¨',
+  umlautTileLabel: 'Pünktchen',
+  endingSlotLabel: 'Endung',
+  endingTileLabel: (ending: PluralPattern): string =>
+    ending === 'none' ? 'keine Endung' : `Endung ${endingLabels[ending]}`,
+  letterLabel: (letter: string, dotted: boolean): string =>
+    dotted ? `${letter}, Pünktchen wegnehmen` : `${letter}, Pünktchen setzen`,
+
+  // Vorlesen
+  readAloud: 'Vorlesen',
+
+  // Zwischenspeicher und Bearbeiten
+  stashTitle: 'Speicher',
+  stashPiece: 'In den Speicher',
+  stashItemLabel: (name: string): string => `${name} aus dem Speicher nehmen`,
+  editHint: 'Bau deine Burg fertig! Tipp ein Teil an, um es aufzunehmen.',
+  editHintHolding: 'Setz das Teil auf ein leuchtendes Feld – oder leg es in den Speicher.',
+  editHintStash: 'Setz noch alle Teile aus dem Speicher – dann ist deine Burg fertig!',
+  editHintStuck: 'Die Teile im Speicher passen nirgends mehr hin. Du kannst die Burg trotzdem fertig machen.',
+  editDone: 'Burg ist fertig',
   placeHint: 'Setz dein Bauteil auf ein leuchtendes Feld!',
   placeHintDecoration: 'Häng die Verzierung an ein leuchtendes Bauteil!',
   undo: 'Rückgängig',
   nextTask: 'Nächstes Wort',
-  finishCastle: 'Burg fertig!',
   offersTitle: 'Such dir ein Bauteil aus!',
   offersDamagedHint: 'Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!',
   streakLabel: (lit: number): string =>

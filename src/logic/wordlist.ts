@@ -31,6 +31,9 @@ function validateWord(raw: unknown, index: number): string[] {
   if (raw['image'] !== undefined && !isNonEmptyString(raw['image'])) {
     errors.push(`${at}: image ungültig`);
   }
+  if (raw['stem'] !== undefined && (!isNonEmptyString(raw['stem']) || raw['stem'] === raw['singular'])) {
+    errors.push(`${at}: stem muss sich vom Singular unterscheiden`);
+  }
   const plural = raw['plural'];
   if (!Array.isArray(plural) || plural.length === 0 || !plural.every(isNonEmptyString)) {
     errors.push(`${at}: plural muss eine nicht-leere Liste von Wörtern sein`);
@@ -38,10 +41,10 @@ function validateWord(raw: unknown, index: number): string[] {
   return errors;
 }
 
-/** Prüft, ob pattern und umlaut zur ersten Pluralform passen. */
+/** Prüft, ob pattern und umlaut zur ersten Pluralform passen (bei Sonderfällen ab dem Pluralstamm). */
 export function checkWordConsistency(word: Word): string[] {
   const first = word.plural[0] ?? '';
-  const analysis = analyzePlural(word.singular, first);
+  const analysis = analyzePlural(word.stem ?? word.singular, first);
   if (analysis === null) {
     return [`${word.id}: „${first}“ folgt keinem regelmäßigen Muster`];
   }

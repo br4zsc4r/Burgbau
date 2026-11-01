@@ -182,3 +182,58 @@ export function removeFromGrid(grid: GridState, id: PieceId, anchor: Cell): Grid
   if (!grid.pieces.some(matches)) throw new Error(`${id} ist nicht gesetzt`);
   return { ...grid, pieces: grid.pieces.filter((entry) => !matches(entry)) };
 }
+
+/** Steht das Teil noch? Boden oder unter mindestens einer Spalte ein Teil zum Draufbauen. */
+function isSupported(grid: GridState, placed: PlacedPiece): boolean {
+  if (placed.row === 0) return true;
+  const def = getPiece(placed.piece);
+  if (def.kind === 'ground') return false;
+  for (let dx = 0; dx < def.width; dx++) {
+    if (supports(grid, { col: placed.col + dx, row: placed.row - 1 })) return true;
+  }
+  return false;
+}
+
+const SLOT_PRIORITY = { top: 0, front: 1, growth: 2 } as const;
+
+/**
+ * Bearbeitungsmodus: das oberste Ding an einer Zelle aufnehmen – erst Dekorationen
+ * (Fahne vor Front-Deko vor Efeu), sonst das Teil. Was danach keinen Halt mehr hat,
+ * fällt mit heraus (auch Dekorationen ohne Träger).
+ */
+export function pickUpAt(
+  grid: GridState,
+  cell: Cell,
+): { grid: GridState; picked: PieceId | null; fallen: PieceId[] } {
+  const decorations = attachmentsAt(grid, cell).sort(
+    (a, b) =>
+      SLOT_PRIORITY[getPiece(a.piece).slot ?? 'growth'] - SLOT_PRIORITY[getPiece(b.piece).slot ?? 'growth'],
+  );
+  const decoration = decorations[0];
+  if (decoration !== undefined) {
+    return {
+      grid: { ...grid, attachments: grid.attachments.filter((a) => a !== decoration) },
+      picked: decoration.piece,
+      fallen: [],
+    };
+  }
+
+  const target = pieceAt(grid, cell);
+  if (target === null) return { grid, picked: null, fallen: [] };
+
+  let pieces = grid.pieces.filter((p) => p !== target);
+  const fallen: PieceId[] = [];
+  // Was keinen Halt mehr hat, fällt – so lange, bis alles wieder steht.
+  for (;;) {
+    const current: GridState = { ...grid, pieces };
+    const loose = pieces.filter((p) => !isSupported(current, p));
+    if (loose.length === 0) break;
+    fallen.push(...loose.map((p) => p.piece));
+    pieces = pieces.filter((p) => !loose.includes(p));
+  }
+
+  const remaining: GridState = { ...grid, pieces, attachments: [] };
+  const attachments = grid.attachments.filter((a) => pieceAt(remaining, a) !== null);
+  fallen.push(...grid.attachments.filter((a) => !attachments.includes(a)).map((a) => a.piece));
+  return { grid: { ...remaining, attachments }, picked: target.piece, fallen };
+}

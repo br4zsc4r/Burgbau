@@ -3,7 +3,20 @@ import { GRID_SIZE_BY_TASKS } from '../../src/data/grid';
 import { getPiece } from '../../src/data/pieces';
 import { cellCenter, worldLayout } from '../../src/logic/gridLayout';
 import type { Cell, PieceCategory, PieceDef, PieceId } from '../../src/types';
-import list from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
+import klasse12 from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
+import klasse3 from '../../src/data/wordlists/klasse-3.json' with { type: 'json' };
+import klasse4 from '../../src/data/wordlists/klasse-4.json' with { type: 'json' };
+
+const ALL_WORDS = [...klasse12.words, ...klasse3.words, ...klasse4.words];
+
+/** Das Wort der aktuellen Aufgabe (aus allen Listen gesucht). */
+export async function currentWord(page: Page) {
+  const text = (await page.locator('.singular').textContent()) ?? '';
+  const singular = text.replace(/^(der|die|das)\s+/, '').trim();
+  const word = ALL_WORDS.find((w) => w.singular === singular);
+  if (word === undefined) throw new Error(`Unbekanntes Wort: ${singular}`);
+  return word;
+}
 
 export const size = GRID_SIZE_BY_TASKS[15];
 export const layout = worldLayout(size);
@@ -30,23 +43,45 @@ export async function createProfile(page: Page, nickname: string): Promise<void>
   await expect(page.getByRole('heading', { name: `Hallo ${nickname}!` })).toBeVisible();
 }
 
-/** Seite öffnen, Profil anlegen und eine neue Burg beginnen. */
-export async function startGame(page: Page, nickname = 'Lena'): Promise<void> {
-  await page.goto('/');
+/** Seite öffnen (optional mit Wortliste), Profil anlegen und eine neue Burg beginnen. */
+export async function startGame(page: Page, nickname = 'Lena', list?: string): Promise<void> {
+  await page.goto(list === undefined ? '/' : `/?liste=${list}`);
   await createProfile(page, nickname);
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
-  await expect(page.getByLabel('Mehrzahl eintippen')).toBeVisible();
+  await expect(page.locator('.task-panel')).toBeVisible();
 }
 
 export const undoButton = (page: Page): Locator => page.getByRole('button', { name: 'Rückgängig' });
 
-/** Aufgabe beantworten und zur Bauteil-Auswahl weitergehen. */
+/** Bausteine legen: Pünktchen (falls nötig) und Endung. */
+export async function buildWithTiles(page: Page, umlautIndex: number | null, ending: string): Promise<void> {
+  if (umlautIndex !== null) await page.locator(`.tile-letter[data-index="${String(umlautIndex)}"]`).click();
+  await page.locator(`.ending-tile[data-ending="${ending}"]`).click();
+}
+
+/** Aufgabe beantworten (Tastatur oder Bausteine) und zur Bauteil-Auswahl weitergehen. */
 export async function answer(page: Page, correct: boolean): Promise<void> {
-  const text = (await page.locator('.singular').textContent()) ?? '';
-  const singular = text.replace(/^(der|die|das)\s+/, '').trim();
-  const plural = list.words.find((w) => w.singular === singular)?.plural[0] ?? '';
-  await page.getByLabel('Mehrzahl eintippen').fill(correct ? plural : 'Xyzxyz');
-  await page.keyboard.press('Enter');
+  const word = await currentWord(page);
+  const plural = word.plural[0] ?? '';
+  const mode = await page.locator('.task-panel').getAttribute('data-mode');
+  const submit = page.getByRole('button', { name: 'Fertig' });
+
+  if (mode === 'tiles') {
+    const singular = Array.from(word.singular);
+    const umlaut = word.umlaut ? singular.findIndex((c, i) => c !== Array.from(plural)[i]) : null;
+    if (correct) {
+      await buildWithTiles(page, umlaut, word.pattern);
+      await submit.click();
+    } else {
+      // Falsche Endung; ist das nur „fast“ falsch, zählt der zweite Versuch.
+      await buildWithTiles(page, null, word.pattern === 'er' ? 's' : 'er');
+      await submit.click();
+      if ((await page.locator('.feedback').getAttribute('data-status')) === 'almost') await submit.click();
+    }
+  } else {
+    await page.getByLabel('Mehrzahl eintippen').fill(correct ? plural : 'Xyzxyz');
+    await page.keyboard.press('Enter');
+  }
   await page.getByRole('button', { name: 'Weiter' }).click();
 }
 
@@ -89,12 +124,28 @@ export async function placeAnywhere(page: Page): Promise<void> {
 
 /** Alle 15 Aufgaben spielen (jede vierte falsch), immer einen Block setzen. */
 export async function buildWholeCastle(page: Page): Promise<void> {
-  const finishButton = page.locator('.build-controls .primary-button');
   for (let n = 0; n < 15; n++) {
     await answer(page, n % 4 !== 3);
     await chooseOffer(page, (piece) => piece.kind === 'block');
-    await placeAnywhere(page);
-    if (n === 14) await expect(page.getByRole('button', { name: 'Burg fertig!' })).toBeVisible();
-    await finishButton.click();
+    if (n < 14) {
+      await placeAnywhere(page);
+      await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+    } else {
+      await placeInEditing(page);
+    }
   }
+  // Nach dem letzten Teil direkt im Bearbeitungsmodus.
+  await expect(page.getByRole('button', { name: 'Burg ist fertig' })).toBeEnabled();
+}
+
+/** Setzt das gehaltene Teil auf die erste passende Zelle, ohne auf „Rückgängig“ zu warten. */
+export async function placeInEditing(page: Page): Promise<void> {
+  const holding = page.locator('.build-hint', { hasText: /leuchtendes Feld/ });
+  for (let row = 0; row < size.rows; row++) {
+    for (let col = 0; col < size.cols; col++) {
+      await tapCell(page, { col, row });
+      if (!(await holding.isVisible())) return;
+    }
+  }
+  throw new Error('Teil passt nirgends');
 }

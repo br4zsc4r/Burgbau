@@ -3,9 +3,14 @@ import {
   answerTask,
   choosePiece,
   completedTasks,
+  canFinishEditing,
   continueAfterPlacement,
   createGame,
+  finishEditing,
   finishTask,
+  pickUp,
+  stashPending,
+  takeFromStash,
   isLastTask,
   placeAt,
   undoPlacement,
@@ -31,6 +36,15 @@ function answer(state: GameState, correct: boolean, settings: Settings = testSet
   const word = wordOf(state);
   const input = correct ? (word.plural[0] ?? '') : 'Xyzxyz';
   return answerTask(state, word, input, settings, random);
+}
+
+/** Erstes Angebot an die erste gültige Stelle setzen. */
+function playPlacement(state: GameState): GameState {
+  const piece = state.offers[0] ?? 'wall';
+  const next = choosePiece(state, piece);
+  const placement = validPlacements(next.grid, piece)[0];
+  if (placement === undefined) throw new Error('kein Platz');
+  return placeAt(next, placement.anchor);
 }
 
 /** Antwort → Angebot → erstes Angebot → erste gültige Zelle. */
@@ -143,10 +157,13 @@ describe('game', () => {
     for (let task = 1; task <= 10; task++) {
       expect(state).toMatchObject({ step: 'task', taskNumber: task });
       expect(isLastTask(state)).toBe(task === 10);
-      state = continueAfterPlacement(playTask(state, task % 3 !== 0), ids, random);
+      state = playTask(state, task % 3 !== 0);
+      if (task < 10) state = continueAfterPlacement(state, ids, random);
     }
-    expect(state.step).toBe('finished');
+    // Nach dem letzten gesetzten Teil direkt im Bearbeitungsmodus.
+    expect(state.step).toBe('editing');
     expect(state.grid.pieces.length + state.grid.attachments.length).toBe(10);
+    expect(finishEditing(state).step).toBe('finished');
   });
 
   it('stellt ein falsch beantwortetes Wort 3–5 Aufgaben später erneut', () => {
@@ -189,5 +206,132 @@ describe('game', () => {
     state = continueAfterPlacement(placeAt(choosePiece(state, state.offers[0] ?? 'wall'), validPlacements(state.grid, state.offers[0] ?? 'wall')[0]?.anchor ?? { col: 0, row: 0 }), ids, random);
     expect(completedTasks(state)).toBe(1);
     expect(completedTasks({ ...state, step: 'finished' })).toBe(10);
+  });
+
+  describe('Zwischenspeicher', () => {
+    function placing(): GameState {
+      const state = finishTask(answer(createGame(ids, testSettings, random), true), ids, random);
+      return choosePiece(state, state.offers[0] ?? 'wall');
+    }
+
+    it('ablegen statt setzen zählt wie gesetzt und lässt sich rückgängig machen', () => {
+      const state = placing();
+      const piece = state.pendingPiece;
+      const stashed = stashPending(state);
+      expect(stashed).toMatchObject({ step: 'placed', pendingPiece: null, stash: [piece] });
+      expect(stashed.grid.pieces).toEqual([]);
+
+      const undone = undoPlacement(stashed);
+      expect(undone).toMatchObject({ step: 'placing', pendingPiece: piece, stash: [] });
+    });
+
+    it('tauscht das wartende Teil mit einem Teil aus dem Speicher', () => {
+      const state = { ...placing(), stash: ['tower', 'ivy'] as const };
+      const pending = state.pendingPiece;
+      const swapped = takeFromStash({ ...state, stash: [...state.stash] }, 1);
+      expect(swapped.pendingPiece).toBe('ivy');
+      expect(swapped.stash).toEqual(['tower', pending]);
+    });
+
+    it('der Speicher bleibt über Aufgaben hinweg erhalten', () => {
+      const stashed = stashPending(placing());
+      const next = continueAfterPlacement(stashed, ids, random);
+      expect(next.stash).toEqual(stashed.stash);
+    });
+  });
+
+  describe('Bearbeitungsmodus', () => {
+    function editing(): GameState {
+      let state = createGame(ids, { ...testSettings, tasksPerCastle: 10 }, random);
+      state = { ...state, taskNumber: 10 };
+      return playTask(state, true);
+    }
+
+    it('kommt direkt nach dem letzten gesetzten Teil', () => {
+      expect(editing()).toMatchObject({ step: 'editing', lastPlacement: null });
+    });
+
+    it('kommt auch, wenn das letzte Teil in den Speicher gelegt wird', () => {
+      let state = createGame(ids, { ...testSettings, tasksPerCastle: 10 }, random);
+      state = { ...state, taskNumber: 10 };
+      state = finishTask(answer(state, true), ids, random);
+      state = stashPending(choosePiece(state, state.offers[0] ?? 'wall'));
+      expect(state.step).toBe('editing');
+      expect(state.stash).toHaveLength(1);
+    });
+
+    it('Teile aufnehmen, ablegen und aus dem Speicher setzen', () => {
+      let state = editing();
+      const placed = state.grid.pieces[0];
+      if (placed === undefined) throw new Error('kein Teil');
+      state = pickUp(state, placed);
+      expect(state.pendingPiece).toBe(placed.piece);
+      expect(state.grid.pieces).toEqual([]);
+
+      state = stashPending(state);
+      expect(state).toMatchObject({ step: 'editing', pendingPiece: null, stash: [placed.piece] });
+
+      state = takeFromStash(state, 0);
+      expect(state).toMatchObject({ pendingPiece: placed.piece, stash: [] });
+      state = placeAt(state, { col: 5, row: 0 });
+      expect(state).toMatchObject({ step: 'editing', pendingPiece: null });
+      expect(pieceAt(state.grid, { col: 5, row: 0 })?.piece).toBe(placed.piece);
+    });
+
+    it('Fertig erst, wenn alle Teile gesetzt sind', () => {
+      const withStash = { ...editing(), stash: ['tower' as const] };
+      expect(canFinishEditing(withStash)).toBe(false);
+      expect(finishEditing(withStash)).toBe(withStash);
+
+      const holding = { ...editing(), pendingPiece: 'wall' as const };
+      expect(canFinishEditing(holding)).toBe(false);
+
+      expect(canFinishEditing(editing())).toBe(true);
+      expect(finishEditing(editing()).step).toBe('finished');
+    });
+
+    it('Reste, die nirgends mehr hinpassen, blockieren das Fertigmachen nicht', () => {
+      // Eine Fahne braucht einen Turm, eine Mauer oder ein Dach – auf leerem Raster passt sie nicht.
+      const state = { ...editing(), grid: { ...editing().grid, pieces: [], attachments: [] }, stash: ['flag' as const] };
+      expect(canFinishEditing(state)).toBe(true);
+      expect(finishEditing(state)).toMatchObject({ step: 'finished', stash: [] });
+    });
+
+    it('zählt im Fortschritt als beendet', () => {
+      expect(completedTasks(editing())).toBe(10);
+    });
+  });
+
+  describe('Dach-Garantie', () => {
+    it('in den letzten zwei Aufgaben ist immer ein Dach im Angebot', () => {
+      for (let seed = 0; seed < 40; seed++) {
+        for (const correct of [true, false]) {
+          let state = createGame(ids, testSettings, seededRandom(seed));
+          state = { ...state, taskNumber: 14 + (seed % 2), grid: { ...state.grid, pieces: [{ piece: 'wall', col: 0, row: 0 }] } };
+          state = finishTask(answer(state, correct), ids, seededRandom(seed));
+          expect(state.offers.some((id) => getPiece(id).roof === true)).toBe(true);
+        }
+      }
+    });
+
+    it('vorher nicht erzwungen', () => {
+      const roofs = Array.from({ length: 40 }, (_, seed) => {
+        let state = createGame(ids, testSettings, seededRandom(seed));
+        state = finishTask(answer(state, true), ids, seededRandom(seed));
+        return state.offers.some((id) => getPiece(id).roof === true);
+      });
+      expect(roofs.some(Boolean)).toBe(false);
+    });
+  });
+
+  it('schreibt das Lernfach bei jeder Antwort fort', () => {
+    let state = createGame(ids, testSettings, random, { [ids[0] ?? '']: 3 });
+    const wordId = state.quiz.wordId;
+    const before = state.boxes[wordId] ?? 0;
+    state = answer(state, true);
+    expect(state.boxes[wordId]).toBe(Math.min(before + 1, 4));
+    state = continueAfterPlacement(playPlacement(finishTask(state, ids, random)), ids, random);
+    const second = state.quiz.wordId;
+    expect(answer(state, false).boxes[second]).toBe(0);
   });
 });

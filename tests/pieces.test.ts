@@ -66,6 +66,15 @@ describe('Bauteil-Katalog', () => {
     }
   });
 
+  it('es gibt mehrere 2 × 2-Teile, auch bei den beschädigten', () => {
+    const big = (category: Parameters<typeof piecesOf>[0]) =>
+      piecesOf(category).filter((p) => p.width === 2 && p.height === 2 && p.retired !== true);
+    expect(big('basic').length).toBeGreaterThanOrEqual(4);
+    expect(big('finish').length).toBeGreaterThanOrEqual(1);
+    expect(big('damaged').length).toBeGreaterThanOrEqual(2);
+    expect(getPiece('windmill')).toMatchObject({ width: 2, height: 2, animated: true });
+  });
+
   it('Umgebungsteile stehen auf dem Boden', () => {
     expect(piecesOf('environment').map((p) => p.kind)).toEqual(['ground', 'ground', 'ground', 'ground']);
   });
@@ -77,7 +86,7 @@ describe('pieceArt', () => {
 
   it('Blöcke entstehen aus Materialtextur, nur Merkmale haben eine Grafik', () => {
     expect(pieceArt('wall')).toMatchObject({ material: 'stone', image: null, damage: [] });
-    expect(pieceArt('tower')).toMatchObject({ material: 'towerStone', image: featureUrl('tower') });
+    expect(pieceArt('tower')).toMatchObject({ material: 'stone', image: featureUrl('tower') });
     expect(pieceArt('pointedRoof')).toMatchObject({ material: null, image: imageUrl('pointedRoof') });
   });
 
@@ -88,6 +97,10 @@ describe('pieceArt', () => {
       if (art.material !== null) expect(exists(textureUrl(art.material)), art.material).toBe(true);
     }
     for (const kind of DAMAGE_KINDS) expect(exists(damageUrl(kind)), kind).toBe(true);
+    for (const piece of PIECES) {
+      const animation = pieceArt(piece.id).animation;
+      if (animation !== null) expect(exists(animation.image), animation.image).toBe(true);
+    }
     expect(exists(BATTLEMENTS_URL)).toBe(true);
     expect(exists(BATTLEMENTS_BROKEN_URL)).toBe(true);
   });
@@ -103,6 +116,12 @@ describe('pieceArt', () => {
         expect(overlay.dy).toBeLessThan(piece.height);
       }
       expect(pieceArt(piece.id).material).toBe(getPiece(piece.base ?? 'wall').material ?? null);
+    }
+  });
+
+  it('genau die animierten Teile haben einen bewegten Teil', () => {
+    for (const piece of PIECES) {
+      expect(pieceArt(piece.id).animation !== null, piece.id).toBe(piece.animated === true);
     }
   });
 

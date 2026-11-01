@@ -1,11 +1,11 @@
 import './ui/styles.css';
-import klasse12 from './data/wordlists/klasse-1-2.json';
 import { parseWordList } from './logic/wordlist';
 import { createRepository } from './state/repository';
 import { defaultSettings } from './state/settings';
 import { createIdbStore, createMemoryStore, type KeyValueStore } from './state/storage';
 import { mountApp } from './ui/app';
 import { texts } from './ui/texts';
+import type { WordList } from './types';
 
 /** IndexedDB, wenn verfügbar; sonst (z. B. privates Fenster) nur im Speicher. */
 async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean }> {
@@ -25,13 +25,29 @@ function newId(): string {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
+const WORD_LISTS = Object.values(
+  import.meta.glob<unknown>('./data/wordlists/*.json', { eager: true, import: 'default' }),
+).map(parseWordList);
+
+/**
+ * Aktive Wortliste. Bis zu den Lehrkraft-Einstellungen (Phase 7) lässt sie sich zum
+ * Ausprobieren über die Adresse wählen, z. B. ?liste=klasse-3.
+ */
+function activeWordList(): WordList {
+  const requested = new URLSearchParams(window.location.search).get('liste') ?? defaultSettings.wordListId;
+  const list =
+    WORD_LISTS.find((l) => l.id === requested) ??
+    WORD_LISTS.find((l) => l.id === defaultSettings.wordListId);
+  if (list === undefined) throw new Error('Keine Wortliste gefunden');
+  return list;
+}
+
 async function start(root: HTMLElement): Promise<void> {
-  // Bis Phase 6 nur Tastatur-Modus. Der Bausteine-Modus (inputMode "tiles") folgt dort.
-  const list = parseWordList(klasse12);
+  const list = activeWordList();
   const { store, persistent } = await openStore();
   await mountApp(root, {
     list,
-    settings: defaultSettings,
+    settings: { ...defaultSettings, wordListId: list.id },
     random: Math.random,
     repository: createRepository(store),
     newId,

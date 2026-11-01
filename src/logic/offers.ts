@@ -1,11 +1,18 @@
-import { isLarge, isStackable, piecesOf } from '../data/pieces';
+import { isLarge, isOffered, isStackable, piecesOf } from '../data/pieces';
 import type { PieceCategory, PieceDef, PieceId, RandomFn } from '../types';
 import { randomInt, shuffle } from './random';
 
 /** Wie oft ein Teil im Angebot durch eine große Variante ersetzt wird (Startwert). */
-export const LARGE_CHANCE = 1 / 3;
+export const LARGE_CHANCE = 0.4;
 /** Wie oft bei richtiger Antwort ein Grundbauteil durch ein Umgebungsteil ersetzt wird. */
 export const ENVIRONMENT_CHANCE = 1 / 4;
+/** Ab dieser Serie ist das Premium-Teil ein animiertes Teil. */
+export const ANIMATED_MIN_STREAK = 12;
+
+export interface OfferOptions {
+  /** Letzte Aufgaben: Ein Dach muss dabei sein, damit die Burg noch abgeschlossen werden kann. */
+  needsRoof?: boolean;
+}
 
 /** Welche Kategorien die drei Angebote haben (Spezifikation Abschnitt 4). */
 export function offerCategories(correct: boolean, streak: number, random: RandomFn): PieceCategory[] {
@@ -17,12 +24,21 @@ export function offerCategories(correct: boolean, streak: number, random: Random
   return ['premium', 'basic', randomInt(2, random) === 0 ? 'decoration' : 'finish'];
 }
 
+/** Normale (nicht animierte, nicht stillgelegte) Teile einer Kategorie. */
+function regularOf(category: PieceCategory): PieceDef[] {
+  return piecesOf(category).filter((piece) => isOffered(piece) && piece.animated !== true);
+}
+
 function smallOf(category: PieceCategory): PieceDef[] {
-  return piecesOf(category).filter((piece) => !isLarge(piece));
+  return regularOf(category).filter((piece) => !isLarge(piece));
 }
 
 function largeOf(category: PieceCategory, streak: number): PieceDef[] {
-  return piecesOf(category).filter((piece) => isLarge(piece) && (piece.minStreak ?? 0) <= streak);
+  return regularOf(category).filter((piece) => isLarge(piece) && (piece.minStreak ?? 0) <= streak);
+}
+
+function animatedPieces(): PieceDef[] {
+  return piecesOf('premium').filter((piece) => isOffered(piece) && piece.animated === true);
 }
 
 /** Falls in einer Kategorie nichts passt: Ersatz, ohne Premium oder Schaden zu verschenken. */
@@ -40,9 +56,15 @@ export function offerPieces(
   streak: number,
   random: RandomFn,
   placeable: (id: PieceId) => boolean = () => true,
+  options: OfferOptions = {},
 ): PieceId[] {
   const categories = offerCategories(correct, streak, random);
   const pools = categories.map(smallOf);
+  if (streak >= ANIMATED_MIN_STREAK) {
+    categories.forEach((category, i) => {
+      if (category === 'premium') pools[i] = animatedPieces();
+    });
+  }
 
   const largeSlots = categories.flatMap((c, i) => (largeOf(c, streak).length > 0 ? [i] : []));
   let largeSlot = -1;
@@ -75,6 +97,27 @@ export function offerPieces(
     if (stackable !== undefined) {
       const replace = chosen.findIndex((piece) => piece.category !== 'premium');
       chosen[replace === -1 ? chosen.length - 1 : replace] = stackable;
+    }
+  }
+
+  if (options.needsRoof === true && !chosen.some((piece) => piece.roof === true)) {
+    const roofs = correct
+      ? [...smallOf('finish'), ...largeOf('finish', streak)].filter((piece) => piece.roof === true)
+      : smallOf('damaged').filter((piece) => piece.roof === true);
+    const roof = pick(roofs);
+    if (roof !== undefined) {
+      if (chosen.length < 3) {
+        chosen.push(roof);
+      } else {
+        // Ersetzt wird kein Premium-Teil und nicht das einzige Teil zum Weiterbauen.
+        const stackables = chosen.filter(isStackable).length;
+        const replaceable = (piece: PieceDef): boolean =>
+          piece.category !== 'premium' && (!isStackable(piece) || stackables > 1);
+        const index = chosen.findIndex((piece) => replaceable(piece) && !isStackable(piece));
+        const fallback = chosen.findIndex(replaceable);
+        const target = index !== -1 ? index : fallback;
+        if (target !== -1) chosen[target] = roof;
+      }
     }
   }
 

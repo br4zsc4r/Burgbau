@@ -16,7 +16,7 @@ export interface BlockTile {
   material: Material;
   /** 0–15: an welchen Seiten ein Nachbar aus gleichem Material liegt (dort keine Kante). */
   mask: number;
-  /** Mauer mit freier Zelle darüber: bekommt automatisch Zinnen. */
+  /** Block mit freier Zelle darüber: bekommt automatisch Zinnen. */
   battlements: boolean;
 }
 
@@ -41,9 +41,8 @@ export function neighborMask(grid: GridState, cell: Cell, material: Material): n
   return mask;
 }
 
-/** Ein Mauerblock ohne Teil darüber bekommt Zinnen (oberste Reihe: Zinnen ragen in den Himmel). */
-export function needsBattlements(grid: GridState, cell: Cell, material: Material): boolean {
-  if (material !== 'stone') return false;
+/** Ein Block ohne Teil darüber bekommt Zinnen (oberste Reihe: Zinnen ragen in den Himmel). */
+export function needsBattlements(grid: GridState, cell: Cell): boolean {
   const above = { col: cell.col, row: cell.row + 1 };
   return !isInside(grid, above) || pieceAt(grid, above) === null;
 }
@@ -61,7 +60,7 @@ export function blockTiles(grid: GridState): BlockTile[] {
       anchor,
       material,
       mask: neighborMask(grid, cell, material),
-      battlements: needsBattlements(grid, cell, material),
+      battlements: needsBattlements(grid, cell),
     }));
   });
 }

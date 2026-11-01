@@ -94,6 +94,7 @@ Die Klassenstufe wird **nicht** separat eingestellt, sondern über die **aktive 
 - `umlaut`: ob im Plural ein Umlaut entsteht
 - `image`: optional; ohne Bild wird ein Platzhalter angezeigt
 - `verified`: `false`, solange das Wort nicht gegen Duden/Wiktionary geprüft ist
+- `stem`: optional, Pluralstamm, wenn er sich vom Singular unterscheidet (`Museum` → `Muse` + `en`, `Bus` → `Buss` + `e`). `pattern` und `umlaut` beziehen sich dann auf diesen Stamm. Solche Wörter gibt es nur im Tastatur-Modus.
 - Wörter **ohne Plural** (Milch, Glück) kommen in keine Liste.
 - Von KI erzeugte Listen müssen gegen den Duden oder Wiktionary **geprüft** werden.
 
@@ -382,3 +383,41 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Speicherung:** IndexedDB über `idb-keyval` (Datenbank „burgbau“). Die Datensätze `profiles`, `game:<Profil-ID>` und `castles:<Profil-ID>` haben jeweils `version`, Migrationen stehen in `src/state/migrations.ts`. Beim Laden fallen nur einzelne kaputte Teile oder Burgen weg, nie eine ganze Sammlung. Wörter, die es in der Liste nicht mehr gibt, werden in einer laufenden Burg ersetzt.
 - **Ohne IndexedDB** (z. B. privates Fenster) läuft das Spiel im Speicher weiter, ein Hinweis sagt, dass nichts gespeichert wird.
 - **Vorschaubilder:** Phaser zeichnet sie mit derselben Render-Funktion wie die Bauszene in eine Dynamic Texture (Viertel-Größe). Sie werden nur im Speicher zwischengespeichert, nicht dauerhaft. Die Vollansicht nutzt die Bauszene selbst, ohne Rasterlinien und ohne Eingabe.
+
+### Phase 6 (2026-11-01)
+**Wortlisten**
+- **Umfang:** `klasse-1-2.json` hat 61 Wörter (Bausteine), `klasse-3.json` 82 Wörter mit vielen Umlauten (Bausteine; die Spezifikation erlaubt beide Modi), `klasse-4.json` 83 Wörter mit Sonderfällen (Tastatur). Alle Wörter stehen auf `verified: false` und müssen vor dem Einsatz gegen Duden/Wiktionary geprüft werden.
+- **Bewusst weggelassen** wurden Wörter mit mehrdeutigem Plural (z. B. Mutter, Bank, Wort, Stock, Band, Hahn, Tuch, Virus). Bei anerkannten Doppelformen gelten beide: Pizzas/Pizzen, Globen/Globusse, Kakteen/Kaktusse, Taxis/Taxen.
+- **Aktive Liste:** Kommt aus den Einstellungen (Standard Klasse 1/2). Bis zu den Lehrkraft-Einstellungen in Phase 7 lässt sie sich zum Ausprobieren über die Adresse wählen: `?liste=klasse-3`.
+
+**Bausteine-Modus**
+- Das Wort steht als Bausteine da: „die“, die Buchstaben des Singulars, dahinter ein Endungsfeld. Die Endungen (-e, -er, -n, -en, -s, – für „keine Endung“) werden **angetippt oder ans Wort gezogen**. Pünktchen setzt man durch **Antippen eines Vokals** oder durch Ziehen des ¨-Bausteins auf den Vokal. Vokale sind eigene 64-px-Felder.
+- „Keine Endung“ muss ausdrücklich gewählt werden, erst dann wird „Fertig“ aktiv.
+- Die Prüfung ist dieselbe wie beim Tippen. Fehlende Pünktchen sind also „Fast!“ mit zweitem Versuch.
+- Wörter mit eigenem Pluralstamm erscheinen auch in Bausteine-Listen im Tastatur-Modus.
+
+**Vorlesen**
+- Ein Lautsprecher-Knopf an der Wortkarte liest vor der Antwort „Wie heißt die Mehrzahl? der Hund.“ vor, danach Singular und Plural. Die Sprache ist `de-DE`, mit etwas langsamerem Tempo.
+- Der Knopf erscheint nur, wenn der Browser tatsächlich **Stimmen** hat, nicht schon, wenn er die API nur anbietet. Lädt der Browser seine Stimmen erst später (z. B. Chrome), taucht der Knopf nachträglich auf. Bei ausgeschaltetem Vorlesen (Einstellung `readAloud`, Lehrkraft ab Phase 7) fehlt er ebenfalls.
+- **Hinweis für Linux-Geräte:** Firefox-basierte Browser brauchen einen laufenden `speech-dispatcher` mit Sprachmodul (z. B. `speech-dispatcher-espeak-ng`). Bei Flatpak-Browsern muss der Dienst über die Socket-Unit erreichbar sein (`systemctl --user enable --now speech-dispatcher.socket`), weil die Sandbox ihn nicht selbst starten kann. Danach den Browser vollständig neu starten.
+
+**Lernfortschritt**
+- Fächer 0–4 je Wort, Profil und Wortliste, gespeichert als `progress:<Profil-ID>`.
+- Gezählt wird das Endergebnis jeder Aufgabe, auch bei Wiederholungen: richtig → ein Fach höher, falsch → Fach 0.
+- Fach 0–2 gilt als „zu üben“. Neue Aufgaben kommen zu etwa 60 % aus diesen Wörtern, sonst aus neuen oder sicheren (Fach 3–4).
+
+**Rückmeldung nach Phase 5 (Extras)**
+- **Zinnen-Teil stillgelegt:** Es wird nicht mehr angeboten, weil Zinnen automatisch entstehen. In gespeicherten Burgen bleibt es darstellbar.
+- **Oben drauf auch auf Mauern:** Fahne, Wimpel, Drache usw. stecken jetzt auch auf Mauern, und zwar auf deren automatischen Zinnen.
+- **Dach-Garantie:** In den letzten 2 Aufgaben ist immer ein Dach im Angebot, nach richtiger Antwort Spitz-, Kegel- oder hohes Spitzdach, nach falscher das schiefe Dach. Es ersetzt nie ein Premium-Teil und nie das einzige Teil zum Weiterbauen.
+- **Animierte Teile:** Feuerdrache (pustet Flammen), Riesenfahne (weht), Funkelkristall (glitzert), alle drei oben drauf, sowie die Windmühle (Flügel drehen sich; steht wie ein Dach, nichts darauf). Ab **Serie 12** ist das Premium-Teil immer eines davon. Sie bewegen sich in der Bauszene und auf den Angebotskarten. Vorschaubilder der Galerie sind Standbilder.
+- **Zwischenspeicher:** Er ist unbegrenzt. Die Leiste steht links, im Hochformat unten. Beim Setzen kann man das Teil „In den Speicher“ legen; das zählt wie gesetzt und lässt sich rückgängig machen. Oder man tippt ein Speicher-Teil an und tauscht es gegen das gewählte.
+- **Bearbeitungsmodus:** Nach dem Setzen (oder Ablegen) des letzten Teils geht es **automatisch** in den Bearbeitungsmodus. Antippen nimmt das oberste Ding einer Zelle auf, erst Fahne, dann Front-Deko, dann Efeu, dann das Teil. Was dadurch keinen Halt mehr hat, fällt samt Deko in den Speicher. Speicher-Teile lassen sich setzen, ein gehaltenes Teil kann zurück in den Speicher.
+- **„Burg ist fertig“ erst, wenn alles gesetzt ist:** Es darf nichts in der Hand und nichts im Speicher liegen. Damit kein Kind festsitzt, gibt es eine Ausnahme: Passt keines der restlichen Speicher-Teile noch irgendwo hin, darf es trotzdem abschließen (Hinweis im Text), und die Reste entfallen.
+- **Speicherformat:** Laufende Burgen haben jetzt Version 2 (Speicher und Lernfächer). Die Migration von Version 1 steht in `src/state/migrations.ts`.
+
+**Rückmeldung nach Phase 6 (vor dem Commit)**
+- **Türme aus demselben Stein wie die Mauern:** Turmteile unterscheiden sich nur durch ihre Schießscharten. Sie verschmelzen deshalb mit Mauern und bekommen wie diese automatisch Zinnen. Das ersetzt die Material-Trennung aus Phase 4b, Turm und Mauer passten farblich nicht zusammen.
+- **Mehr 2 × 2-Teile:** Neu sind Großer Turm, Große Fenstermauer (vier Fenster; Blumenkästen passen), Großes Dach (ohne Fahne, die Spitze liegt zwischen zwei Zellen) und die Turmruine (beschädigt). Die Chance auf ein großes Teil im Angebot steigt von ⅓ auf 40 %.
+- **Windmühle 2 × 2.**
+- **Riesenfahne:** Sie weht nur über die Breite (scaleX). Mit zusätzlicher Drehung zeichnete Phaser 4 das Tuch fehlerhaft.

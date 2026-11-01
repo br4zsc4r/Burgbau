@@ -8,7 +8,7 @@ import {
   startGame,
 } from './helpers';
 
-const finishButton = (page: Page) => page.locator('.build-controls .primary-button');
+const finishButton = (page: Page) => page.getByRole('button', { name: /Nächstes Wort|Burg fertig!/ });
 
 /** Einen Block wählen, irgendwo setzen und weiter zur nächsten Aufgabe. */
 async function buildBlock(page: Page): Promise<void> {
@@ -67,6 +67,7 @@ test('Serie 3 bringt eine Dekoration, die an einem Bauteil andockt', async ({ pa
 test('nach 15 Aufgaben ist die Burg fertig und bekommt einen Namen', async ({ page }) => {
   test.setTimeout(90_000);
   await buildWholeCastle(page);
+  await page.getByRole('button', { name: 'Burg ist fertig' }).click();
   await expect(page.getByText('Deine Burg ist fertig!')).toBeVisible();
   await expect(page.getByRole('img', { name: '15 von 15 Wörtern geschafft' })).toBeVisible();
   await expect(page.getByLabel('Wie soll deine Burg heißen?')).toBeFocused();

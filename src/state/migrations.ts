@@ -6,8 +6,9 @@ import { isRecord } from './validate';
  */
 export const CURRENT_VERSION = {
   profiles: 1,
-  game: 1,
+  game: 2,
   castles: 1,
+  progress: 1,
 } as const;
 
 export type RecordKind = keyof typeof CURRENT_VERSION;
@@ -17,8 +18,15 @@ type Migration = (record: Record<string, unknown>) => Record<string, unknown>;
 /** Migrationen je Datensatzart, Schlüssel = Version, von der aus migriert wird. */
 const MIGRATIONS: Record<RecordKind, Partial<Record<number, Migration>>> = {
   profiles: {},
-  game: {},
+  game: {
+    // Phase 6: Zwischenspeicher und Lernfächer kamen dazu.
+    1: (record) => {
+      const game = isRecord(record['game']) ? record['game'] : {};
+      return { ...record, game: { stash: [], boxes: {}, ...game } };
+    },
+  },
   castles: {},
+  progress: {},
 };
 
 /**

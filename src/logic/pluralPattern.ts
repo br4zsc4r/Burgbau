@@ -53,26 +53,36 @@ export function analyzePlural(singular: string, plural: string): PluralAnalysis 
   return { pattern, umlautIndex, endingStart: s.length };
 }
 
-/** Teilt die Hauptform des Plurals in Stücke; Umlaut und Endung werden hervorgehoben. */
+/**
+ * Teilt die Hauptform des Plurals in Stücke; Umlaut und Endung werden hervorgehoben.
+ * Bei Sonderfällen (eigener Pluralstamm) auch der Teil des Stamms, der neu dazukommt
+ * (Freundin → Freundin|n|en).
+ */
 export function solutionSegments(word: Word): SolutionSegment[] {
   const plural = (word.plural[0] ?? '').normalize('NFC');
-  const analysis = analyzePlural(word.singular, plural);
+  const base = (word.stem ?? word.singular).normalize('NFC');
+  const analysis = analyzePlural(base, plural);
   if (analysis === null) return [{ text: plural, highlight: false }];
 
   const chars = Array.from(plural);
-  const { umlautIndex, endingStart } = analysis;
+  const singular = Array.from(word.singular.normalize('NFC'));
+  let common = 0;
+  while (common < analysis.endingStart && singular[common] === chars[common]) common++;
+  // Ohne eigenen Stamm ist der ganze Stamm „bekannt“ (bis auf einen Umlaut).
+  const known = word.stem === undefined ? analysis.endingStart : common;
+
   const segments: SolutionSegment[] = [];
   const push = (from: number, to: number, highlight: boolean): void => {
-    if (to > from) segments.push({ text: chars.slice(from, to).join(''), highlight });
+    if (to <= from) return;
+    const text = chars.slice(from, to).join('');
+    const last = segments[segments.length - 1];
+    if (last?.highlight === highlight) last.text += text;
+    else segments.push({ text, highlight });
   };
 
-  if (umlautIndex === null) {
-    push(0, endingStart, false);
-  } else {
-    push(0, umlautIndex, false);
-    push(umlautIndex, umlautIndex + 1, true);
-    push(umlautIndex + 1, endingStart, false);
+  for (let i = 0; i < analysis.endingStart; i++) {
+    push(i, i + 1, i === analysis.umlautIndex || i >= known);
   }
-  push(endingStart, chars.length, true);
+  push(analysis.endingStart, chars.length, true);
   return segments;
 }

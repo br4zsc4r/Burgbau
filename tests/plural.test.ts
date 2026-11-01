@@ -3,8 +3,8 @@ import { checkAnswer, normalizeAnswer } from '../src/logic/plural';
 import type { Settings } from '../src/types';
 import { makeWord } from './helpers';
 
-const lenient: Settings = { requireCapitalization: false, tasksPerCastle: 15 };
-const strict: Settings = { requireCapitalization: true, tasksPerCastle: 15 };
+const lenient: Settings = { wordListId: 'test', requireCapitalization: false, readAloud: false, tasksPerCastle: 15 };
+const strict: Settings = { wordListId: 'test', requireCapitalization: true, readAloud: false, tasksPerCastle: 15 };
 
 const hund = makeWord({ singular: 'Hund', plural: ['Hunde'] });
 const hand = makeWord({ singular: 'Hand', plural: ['Hände'], umlaut: true });

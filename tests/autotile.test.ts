@@ -47,10 +47,10 @@ describe('neighborMask', () => {
     expect(neighborMask(grid, { col: 2, row: 1 }, 'stone')).toBe(15);
   });
 
-  it('verschmilzt Mauer nicht mit Turm', () => {
+  it('Türme sind aus demselben Stein und verschmelzen mit Mauern', () => {
     const grid = build(['wall', 1, 0], ['tower', 2, 0]);
-    expect(neighborMask(grid, { col: 1, row: 0 }, 'stone')).toBe(0);
-    expect(neighborMask(grid, { col: 2, row: 0 }, 'towerStone')).toBe(0);
+    expect(neighborMask(grid, { col: 1, row: 0 }, 'stone')).toBe(RIGHT);
+    expect(neighborMask(grid, { col: 2, row: 0 }, 'stone')).toBe(LEFT);
   });
 
   it('beschädigte Teile, Tore und Fenster verschmelzen mit Mauern', () => {
@@ -87,7 +87,7 @@ describe('Zinnen', () => {
   });
 
   it('kein Zinnen unter einem Dach oder Überhang', () => {
-    expect(needsBattlements(build(['wall', 1, 0], ['pointedRoof', 1, 1]), { col: 1, row: 0 }, 'stone')).toBe(false);
+    expect(needsBattlements(build(['wall', 1, 0], ['pointedRoof', 1, 1]), { col: 1, row: 0 })).toBe(false);
     const overhang = build(['wall', 1, 0], ['wall', 2, 0], ['wallWide', 2, 1]);
     expect(tileAt(overhang, { col: 2, row: 0 })?.battlements).toBe(false);
   });
@@ -98,8 +98,8 @@ describe('Zinnen', () => {
     expect(tileAt(grid, { col: 0, row: 1 })?.battlements).toBe(true);
   });
 
-  it('Türme bekommen keine automatischen Zinnen', () => {
-    expect(tileAt(build(['tower', 1, 0]), { col: 1, row: 0 })?.battlements).toBe(false);
+  it('auch Türme bekommen automatische Zinnen', () => {
+    expect(tileAt(build(['tower', 1, 0]), { col: 1, row: 0 })?.battlements).toBe(true);
   });
 
   it('in der obersten Reihe ragen Zinnen in den Himmel', () => {

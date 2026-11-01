@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { getPiece, isLarge, isStackable } from '../src/data/pieces';
-import { offerCategories, offerPieces } from '../src/logic/offers';
+import { ANIMATED_MIN_STREAK, offerCategories, offerPieces, type OfferOptions } from '../src/logic/offers';
 import type { PieceCategory, PieceId } from '../src/types';
 import { seededRandom } from './helpers';
 
 const SEEDS = Array.from({ length: 300 }, (_, i) => i);
 
-function offersFor(correct: boolean, streak: number, placeable?: (id: PieceId) => boolean) {
-  return SEEDS.map((seed) => offerPieces(correct, streak, seededRandom(seed), placeable));
+function offersFor(
+  correct: boolean,
+  streak: number,
+  placeable?: (id: PieceId) => boolean,
+  options?: OfferOptions,
+) {
+  return SEEDS.map((seed) => offerPieces(correct, streak, seededRandom(seed), placeable, options));
 }
 
 function categoriesOf(offers: PieceId[]): PieceCategory[] {
@@ -132,5 +137,29 @@ describe('offerPieces', () => {
 
   it('ist mit gleicher Zufallsfolge deterministisch', () => {
     expect(offerPieces(true, 6, seededRandom(9))).toEqual(offerPieces(true, 6, seededRandom(9)));
+  });
+
+  it('bietet das stillgelegte Zinnen-Teil nie an', () => {
+    for (const streak of [1, 6, 11]) {
+      for (const offers of offersFor(true, streak)) expect(offers).not.toContain('battlements');
+    }
+  });
+
+  it('animierte Teile erst ab Serie 12, dann immer eines', () => {
+    const animated = (offers: PieceId[]) => offers.filter((id) => getPiece(id).animated === true);
+    for (const offers of offersFor(true, ANIMATED_MIN_STREAK - 1)) expect(animated(offers)).toEqual([]);
+    const all = offersFor(true, ANIMATED_MIN_STREAK);
+    for (const offers of all) expect(animated(offers)).toHaveLength(1);
+    expect(new Set(all.flatMap(animated)).size).toBe(4);
+  });
+
+  it('Dach-Garantie: immer ein Dach, ohne das letzte Teil zum Weiterbauen zu verdrängen', () => {
+    for (const [correct, streak] of situations) {
+      for (const offers of offersFor(correct, streak, undefined, { needsRoof: true })) {
+        expect(offers.some((id) => getPiece(id).roof === true)).toBe(true);
+        expect(offers.some((id) => isStackable(getPiece(id)))).toBe(true);
+        if (!correct) expect(categoriesOf(offers)).toEqual(['damaged', 'damaged', 'damaged']);
+      }
+    }
   });
 });

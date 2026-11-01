@@ -48,6 +48,18 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
     svg.append(svgElement('image', { href: art.image, width: String(w), height: String(h) }));
   }
 
+  if (art.animation !== null) {
+    // Bewegter Teil auch auf der Karte, damit die Belohnung gleich erkennbar ist.
+    const moving = svgElement('image', {
+      href: art.animation.image,
+      width: String(w),
+      height: String(h),
+      class: `piece-anim anim-${art.animation.kind}`,
+    });
+    moving.style.transformOrigin = `${String(art.animation.originX * w)}px ${String(art.animation.originY * h)}px`;
+    svg.append(moving);
+  }
+
   for (const overlay of art.damage) {
     svg.append(
       svgElement('image', {

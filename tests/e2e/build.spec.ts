@@ -50,9 +50,9 @@ test('Rückgängig legt den Block zurück in die Ablage', async ({ page }) => {
 test('nach „Nächstes Wort“ kommt die nächste Aufgabe', async ({ page }) => {
   await tapCell(page, { col: 2, row: 0 });
   await nextButton(page).click();
-  await expect(page.getByLabel('Mehrzahl eintippen')).toBeVisible();
-  await expect(page.getByLabel('Mehrzahl eintippen')).toHaveValue('');
-  await expect(page.getByLabel('Mehrzahl eintippen')).toBeFocused();
+  await expect(page.locator('.task-panel')).toBeVisible();
+  await expect(page.locator('.ending-slot')).toHaveText('');
+  await expect(page.getByRole('button', { name: 'Fertig' })).toBeDisabled();
   await expect(undoButton(page)).toBeHidden();
 });
 

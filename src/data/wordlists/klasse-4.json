@@ -1,0 +1,940 @@
+{
+  "id": "klasse-4",
+  "name": "Klasse 4 – mit Sonderfällen",
+  "inputMode": "keyboard",
+  "words": [
+    {
+      "id": "museum",
+      "singular": "Museum",
+      "article": "das",
+      "plural": [
+        "Museen"
+      ],
+      "stem": "Muse",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "album",
+      "singular": "Album",
+      "article": "das",
+      "plural": [
+        "Alben"
+      ],
+      "stem": "Alb",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "datum",
+      "singular": "Datum",
+      "article": "das",
+      "plural": [
+        "Daten"
+      ],
+      "stem": "Dat",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zentrum",
+      "singular": "Zentrum",
+      "article": "das",
+      "plural": [
+        "Zentren"
+      ],
+      "stem": "Zentr",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "gymnasium",
+      "singular": "Gymnasium",
+      "article": "das",
+      "plural": [
+        "Gymnasien"
+      ],
+      "stem": "Gymnasi",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "stadion",
+      "singular": "Stadion",
+      "article": "das",
+      "plural": [
+        "Stadien"
+      ],
+      "stem": "Stadi",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "globus",
+      "singular": "Globus",
+      "article": "der",
+      "plural": [
+        "Globen",
+        "Globusse"
+      ],
+      "stem": "Glob",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kaktus",
+      "singular": "Kaktus",
+      "article": "der",
+      "plural": [
+        "Kakteen",
+        "Kaktusse"
+      ],
+      "stem": "Kakte",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "thema",
+      "singular": "Thema",
+      "article": "das",
+      "plural": [
+        "Themen"
+      ],
+      "stem": "Them",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "firma",
+      "singular": "Firma",
+      "article": "die",
+      "plural": [
+        "Firmen"
+      ],
+      "stem": "Firm",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "freundin",
+      "singular": "Freundin",
+      "article": "die",
+      "plural": [
+        "Freundinnen"
+      ],
+      "stem": "Freundinn",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "lehrerin",
+      "singular": "Lehrerin",
+      "article": "die",
+      "plural": [
+        "Lehrerinnen"
+      ],
+      "stem": "Lehrerinn",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "koenigin",
+      "singular": "Königin",
+      "article": "die",
+      "plural": [
+        "Königinnen"
+      ],
+      "stem": "Königinn",
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ergebnis",
+      "singular": "Ergebnis",
+      "article": "das",
+      "plural": [
+        "Ergebnisse"
+      ],
+      "stem": "Ergebniss",
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zeugnis",
+      "singular": "Zeugnis",
+      "article": "das",
+      "plural": [
+        "Zeugnisse"
+      ],
+      "stem": "Zeugniss",
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bus",
+      "singular": "Bus",
+      "article": "der",
+      "plural": [
+        "Busse"
+      ],
+      "stem": "Buss",
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "pizza",
+      "singular": "Pizza",
+      "article": "die",
+      "plural": [
+        "Pizzas",
+        "Pizzen"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "lehrer",
+      "singular": "Lehrer",
+      "article": "der",
+      "plural": [
+        "Lehrer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "schueler",
+      "singular": "Schüler",
+      "article": "der",
+      "plural": [
+        "Schüler"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "computer",
+      "singular": "Computer",
+      "article": "der",
+      "plural": [
+        "Computer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "koffer",
+      "singular": "Koffer",
+      "article": "der",
+      "plural": [
+        "Koffer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "theater",
+      "singular": "Theater",
+      "article": "das",
+      "plural": [
+        "Theater"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "spiegel",
+      "singular": "Spiegel",
+      "article": "der",
+      "plural": [
+        "Spiegel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "schluessel",
+      "singular": "Schlüssel",
+      "article": "der",
+      "plural": [
+        "Schlüssel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "maedchen",
+      "singular": "Mädchen",
+      "article": "das",
+      "plural": [
+        "Mädchen"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "broetchen",
+      "singular": "Brötchen",
+      "article": "das",
+      "plural": [
+        "Brötchen"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "gebaeude",
+      "singular": "Gebäude",
+      "article": "das",
+      "plural": [
+        "Gebäude"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "hotel",
+      "singular": "Hotel",
+      "article": "das",
+      "plural": [
+        "Hotels"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "restaurant",
+      "singular": "Restaurant",
+      "article": "das",
+      "plural": [
+        "Restaurants"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "park",
+      "singular": "Park",
+      "article": "der",
+      "plural": [
+        "Parks"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "handy",
+      "singular": "Handy",
+      "article": "das",
+      "plural": [
+        "Handys"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "baby",
+      "singular": "Baby",
+      "article": "das",
+      "plural": [
+        "Babys"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "clown",
+      "singular": "Clown",
+      "article": "der",
+      "plural": [
+        "Clowns"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "cafe",
+      "singular": "Café",
+      "article": "das",
+      "plural": [
+        "Cafés"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "buero",
+      "singular": "Büro",
+      "article": "das",
+      "plural": [
+        "Büros"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "taxi",
+      "singular": "Taxi",
+      "article": "das",
+      "plural": [
+        "Taxis",
+        "Taxen"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zoo",
+      "singular": "Zoo",
+      "article": "der",
+      "plural": [
+        "Zoos"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "mensch",
+      "singular": "Mensch",
+      "article": "der",
+      "plural": [
+        "Menschen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "held",
+      "singular": "Held",
+      "article": "der",
+      "plural": [
+        "Helden"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "prinz",
+      "singular": "Prinz",
+      "article": "der",
+      "plural": [
+        "Prinzen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "elefant",
+      "singular": "Elefant",
+      "article": "der",
+      "plural": [
+        "Elefanten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "planet",
+      "singular": "Planet",
+      "article": "der",
+      "plural": [
+        "Planeten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "polizist",
+      "singular": "Polizist",
+      "article": "der",
+      "plural": [
+        "Polizisten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "astronaut",
+      "singular": "Astronaut",
+      "article": "der",
+      "plural": [
+        "Astronauten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zeitung",
+      "singular": "Zeitung",
+      "article": "die",
+      "plural": [
+        "Zeitungen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "rechnung",
+      "singular": "Rechnung",
+      "article": "die",
+      "plural": [
+        "Rechnungen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "erfindung",
+      "singular": "Erfindung",
+      "article": "die",
+      "plural": [
+        "Erfindungen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bibliothek",
+      "singular": "Bibliothek",
+      "article": "die",
+      "plural": [
+        "Bibliotheken"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "auge",
+      "singular": "Auge",
+      "article": "das",
+      "plural": [
+        "Augen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "insekt",
+      "singular": "Insekt",
+      "article": "das",
+      "plural": [
+        "Insekten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "muskel",
+      "singular": "Muskel",
+      "article": "der",
+      "plural": [
+        "Muskeln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "regel",
+      "singular": "Regel",
+      "article": "die",
+      "plural": [
+        "Regeln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kartoffel",
+      "singular": "Kartoffel",
+      "article": "die",
+      "plural": [
+        "Kartoffeln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "lied",
+      "singular": "Lied",
+      "article": "das",
+      "plural": [
+        "Lieder"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "gesicht",
+      "singular": "Gesicht",
+      "article": "das",
+      "plural": [
+        "Gesichter"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "licht",
+      "singular": "Licht",
+      "article": "das",
+      "plural": [
+        "Lichter"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "schild",
+      "singular": "Schild",
+      "article": "das",
+      "plural": [
+        "Schilder"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kalb",
+      "singular": "Kalb",
+      "article": "das",
+      "plural": [
+        "Kälber"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "volk",
+      "singular": "Volk",
+      "article": "das",
+      "plural": [
+        "Völker"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "geist",
+      "singular": "Geist",
+      "article": "der",
+      "plural": [
+        "Geister"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "gespenst",
+      "singular": "Gespenst",
+      "article": "das",
+      "plural": [
+        "Gespenster"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "reichtum",
+      "singular": "Reichtum",
+      "article": "der",
+      "plural": [
+        "Reichtümer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "brief",
+      "singular": "Brief",
+      "article": "der",
+      "plural": [
+        "Briefe"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "geschenk",
+      "singular": "Geschenk",
+      "article": "das",
+      "plural": [
+        "Geschenke"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kreis",
+      "singular": "Kreis",
+      "article": "der",
+      "plural": [
+        "Kreise"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "preis",
+      "singular": "Preis",
+      "article": "der",
+      "plural": [
+        "Preise"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "koenig",
+      "singular": "König",
+      "article": "der",
+      "plural": [
+        "Könige"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ring",
+      "singular": "Ring",
+      "article": "der",
+      "plural": [
+        "Ringe"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zelt",
+      "singular": "Zelt",
+      "article": "das",
+      "plural": [
+        "Zelte"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "spiel",
+      "singular": "Spiel",
+      "article": "das",
+      "plural": [
+        "Spiele"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "tier",
+      "singular": "Tier",
+      "article": "das",
+      "plural": [
+        "Tiere"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "freund",
+      "singular": "Freund",
+      "article": "der",
+      "plural": [
+        "Freunde"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "abend",
+      "singular": "Abend",
+      "article": "der",
+      "plural": [
+        "Abende"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "erfolg",
+      "singular": "Erfolg",
+      "article": "der",
+      "plural": [
+        "Erfolge"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "paket",
+      "singular": "Paket",
+      "article": "das",
+      "plural": [
+        "Pakete"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "problem",
+      "singular": "Problem",
+      "article": "das",
+      "plural": [
+        "Probleme"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "fluss",
+      "singular": "Fluss",
+      "article": "der",
+      "plural": [
+        "Flüsse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "nuss",
+      "singular": "Nuss",
+      "article": "die",
+      "plural": [
+        "Nüsse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "kuss",
+      "singular": "Kuss",
+      "article": "der",
+      "plural": [
+        "Küsse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schuss",
+      "singular": "Schuss",
+      "article": "der",
+      "plural": [
+        "Schüsse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "zahn",
+      "singular": "Zahn",
+      "article": "der",
+      "plural": [
+        "Zähne"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "bahnhof",
+      "singular": "Bahnhof",
+      "article": "der",
+      "plural": [
+        "Bahnhöfe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "flughafen",
+      "singular": "Flughafen",
+      "article": "der",
+      "plural": [
+        "Flughäfen"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    }
+  ]
+}

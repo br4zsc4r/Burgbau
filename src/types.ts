@@ -13,6 +13,11 @@ export interface Word {
   article: Article;
   /** Erlaubte Pluralformen; die erste ist die Hauptform (für Lösung und Muster). */
   plural: string[];
+  /**
+   * Pluralstamm, wenn er sich vom Singular unterscheidet (Museum → Muse-en, Bus → Buss-e).
+   * Solche Wörter gibt es nur im Tastatur-Modus.
+   */
+  stem?: string;
   pattern: PluralPattern;
   umlaut: boolean;
   image?: string;
@@ -30,8 +35,12 @@ export interface WordList {
 export type TasksPerCastle = 10 | 15 | 20;
 
 export interface Settings {
+  /** Aktive Wortliste (= Klassenstufe) des Geräts. */
+  wordListId: string;
   /** Großschreibung verpflichtend (Lehrkraft-Einstellung). */
   requireCapitalization: boolean;
+  /** Vorlese-Knopf anzeigen (Web Speech API). */
+  readAloud: boolean;
   /** Aufgaben pro Burg (Lehrkraft-Einstellung). */
   tasksPerCastle: TasksPerCastle;
 }
@@ -88,11 +97,14 @@ export type NormalPieceId =
   | 'towerTall'
   | 'wallBig'
   | 'gateBig'
+  | 'towerBig'
+  | 'windowWallBig'
   // Abschlüsse
   | 'battlements'
   | 'pointedRoof'
   | 'coneRoof'
   | 'pointedRoofTall'
+  | 'roofBig'
   // Dekorationen
   | 'flag'
   | 'pennant'
@@ -110,7 +122,12 @@ export type NormalPieceId =
   | 'tree'
   | 'well'
   | 'moat'
-  | 'drawbridge';
+  | 'drawbridge'
+  // Animiert (ab Serie 12)
+  | 'fireDragon'
+  | 'giantFlag'
+  | 'crystal'
+  | 'windmill';
 
 export type DamagedPieceId =
   | 'crumblingWall'
@@ -123,7 +140,8 @@ export type DamagedPieceId =
   | 'rubble'
   | 'crumblingWallWide'
   | 'chippedTowerTall'
-  | 'ruinWall';
+  | 'ruinWall'
+  | 'ruinTower';
 
 export type PieceId = NormalPieceId | DamagedPieceId;
 
@@ -137,7 +155,7 @@ export type PieceKind = 'block' | 'cap' | 'ground' | 'attachment';
 export type AttachSlot = 'growth' | 'front' | 'top';
 
 /** Material eines Blocks: gleiches Material verschmilzt beim Autotiling. */
-export type Material = 'stone' | 'towerStone';
+export type Material = 'stone';
 
 /** Vorderseite eines Blocks: was dort andocken darf. */
 export type FrontType = 'plain' | 'window' | 'none';
@@ -163,6 +181,12 @@ export interface PieceDef {
   minStreak?: number;
   /** Nur beschädigte Teile: das normale Teil, auf dem sie beruhen. */
   base?: NormalPieceId;
+  /** Dach: wird in den letzten Aufgaben garantiert angeboten. */
+  roof?: boolean;
+  /** Bewegt sich in der Szene; Belohnung für eine besonders lange Serie. */
+  animated?: boolean;
+  /** Wird nicht mehr angeboten, bleibt aber für gespeicherte Burgen darstellbar. */
+  retired?: boolean;
 }
 
 /** Rasterzelle; row 0 ist die unterste Reihe (auf dem Boden). */
@@ -199,9 +223,13 @@ export interface Placement {
 
 /**
  * task = Aufgabe läuft, choosing = 1 aus 3 wählen, placing = Teil wartet aufs Setzen,
- * placed = gesetzt (Rückgängig möglich), finished = Burg fertig.
+ * placed = gesetzt oder in den Speicher gelegt (Rückgängig möglich),
+ * editing = Bearbeitungsmodus nach der letzten Aufgabe, finished = Burg fertig (Name).
  */
-export type GameStep = 'task' | 'choosing' | 'placing' | 'placed' | 'finished';
+export type GameStep = 'task' | 'choosing' | 'placing' | 'placed' | 'editing' | 'finished';
+
+/** Lernfortschritt einer Wortliste: Fach 0–4 je Wort-ID (leichtes Leitner-System). */
+export type WordBoxes = Record<string, number>;
 
 export interface GameState {
   tasksTotal: number;
@@ -217,8 +245,15 @@ export interface GameState {
   pendingPiece: PieceId | null;
   grid: GridState;
   step: GameStep;
-  /** Zuletzt gesetztes Teil, solange es noch rückgängig gemacht werden darf. */
-  lastPlacement: { piece: PieceId; anchor: Cell } | null;
+  /**
+   * Zuletzt gesetztes Teil, solange es noch rückgängig gemacht werden darf.
+   * anchor = null: Das Teil wurde in den Speicher gelegt.
+   */
+  lastPlacement: { piece: PieceId; anchor: Cell | null } | null;
+  /** Zwischenspeicher: Teile, die später gesetzt werden sollen. */
+  stash: PieceId[];
+  /** Lernfortschritt des Profils für die aktive Wortliste (steuert die Wortauswahl). */
+  boxes: WordBoxes;
 }
 
 export type Animal =

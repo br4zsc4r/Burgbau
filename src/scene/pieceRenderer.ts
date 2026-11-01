@@ -10,6 +10,7 @@ import {
   pieceArt,
   textureUrl,
   type DamageKind,
+  type PieceAnimation,
 } from '../data/pieceArt';
 import { PIECES, getPiece } from '../data/pieces';
 import { DOWN, LEFT, RIGHT, UP } from '../logic/autotile';
@@ -34,6 +35,14 @@ export function preloadPieceArt(load: Phaser.Loader.LoaderPlugin): void {
       loaded.add(art.image);
       const base = getPiece(art.base);
       load.svg(art.image, art.image, {
+        width: base.width * ART_CELL * RASTER_SCALE,
+        height: base.height * ART_CELL * RASTER_SCALE,
+      });
+    }
+    if (art.animation !== null && !loaded.has(art.animation.image)) {
+      loaded.add(art.animation.image);
+      const base = getPiece(art.base);
+      load.svg(art.animation.image, art.animation.image, {
         width: base.width * ART_CELL * RASTER_SCALE,
         height: base.height * ART_CELL * RASTER_SCALE,
       });
@@ -133,10 +142,63 @@ function drawEdges(
   side(RIGHT, [x + size, y], [x + size, y + size], [-1, 0]);
 }
 
+/** Bewegung des animierten Teils (nur in der Bauszene, Vorschaubilder bleiben still). */
+function animate(scene: Phaser.Scene, image: Phaser.GameObjects.Image, kind: PieceAnimation['kind']): void {
+  const scaleX = image.scaleX;
+  const scaleY = image.scaleY;
+  switch (kind) {
+    case 'spin':
+      scene.tweens.add({ targets: image, angle: 360, duration: 4000, repeat: -1 });
+      break;
+    case 'wave':
+      // Nur scaleX, keine Drehung: Drehung plus ungleichmäßige Skalierung zerschnitt das Bild
+      // in Phaser 4 entlang der Diagonale (im Browser beobachtet).
+      scene.tweens.add({
+        targets: image,
+        scaleX: scaleX * 0.82,
+        duration: 700,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      break;
+    case 'flicker':
+      // Kurz Feuer pusten, dann Pause.
+      image.setAlpha(0);
+      scene.tweens.add({
+        targets: image,
+        alpha: { from: 0, to: 1 },
+        scaleX: { from: scaleX * 0.3, to: scaleX * 1.1 },
+        scaleY: { from: scaleY * 0.6, to: scaleY },
+        duration: 350,
+        hold: 500,
+        yoyo: true,
+        repeat: -1,
+        repeatDelay: 1400,
+        ease: 'Quad.easeOut',
+      });
+      break;
+    case 'sparkle':
+      scene.tweens.add({
+        targets: image,
+        alpha: { from: 0.2, to: 1 },
+        scaleX: { from: scaleX * 0.85, to: scaleX * 1.1 },
+        scaleY: { from: scaleY * 0.85, to: scaleY * 1.1 },
+        angle: 12,
+        duration: 900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      break;
+  }
+}
+
 /**
  * Zeichnet ein Teil. left/top = linke obere Ecke in Welt- bzw. Container-Koordinaten.
  * Blöcke: Textur (ab textureOrigin in Weltkoordinaten) → Merkmal → Schaden → Kanten → Zinnen.
- * Andere Teile: Vollbild → Schaden.
+ * Andere Teile: Vollbild → bewegter Teil → Schaden.
+ * Liefert die bewegten Bilder, damit ihre Tweens beim Neuzeichnen beendet werden können.
  */
 export function drawPiece(
   scene: Phaser.Scene,
@@ -147,7 +209,9 @@ export function drawPiece(
   cellSize: number,
   tiles: readonly TileView[],
   textureOrigin: { x: number; y: number } | null,
-): void {
+  animated = false,
+): Phaser.GameObjects.Image[] {
+  const moving: Phaser.GameObjects.Image[] = [];
   const piece = getPiece(id);
   const art = pieceArt(id);
   const width = piece.width * cellSize;
@@ -171,6 +235,19 @@ export function drawPiece(
     layers.base.add(scene.add.image(left, top, art.image).setOrigin(0, 0).setDisplaySize(width, height));
   }
 
+  if (art.animation !== null) {
+    const { image, kind, originX, originY } = art.animation;
+    const part = scene.add
+      .image(left + originX * width, top + originY * height, image)
+      .setOrigin(originX, originY)
+      .setDisplaySize(width, height);
+    layers.base.add(part);
+    if (animated) {
+      animate(scene, part, kind);
+      moving.push(part);
+    }
+  }
+
   for (const overlay of art.damage) {
     const x = left + overlay.dx * cellSize;
     const y = top + (piece.height - 1 - overlay.dy) * cellSize;
@@ -190,4 +267,5 @@ export function drawPiece(
       layers.top.add(scene.add.image(x, y - h + OUTLINE / 2, key).setOrigin(0, 0).setDisplaySize(cellSize, h));
     }
   }
+  return moving;
 }

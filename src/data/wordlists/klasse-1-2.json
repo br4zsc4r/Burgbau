@@ -332,6 +332,347 @@
       "pattern": "e",
       "umlaut": false,
       "verified": false
+    },
+    {
+      "id": "mann",
+      "singular": "Mann",
+      "article": "der",
+      "plural": [
+        "Männer"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "tasche",
+      "singular": "Tasche",
+      "article": "die",
+      "plural": [
+        "Taschen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bein",
+      "singular": "Bein",
+      "article": "das",
+      "plural": [
+        "Beine"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "fuss",
+      "singular": "Fuß",
+      "article": "der",
+      "plural": [
+        "Füße"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "nase",
+      "singular": "Nase",
+      "article": "die",
+      "plural": [
+        "Nasen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ohr",
+      "singular": "Ohr",
+      "article": "das",
+      "plural": [
+        "Ohren"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "mund",
+      "singular": "Mund",
+      "article": "der",
+      "plural": [
+        "Münder"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "kuh",
+      "singular": "Kuh",
+      "article": "die",
+      "plural": [
+        "Kühe"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schwein",
+      "singular": "Schwein",
+      "article": "das",
+      "plural": [
+        "Schweine"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "hase",
+      "singular": "Hase",
+      "article": "der",
+      "plural": [
+        "Hasen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "sonne",
+      "singular": "Sonne",
+      "article": "die",
+      "plural": [
+        "Sonnen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "stern",
+      "singular": "Stern",
+      "article": "der",
+      "plural": [
+        "Sterne"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "boot",
+      "singular": "Boot",
+      "article": "das",
+      "plural": [
+        "Boote"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ampel",
+      "singular": "Ampel",
+      "article": "die",
+      "plural": [
+        "Ampeln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bruder",
+      "singular": "Bruder",
+      "article": "der",
+      "plural": [
+        "Brüder"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schwester",
+      "singular": "Schwester",
+      "article": "die",
+      "plural": [
+        "Schwestern"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zimmer",
+      "singular": "Zimmer",
+      "article": "das",
+      "plural": [
+        "Zimmer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "loeffel",
+      "singular": "Löffel",
+      "article": "der",
+      "plural": [
+        "Löffel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "gabel",
+      "singular": "Gabel",
+      "article": "die",
+      "plural": [
+        "Gabeln"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "messer",
+      "singular": "Messer",
+      "article": "das",
+      "plural": [
+        "Messer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "teller",
+      "singular": "Teller",
+      "article": "der",
+      "plural": [
+        "Teller"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "tasse",
+      "singular": "Tasse",
+      "article": "die",
+      "plural": [
+        "Tassen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "glas",
+      "singular": "Glas",
+      "article": "das",
+      "plural": [
+        "Gläser"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "hut",
+      "singular": "Hut",
+      "article": "der",
+      "plural": [
+        "Hüte"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "muetze",
+      "singular": "Mütze",
+      "article": "die",
+      "plural": [
+        "Mützen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kleid",
+      "singular": "Kleid",
+      "article": "das",
+      "plural": [
+        "Kleider"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "schuh",
+      "singular": "Schuh",
+      "article": "der",
+      "plural": [
+        "Schuhe"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "jacke",
+      "singular": "Jacke",
+      "article": "die",
+      "plural": [
+        "Jacken"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kuchen",
+      "singular": "Kuchen",
+      "article": "der",
+      "plural": [
+        "Kuchen"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "heft",
+      "singular": "Heft",
+      "article": "das",
+      "plural": [
+        "Hefte"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "stift",
+      "singular": "Stift",
+      "article": "der",
+      "plural": [
+        "Stifte"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
     }
   ]
 }
