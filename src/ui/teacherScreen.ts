@@ -119,7 +119,14 @@ export function createTeacherScreen(deps: TeacherDeps): {
   const profilesSection = element('section', 'teacher-section');
   const pinSection = element('section', 'teacher-section');
   const resetSection = element('section', 'teacher-section');
-  screen.append(header, general, listsSection, profilesSection, pinSection, resetSection);
+  // Namensnennung für die Wort-Bilder (CC BY-SA verlangt sie).
+  const creditsSection = element('section', 'teacher-section');
+  creditsSection.append(
+    element('h2', 'section-title', texts.sectionCredits),
+    element('p', 'setting-note', texts.creditsOpenMoji),
+    element('p', 'setting-note', texts.creditsGame),
+  );
+  screen.append(header, general, listsSection, profilesSection, pinSection, resetSection, creditsSection);
 
   let settings: Settings = defaultSettings;
   let profiles: Profile[] = [];
@@ -176,6 +183,9 @@ export function createTeacherScreen(deps: TeacherDeps): {
       }),
       checkbox(texts.settingReadAloud, settings.readAloud, (readAloud) => {
         save({ readAloud });
+      }),
+      checkbox(texts.settingSound, settings.sound, (sound) => {
+        save({ sound });
       }),
       checkbox(texts.settingSelfRegistration, settings.allowSelfRegistration, (allowSelfRegistration) => {
         save({ allowSelfRegistration });
@@ -371,7 +381,9 @@ export function createTeacherScreen(deps: TeacherDeps): {
           errors++;
           continue;
         }
-        words.push({ ...result.word, verified: row.verified.checked });
+        // Ein korrigiertes Wort behält sein Bild.
+        const image = original?.id === result.word.id ? original.image : undefined;
+        words.push({ ...result.word, ...(image === undefined ? {} : { image }), verified: row.verified.checked });
       }
       if (errors > 0) {
         say(texts.editorHasErrors);

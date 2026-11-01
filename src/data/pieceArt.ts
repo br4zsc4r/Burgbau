@@ -1,8 +1,8 @@
 import type { DamagedPieceId, Material, NormalPieceId, PieceId } from '../types';
 import { getPiece } from './pieces';
 
-/** Platzhalter-Grafiken (bis Phase 8), relativ zur index.html. */
-const ART_DIR = 'assets/placeholder/';
+/** Spielgrafiken (erzeugt mit npm run art), relativ zur index.html. */
+const ART_DIR = 'assets/art/';
 
 export const TORCH_LIT_URL = `${ART_DIR}torch-lit.svg`;
 export const TORCH_UNLIT_URL = `${ART_DIR}torch-unlit.svg`;
@@ -57,6 +57,8 @@ const FEATURES: readonly NormalPieceId[] = [
   'windowWall',
   'windowWallBig',
   'stainedGlass',
+  'portcullis',
+  'arch',
 ];
 
 export function featureUrl(base: NormalPieceId): string {
@@ -129,21 +131,47 @@ const TOP_MOUNT_OFFSET: Partial<Record<NormalPieceId, number>> = {
   pointedRoofTall: 8,
   coneRoof: 4,
   goldenRoof: 8,
+  bellRoof: 4,
+};
+
+/**
+ * Öffnung, durch die man hindurchsieht (Burgbogen): Rundbogen in Grafik-Pixeln des Teils.
+ * Die Textur wird dort ausgespart, das Merkmal zeichnet Steinkranz und Kontur.
+ */
+export interface Cutout {
+  cx: number;
+  /** Scheitel des Bogens */
+  top: number;
+  half: number;
+  bottom: number;
+}
+
+const CUTOUTS: Partial<Record<NormalPieceId, Cutout>> = {
+  arch: { cx: 96, top: 30, half: 60, bottom: 96 },
 };
 
 /** Bewegter Teil eines animierten Teils: eigene Grafik, Art der Bewegung und Drehpunkt (0–1). */
+export type AnimationKind = 'flicker' | 'wave' | 'sparkle' | 'spin' | 'swing' | 'bob' | 'splash';
+
 export interface PieceAnimation {
   image: string;
-  kind: 'flicker' | 'wave' | 'sparkle' | 'spin';
+  kind: AnimationKind;
   originX: number;
   originY: number;
 }
 
 const ANIMATIONS: Partial<Record<NormalPieceId, Omit<PieceAnimation, 'image'>>> = {
-  fireDragon: { kind: 'flicker', originX: 62 / 96, originY: 52 / 96 },
+  fireDragon: { kind: 'flicker', originX: 80 / 96, originY: 42 / 96 },
   giantFlag: { kind: 'wave', originX: 16 / 96, originY: 32 / 96 },
   crystal: { kind: 'sparkle', originX: 0.5, originY: 0.5 },
   windmill: { kind: 'spin', originX: 0.5, originY: 76 / 192 },
+  bellRoof: { kind: 'swing', originX: 0.5, originY: 46 / 96 },
+  fountain: { kind: 'splash', originX: 0.5, originY: 48 / 96 },
+  ghost: { kind: 'bob', originX: 0.5, originY: 0.5 },
+  treasureChest: { kind: 'sparkle', originX: 0.5, originY: 54 / 96 },
+  balloon: { kind: 'bob', originX: 0.5, originY: 0.5 },
+  observatory: { kind: 'swing', originX: 48 / 96, originY: 58 / 96 },
+  unicorn: { kind: 'sparkle', originX: 84 / 96, originY: 10 / 96 },
 };
 
 export interface PieceArt {
@@ -158,6 +186,7 @@ export interface PieceArt {
   rough: boolean;
   damaged: boolean;
   animation: PieceAnimation | null;
+  cutout: Cutout | null;
 }
 
 export function pieceArt(id: PieceId): PieceArt {
@@ -175,12 +204,14 @@ export function pieceArt(id: PieceId): PieceArt {
     damage: damaged ? DAMAGE[id as DamagedPieceId] : [],
     rough: ROUGH.includes(id as DamagedPieceId),
     damaged,
-    animation: animation === undefined ? null : { ...animation, image: `${ART_DIR}pieces/${base}-${animationSuffix(animation.kind)}.svg` },
+    animation: animation === undefined ? null : { ...animation, image: animationUrl(base) },
+    cutout: CUTOUTS[base] ?? null,
   };
 }
 
-function animationSuffix(kind: PieceAnimation['kind']): string {
-  return { flicker: 'fire', wave: 'cloth', sparkle: 'sparkle', spin: 'blades' }[kind];
+/** Grafik des bewegten Teils (Flammen, Tuch, Glitzern, Flügel, Glocke …). */
+export function animationUrl(base: NormalPieceId): string {
+  return `${ART_DIR}pieces/${base}-moving.svg`;
 }
 
 /**

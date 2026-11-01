@@ -29,16 +29,23 @@ export interface BuildSceneCallbacks {
   onPickUp: (cell: Cell) => void;
 }
 
-// Platzhalter-Farben bis zu den echten Grafiken.
+// Farben der Szene (passend zur Palette in scripts/art/palette.ts).
 const COLORS = {
-  skyTop: 0x8ec9f2,
-  skyBottom: 0xcfe8fb,
+  skyTop: 0x7cc3f0,
+  skyBottom: 0xd8effc,
+  sun: 0xffe27a,
+  sunGlow: 0xffffff,
   cloud: 0xffffff,
-  hill: 0x86c46f,
-  ground: 0x6fae55,
+  cloudShade: 0xdcebf7,
+  hillFar: 0xa8d98c,
+  hillFarTree: 0x86c46f,
+  hillNear: 0x86c96a,
+  ground: 0x72b84f,
+  groundLight: 0x8fd06c,
   groundEdge: 0x4f8a3c,
+  flower: [0xfffdf7, 0xf2c94c, 0xe86a92],
   gridLine: 0xffffff,
-  outline: 0x4a3f33,
+  outline: 0x3b2f2a,
   valid: 0xffe066,
   invalid: 0xd9534f,
   tray: 0xfffdf7,
@@ -491,26 +498,72 @@ export class BuildScene extends Phaser.Scene {
     g.fillGradientStyle(COLORS.skyTop, COLORS.skyTop, COLORS.skyBottom, COLORS.skyBottom, 1);
     g.fillRect(0, 0, width, groundTop);
 
-    g.fillStyle(COLORS.cloud, 0.9);
+    // Sonne oben rechts, außerhalb der Ablage links.
+    g.fillStyle(COLORS.sunGlow, 0.3);
+    g.fillCircle(width - 110, 90, 72);
+    g.fillStyle(COLORS.sunGlow, 0.3);
+    g.fillCircle(width - 110, 90, 60);
+    g.fillStyle(COLORS.sun, 1);
+    g.fillCircle(width - 110, 90, 46);
+
     for (const [cx, cy, s] of [
       [width * 0.45, 70, 1],
-      [width * 0.78, 110, 0.8],
+      [width * 0.72, 150, 0.8],
       [width * 0.2, 300, 0.7],
     ] as const) {
-      g.fillEllipse(cx, cy, 160 * s, 60 * s);
-      g.fillEllipse(cx - 50 * s, cy + 10 * s, 110 * s, 50 * s);
-      g.fillEllipse(cx + 55 * s, cy + 8 * s, 120 * s, 50 * s);
+      g.fillStyle(COLORS.cloudShade, 1);
+      g.fillEllipse(cx + 6 * s, cy + 14 * s, 190 * s, 50 * s);
+      g.fillStyle(COLORS.cloud, 1);
+      g.fillEllipse(cx, cy + 6 * s, 190 * s, 46 * s);
+      g.fillCircle(cx - 40 * s, cy - 4 * s, 34 * s);
+      g.fillCircle(cx + 20 * s, cy - 14 * s, 42 * s);
+      g.fillCircle(cx + 62 * s, cy + 2 * s, 26 * s);
     }
 
     // Hügel im Hintergrund – rein dekorativ, die Schwerkraft gilt nur fürs Raster.
-    g.fillStyle(COLORS.hill, 1);
-    g.fillEllipse(width * 0.3, groundTop + 40, width * 0.9, 420);
-    g.fillEllipse(width * 0.85, groundTop + 60, width * 0.6, 300);
+    const farHills = [
+      { cx: width * 0.15, cy: groundTop + 60, rx: width * 0.35, ry: 190 },
+      { cx: width * 0.8, cy: groundTop + 80, rx: width * 0.4, ry: 220 },
+    ];
+    g.fillStyle(COLORS.hillFar, 1);
+    for (const hill of farHills) g.fillEllipse(hill.cx, hill.cy, hill.rx * 2, hill.ry * 2);
+    // Bäumchen genau auf der Hügelkante (höchster Hügel an dieser Stelle).
+    g.fillStyle(COLORS.hillFarTree, 1);
+    for (const [fx, r] of [
+      [0.05, 16],
+      [0.09, 20],
+      [0.6, 18],
+      [0.65, 14],
+      [0.93, 20],
+    ] as const) {
+      const x = width * fx;
+      const tops = farHills
+        .filter((h) => Math.abs(x - h.cx) < h.rx)
+        .map((h) => h.cy - h.ry * Math.sqrt(1 - ((x - h.cx) / h.rx) ** 2));
+      if (tops.length === 0) continue;
+      const y = Math.min(...tops) + 4;
+      g.fillRect(x - 3, y - 22, 6, 22);
+      g.fillCircle(x, y - 22 - r * 0.7, r);
+    }
+    g.fillStyle(COLORS.hillNear, 1);
+    g.fillEllipse(width * 0.35, groundTop + 50, width * 1.1, 200);
+    g.fillEllipse(width * 0.95, groundTop + 40, width * 0.6, 170);
 
     g.fillStyle(COLORS.ground, 1);
     g.fillRect(0, groundTop, width, height - groundTop);
+    g.fillStyle(COLORS.groundLight, 1);
+    g.fillRect(0, groundTop + 6, width, 8);
     g.fillStyle(COLORS.groundEdge, 1);
     g.fillRect(0, groundTop, width, 6);
+    // Ein paar Blümchen, immer an denselben Stellen.
+    for (let i = 0; i < width / 70; i++) {
+      const x = 30 + i * 70 + ((i * 37) % 29);
+      const y = groundTop + 26 + ((i * 53) % 30);
+      g.fillStyle(COLORS.groundEdge, 1);
+      g.fillRect(x - 1, y, 2, 8);
+      g.fillStyle(COLORS.flower[i % COLORS.flower.length] ?? COLORS.cloud, 1);
+      g.fillCircle(x, y, 4);
+    }
   }
 
   /** Dezente Rasterlinien als Orientierung beim Bauen. */

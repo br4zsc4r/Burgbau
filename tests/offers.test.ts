@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { getPiece, isLarge, isStackable } from '../src/data/pieces';
-import { ANIMATED_MIN_STREAK, offerCategories, offerPieces, type OfferOptions } from '../src/logic/offers';
+import { PIECES, rarityOf } from '../src/data/pieces';
+import {
+  RARITY_MIN_STREAK,
+  offerCategories,
+  offerPieces,
+  pickByRarity,
+  unlockStreak,
+  type OfferOptions,
+} from '../src/logic/offers';
 import type { PieceCategory, PieceId } from '../src/types';
 import { seededRandom } from './helpers';
 
@@ -28,14 +36,14 @@ describe('offerCategories', () => {
     [true, 3, ['basic', 'basic', 'decoration']],
     [true, 4, ['basic', 'basic', 'decoration']],
     [true, 5, ['basic', 'decoration', 'finish']],
-    [true, 9, ['basic', 'decoration', 'finish']],
+    [true, 7, ['basic', 'decoration', 'finish']],
   ] as const)('richtig=%s, Serie %i → %o', (correct, streak, expected) => {
     expect([...offerCategories(correct, streak, seededRandom(1))].sort()).toEqual(expected);
   });
 
-  it('Serie 10+: Premium, Grundbauteil und Dekoration oder Abschluss', () => {
+  it('Serie 8+: Premium, Grundbauteil und Dekoration oder Abschluss', () => {
     for (let seed = 0; seed < 20; seed++) {
-      const result = offerCategories(true, 10 + seed, seededRandom(seed));
+      const result = offerCategories(true, 8 + seed, seededRandom(seed));
       expect(result).toContain('premium');
       expect(result).toContain('basic');
       expect(['decoration', 'finish']).toContain(result[2]);
@@ -145,12 +153,42 @@ describe('offerPieces', () => {
     }
   });
 
-  it('animierte Teile erst ab Serie 12, dann immer eines', () => {
-    const animated = (offers: PieceId[]) => offers.filter((id) => getPiece(id).animated === true);
-    for (const offers of offersFor(true, ANIMATED_MIN_STREAK - 1)) expect(animated(offers)).toEqual([]);
-    const all = offersFor(true, ANIMATED_MIN_STREAK);
-    for (const offers of all) expect(animated(offers)).toHaveLength(1);
-    expect(new Set(all.flatMap(animated)).size).toBe(4);
+  it('seltene Teile erst ab ihrer Serie', () => {
+    const rarities = (streak: number) =>
+      new Set(offersFor(true, streak).flat().map((id) => rarityOf(getPiece(id))));
+    expect([...rarities(4)]).toEqual(['common']);
+    expect(rarities(5).has('rare')).toBe(true);
+    expect(rarities(7).has('epic')).toBe(false);
+    expect(rarities(8).has('epic')).toBe(true);
+    expect(rarities(9).has('legendary')).toBe(false);
+    expect(rarities(10).has('legendary')).toBe(true);
+    for (const piece of PIECES) {
+      expect(unlockStreak(piece)).toBeGreaterThanOrEqual(RARITY_MIN_STREAK[rarityOf(piece)]);
+    }
+  });
+
+  it('legendäre Teile kommen seltener als epische, aber sie kommen', () => {
+    const all = offersFor(true, 12).flat().map((id) => rarityOf(getPiece(id)));
+    const epic = all.filter((r) => r === 'epic').length;
+    const legendary = all.filter((r) => r === 'legendary').length;
+    expect(legendary).toBeGreaterThan(30);
+    expect(legendary).toBeLessThan(epic);
+  });
+
+  it('beschädigte Teile bleiben gewöhnlich', () => {
+    for (const offers of offersFor(false, 12)) {
+      expect(offers.every((id) => rarityOf(getPiece(id)) === 'common')).toBe(true);
+    }
+  });
+
+  it('pickByRarity: wählt erst die Stufe nach Gewicht', () => {
+    const pool = [getPiece('wall'), getPiece('tower'), getPiece('gate'), getPiece('fireDragon')];
+    const picks = SEEDS.map((seed) => pickByRarity(pool, seededRandom(seed))?.id);
+    const dragons = picks.filter((id) => id === 'fireDragon').length;
+    // 1 von 13 Anteilen: deutlich seltener als jedes einzelne gewöhnliche Teil.
+    expect(dragons).toBeGreaterThan(5);
+    expect(dragons).toBeLessThan(50);
+    expect(pickByRarity([], seededRandom(1))).toBeUndefined();
   });
 
   it('Dach-Garantie: immer ein Dach, ohne das letzte Teil zum Weiterbauen zu verdrängen', () => {

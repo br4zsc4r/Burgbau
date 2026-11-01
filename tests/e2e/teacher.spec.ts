@@ -1,22 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { createProfile, setSettings, startGame } from './helpers';
-
-const PIN = '2468';
-
-/** Zahnrad antippen und PIN eingeben (beim ersten Mal festlegen). */
-async function openTeacher(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Einstellungen für Lehrkräfte' }).click();
-  // Der Dialog öffnet erst, wenn der gespeicherte PIN-Hash geladen ist.
-  await expect(page.locator('.teacher-gate')).toBeVisible();
-  if (await page.getByRole('heading', { name: 'PIN festlegen' }).isVisible()) {
-    await page.getByLabel('Neue PIN').fill(PIN);
-    await page.getByLabel('PIN wiederholen').fill(PIN);
-  } else {
-    await page.getByLabel('PIN eingeben').fill(PIN);
-  }
-  await page.getByRole('button', { name: 'Öffnen' }).click();
-  await expect(page.getByRole('heading', { name: 'Einstellungen für Lehrkräfte' })).toBeVisible();
-}
+import { expect, test } from '@playwright/test';
+import { PIN, createProfile, openTeacher, setSettings, startGame } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

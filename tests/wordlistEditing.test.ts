@@ -24,6 +24,14 @@ describe('mergeLists', () => {
     ]);
     expect(merged[0]?.list.words).toEqual([hund]);
   });
+
+  it('eine bearbeitete Fassung behält die Bilder der mitgelieferten Wörter', () => {
+    const withImage: WordList = { ...k12, words: [{ ...hund, image: 'hund.svg' }, katze] };
+    const ownImage = { ...katze, image: 'eigene.svg' };
+    const edited = { ...k12, words: [hund, ownImage, baum] };
+    const words = mergeLists([withImage], [edited])[0]?.list.words;
+    expect(words?.map((w) => w.image)).toEqual(['hund.svg', 'eigene.svg', undefined]);
+  });
 });
 
 describe('activePool', () => {

@@ -9,6 +9,7 @@ export const defaultSettings: Settings = {
   inputMode: 'list',
   requireCapitalization: false,
   readAloud: true,
+  sound: true,
   tasksPerCastle: 15,
   allowSelfRegistration: true,
   pictureCode: false,
@@ -35,6 +36,7 @@ export function parseSettings(value: unknown): Settings {
       : defaultSettings.inputMode,
     requireCapitalization: bool('requireCapitalization'),
     readAloud: bool('readAloud'),
+    sound: bool('sound'),
     tasksPerCastle: TASK_COUNTS.includes(value['tasksPerCastle'] as TasksPerCastle)
       ? (value['tasksPerCastle'] as TasksPerCastle)
       : defaultSettings.tasksPerCastle,

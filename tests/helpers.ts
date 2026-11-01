@@ -5,6 +5,7 @@ export const testSettings: Settings = {
   inputMode: 'list',
   requireCapitalization: false,
   readAloud: false,
+  sound: false,
   tasksPerCastle: 15,
   allowSelfRegistration: true,
   pictureCode: false,

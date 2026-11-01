@@ -1,4 +1,4 @@
-import type { PieceCategory, PieceDef, PieceId } from '../types';
+import type { PieceCategory, PieceDef, PieceId, Rarity } from '../types';
 
 // Mauern und Türme sind aus demselben Stein, verschmelzen und tragen Fahnen auf ihren Zinnen.
 const block = { kind: 'block', width: 1, height: 1, material: 'stone', front: 'plain', topMount: true } as const;
@@ -10,7 +10,7 @@ const ground = { kind: 'ground', width: 1, height: 1 } as const;
 
 /**
  * Bauteil-Katalog (Spezifikation Abschnitt 4 und Abschnitt 13, Vorgaben für Phase 4).
- * Große Teile haben width/height > 1 und eine Mindest-Serie.
+ * Große Teile haben width/height > 1 und eine Mindest-Serie; seltene Teile eine Seltenheit.
  */
 export const PIECES: readonly PieceDef[] = [
   { id: 'wall', category: 'basic', ...block },
@@ -23,6 +23,10 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'gateBig', category: 'basic', ...block, width: 2, height: 2, front: 'none', minStreak: 5 },
   { id: 'towerBig', category: 'basic', ...tower, width: 2, height: 2, minStreak: 5 },
   { id: 'windowWallBig', category: 'basic', ...block, width: 2, height: 2, front: 'window', minStreak: 5 },
+  { id: 'stainedGlass', category: 'basic', ...block, front: 'window', rarity: 'rare' },
+  { id: 'portcullis', category: 'basic', ...block, front: 'none', rarity: 'rare' },
+  // Bogen: unten offen, man sieht hindurch – eine Brücke zwischen zwei Mauerteilen.
+  { id: 'arch', category: 'basic', ...block, width: 2, front: 'none', minStreak: 1, rarity: 'rare' },
 
   // Zinnen entstehen inzwischen automatisch; das Teil bleibt nur für alte Burgen erhalten.
   { id: 'battlements', category: 'finish', ...cap, retired: true },
@@ -31,6 +35,8 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'pointedRoofTall', category: 'finish', ...roof, height: 2, minStreak: 5 },
   // Großes Dach: die Spitze liegt zwischen zwei Zellen, daher keine Fahne darauf.
   { id: 'roofBig', category: 'finish', ...roof, width: 2, height: 2, topMount: false, minStreak: 5 },
+  { id: 'goldenRoof', category: 'finish', ...roof, rarity: 'rare' },
+  { id: 'bellRoof', category: 'finish', ...roof, rarity: 'rare' },
 
   { id: 'flag', category: 'decoration', ...deco, slot: 'top' },
   { id: 'pennant', category: 'decoration', ...deco, slot: 'top' },
@@ -39,20 +45,27 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'torch', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
   { id: 'ivy', category: 'decoration', ...deco, slot: 'growth' },
   { id: 'flowerBox', category: 'decoration', ...deco, slot: 'front', fits: 'window' },
+  { id: 'banner', category: 'decoration', ...deco, slot: 'front', fits: 'plain', rarity: 'rare' },
+  // Treppe: steht wie ein Dach auf dem Boden oder einem Block, darauf kann man nicht bauen.
+  { id: 'stairs', category: 'decoration', ...cap, topMount: false },
 
-  { id: 'goldenRoof', category: 'premium', ...roof },
-  { id: 'banner', category: 'premium', ...deco, slot: 'front', fits: 'plain' },
-  { id: 'stainedGlass', category: 'premium', ...block, front: 'window' },
-  { id: 'dragon', category: 'premium', ...deco, slot: 'top' },
-  { id: 'fireDragon', category: 'premium', ...deco, slot: 'top', animated: true },
-  { id: 'giantFlag', category: 'premium', ...deco, slot: 'top', animated: true },
-  { id: 'crystal', category: 'premium', ...deco, slot: 'top', animated: true },
-  { id: 'windmill', category: 'premium', ...cap, width: 2, height: 2, topMount: false, animated: true, minStreak: 12 },
+  { id: 'dragon', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
+  { id: 'giantFlag', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
+  { id: 'crystal', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
+  { id: 'ghost', category: 'premium', ...deco, slot: 'front', fits: 'plain', rarity: 'epic' },
+  { id: 'treasureChest', category: 'premium', ...ground, rarity: 'epic' },
+  { id: 'fireDragon', category: 'premium', ...deco, slot: 'top', rarity: 'legendary' },
+  { id: 'windmill', category: 'premium', ...cap, width: 2, height: 2, topMount: false, minStreak: 1, rarity: 'legendary' },
+  { id: 'balloon', category: 'premium', ...cap, height: 2, topMount: false, minStreak: 1, rarity: 'legendary' },
+  { id: 'observatory', category: 'premium', ...roof, topMount: false, rarity: 'legendary' },
+  { id: 'unicorn', category: 'premium', ...ground, rarity: 'legendary' },
 
   { id: 'tree', category: 'environment', ...ground },
   { id: 'well', category: 'environment', ...ground },
   { id: 'moat', category: 'environment', ...ground },
   { id: 'drawbridge', category: 'environment', ...ground },
+  { id: 'barrels', category: 'environment', ...ground },
+  { id: 'fountain', category: 'environment', ...ground, rarity: 'rare' },
 
   // Beschädigt: verhalten sich wie ihr Basisteil, sehen nur weniger schön aus.
   { id: 'crumblingWall', category: 'damaged', ...block, base: 'wall' },
@@ -84,6 +97,10 @@ export function piecesOf(category: PieceCategory): PieceDef[] {
 /** Man kann darauf weiterbauen. */
 export function isStackable(piece: PieceDef): boolean {
   return piece.kind === 'block';
+}
+
+export function rarityOf(piece: PieceDef): Rarity {
+  return piece.rarity ?? 'common';
 }
 
 export function isLarge(piece: PieceDef): boolean {

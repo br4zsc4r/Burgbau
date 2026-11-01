@@ -13,7 +13,8 @@
       "stem": "Muse",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "museum.svg"
     },
     {
       "id": "album",
@@ -37,7 +38,8 @@
       "stem": "Dat",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "datum.svg"
     },
     {
       "id": "zentrum",
@@ -73,7 +75,8 @@
       "stem": "Stadi",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "stadion.svg"
     },
     {
       "id": "globus",
@@ -86,7 +89,8 @@
       "stem": "Glob",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "globus.svg"
     },
     {
       "id": "kaktus",
@@ -99,7 +103,8 @@
       "stem": "Kakte",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "kaktus.svg"
     },
     {
       "id": "thema",
@@ -147,7 +152,8 @@
       "stem": "Lehrerinn",
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "lehrerin.svg"
     },
     {
       "id": "koenigin",
@@ -195,7 +201,8 @@
       "stem": "Buss",
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "bus.svg"
     },
     {
       "id": "pizza",
@@ -207,7 +214,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "pizza.svg"
     },
     {
       "id": "lehrer",
@@ -218,7 +226,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "lehrer.svg"
     },
     {
       "id": "schueler",
@@ -229,7 +238,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "schueler.svg"
     },
     {
       "id": "computer",
@@ -240,7 +250,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "computer.svg"
     },
     {
       "id": "koffer",
@@ -251,7 +262,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "koffer.svg"
     },
     {
       "id": "theater",
@@ -262,7 +274,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "theater.svg"
     },
     {
       "id": "spiegel",
@@ -273,7 +286,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "spiegel.svg"
     },
     {
       "id": "schluessel",
@@ -284,7 +298,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "schluessel.svg"
     },
     {
       "id": "maedchen",
@@ -295,7 +310,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "maedchen.svg"
     },
     {
       "id": "broetchen",
@@ -306,7 +322,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "broetchen.svg"
     },
     {
       "id": "gebaeude",
@@ -317,7 +334,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "gebaeude.svg"
     },
     {
       "id": "hotel",
@@ -328,7 +346,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "hotel.svg"
     },
     {
       "id": "restaurant",
@@ -350,7 +369,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "park.svg"
     },
     {
       "id": "handy",
@@ -361,7 +381,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "handy.svg"
     },
     {
       "id": "baby",
@@ -372,7 +393,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "baby.svg"
     },
     {
       "id": "clown",
@@ -383,7 +405,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "clown.svg"
     },
     {
       "id": "cafe",
@@ -417,7 +440,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "taxi.svg"
     },
     {
       "id": "zoo",
@@ -439,7 +463,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "mensch.svg"
     },
     {
       "id": "held",
@@ -450,7 +475,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "held.svg"
     },
     {
       "id": "prinz",
@@ -461,7 +487,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "prinz.svg"
     },
     {
       "id": "elefant",
@@ -472,7 +499,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "elefant.svg"
     },
     {
       "id": "planet",
@@ -483,7 +511,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "planet.svg"
     },
     {
       "id": "polizist",
@@ -494,7 +523,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "polizist.svg"
     },
     {
       "id": "astronaut",
@@ -505,7 +535,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "astronaut.svg"
     },
     {
       "id": "zeitung",
@@ -516,7 +547,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "zeitung.svg"
     },
     {
       "id": "rechnung",
@@ -527,7 +559,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "rechnung.svg"
     },
     {
       "id": "erfindung",
@@ -549,7 +582,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "bibliothek.svg"
     },
     {
       "id": "auge",
@@ -560,7 +594,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "auge.svg"
     },
     {
       "id": "insekt",
@@ -571,7 +606,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "insekt.svg"
     },
     {
       "id": "muskel",
@@ -582,7 +618,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "muskel.svg"
     },
     {
       "id": "regel",
@@ -604,7 +641,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "kartoffel.svg"
     },
     {
       "id": "lied",
@@ -615,7 +653,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "lied.svg"
     },
     {
       "id": "gesicht",
@@ -626,7 +665,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "gesicht.svg"
     },
     {
       "id": "licht",
@@ -637,7 +677,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "licht.svg"
     },
     {
       "id": "schild",
@@ -648,7 +689,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "schild.svg"
     },
     {
       "id": "kalb",
@@ -681,7 +723,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "geist.svg"
     },
     {
       "id": "gespenst",
@@ -692,7 +735,8 @@
       ],
       "pattern": "er",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "gespenst.svg"
     },
     {
       "id": "reichtum",
@@ -703,7 +747,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "reichtum.svg"
     },
     {
       "id": "brief",
@@ -714,7 +759,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "brief.svg"
     },
     {
       "id": "geschenk",
@@ -725,7 +771,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "geschenk.svg"
     },
     {
       "id": "kreis",
@@ -736,7 +783,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "kreis.svg"
     },
     {
       "id": "preis",
@@ -747,7 +795,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "preis.svg"
     },
     {
       "id": "koenig",
@@ -758,7 +807,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "koenig.svg"
     },
     {
       "id": "ring",
@@ -769,7 +819,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "ring.svg"
     },
     {
       "id": "zelt",
@@ -780,7 +831,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "zelt.svg"
     },
     {
       "id": "spiel",
@@ -791,7 +843,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "spiel.svg"
     },
     {
       "id": "tier",
@@ -802,7 +855,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "tier.svg"
     },
     {
       "id": "freund",
@@ -824,7 +878,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "abend.svg"
     },
     {
       "id": "erfolg",
@@ -846,7 +901,8 @@
       ],
       "pattern": "e",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "paket.svg"
     },
     {
       "id": "problem",
@@ -879,7 +935,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "nuss.svg"
     },
     {
       "id": "kuss",
@@ -890,7 +947,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "kuss.svg"
     },
     {
       "id": "schuss",
@@ -912,7 +970,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "zahn.svg"
     },
     {
       "id": "bahnhof",
@@ -923,7 +982,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "bahnhof.svg"
     },
     {
       "id": "flughafen",
@@ -934,7 +994,8 @@
       ],
       "pattern": "none",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "flughafen.svg"
     }
   ]
 }

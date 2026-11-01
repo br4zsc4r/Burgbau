@@ -41,7 +41,23 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
     pattern.append(svgElement('image', { href: textureUrl(art.material), width: size, height: size }));
     const defs = svgElement('defs', {});
     defs.append(pattern);
-    svg.append(defs, svgElement('rect', { width: String(w), height: String(h), fill: `url(#${patternId})` }));
+    const texture = svgElement('rect', { width: String(w), height: String(h), fill: `url(#${patternId})` });
+    if (art.cutout !== null) {
+      // Bogenöffnung aussparen: Maske weiß, Öffnung schwarz.
+      const { cx, top, half, bottom } = art.cutout;
+      const maskId = `${patternId}-cutout`;
+      const mask = svgElement('mask', { id: maskId });
+      mask.append(
+        svgElement('rect', { width: String(w), height: String(h), fill: 'white' }),
+        svgElement('path', {
+          d: `M${String(cx - half)} ${String(bottom + 1)}V${String(top + half)}A${String(half)} ${String(half)} 0 0 1 ${String(cx + half)} ${String(top + half)}V${String(bottom + 1)}Z`,
+          fill: 'black',
+        }),
+      );
+      defs.append(mask);
+      texture.setAttribute('mask', `url(#${maskId})`);
+    }
+    svg.append(defs, texture);
   }
 
   if (art.image !== null) {
@@ -72,7 +88,7 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
     );
   }
 
-  if (art.material !== null) {
+  if (art.material !== null && art.cutout === null) {
     svg.append(
       svgElement('rect', {
         x: '2',
@@ -80,7 +96,7 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
         width: String(w - 4),
         height: String(h - 4),
         fill: 'none',
-        stroke: '#4a3f33',
+        stroke: '#3b2f2a',
         'stroke-width': '4',
         'stroke-dasharray': art.rough ? '18 3 9 4' : 'none',
       }),

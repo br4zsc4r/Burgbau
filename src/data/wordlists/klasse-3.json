@@ -12,7 +12,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "wand.svg"
     },
     {
       "id": "bach",
@@ -78,7 +79,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "topf.svg"
     },
     {
       "id": "zopf",
@@ -122,7 +124,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "frosch.svg"
     },
     {
       "id": "fuchs",
@@ -133,7 +136,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "fuchs.svg"
     },
     {
       "id": "wolf",
@@ -144,7 +148,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "wolf.svg"
     },
     {
       "id": "turm",
@@ -166,7 +171,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "sturm.svg"
     },
     {
       "id": "wurm",
@@ -177,7 +183,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "wurm.svg"
     },
     {
       "id": "huhn",
@@ -188,7 +195,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "huhn.svg"
     },
     {
       "id": "loch",
@@ -199,7 +207,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "loch.svg"
     },
     {
       "id": "dorf",
@@ -210,7 +219,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "dorf.svg"
     },
     {
       "id": "wald",
@@ -221,7 +231,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "wald.svg"
     },
     {
       "id": "blatt",
@@ -232,7 +243,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "blatt.svg"
     },
     {
       "id": "rad",
@@ -243,7 +255,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "rad.svg"
     },
     {
       "id": "schloss",
@@ -254,7 +267,8 @@
       ],
       "pattern": "er",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "schloss.svg"
     },
     {
       "id": "fass",
@@ -309,7 +323,8 @@
       ],
       "pattern": "none",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "laden.svg"
     },
     {
       "id": "faden",
@@ -320,7 +335,8 @@
       ],
       "pattern": "none",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "faden.svg"
     },
     {
       "id": "ofen",
@@ -364,7 +380,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "nacht.svg"
     },
     {
       "id": "stadt",
@@ -375,7 +392,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "stadt.svg"
     },
     {
       "id": "wurst",
@@ -386,7 +404,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "wurst.svg"
     },
     {
       "id": "gans",
@@ -397,7 +416,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "gans.svg"
     },
     {
       "id": "laus",
@@ -419,7 +439,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "faust.svg"
     },
     {
       "id": "haut",
@@ -441,7 +462,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "braut.svg"
     },
     {
       "id": "bauch",
@@ -518,7 +540,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "korb.svg"
     },
     {
       "id": "schrank",
@@ -540,7 +563,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "saft.svg"
     },
     {
       "id": "gast",
@@ -573,7 +597,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "arzt.svg"
     },
     {
       "id": "platz",
@@ -639,7 +664,8 @@
       ],
       "pattern": "e",
       "umlaut": true,
-      "verified": false
+      "verified": false,
+      "image": "koch.svg"
     },
     {
       "id": "hof",
@@ -716,7 +742,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "strasse.svg"
     },
     {
       "id": "bruecke",
@@ -727,7 +754,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "bruecke.svg"
     },
     {
       "id": "insel",
@@ -738,7 +766,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "insel.svg"
     },
     {
       "id": "zahl",
@@ -749,7 +778,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "zahl.svg"
     },
     {
       "id": "farbe",
@@ -760,7 +790,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "farbe.svg"
     },
     {
       "id": "hemd",
@@ -771,7 +802,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "hemd.svg"
     },
     {
       "id": "feder",
@@ -782,7 +814,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "feder.svg"
     },
     {
       "id": "bauer",
@@ -793,7 +826,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "bauer.svg"
     },
     {
       "id": "nachbar",
@@ -815,7 +849,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "loewe.svg"
     },
     {
       "id": "affe",
@@ -826,7 +861,8 @@
       ],
       "pattern": "n",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "affe.svg"
     },
     {
       "id": "baer",
@@ -837,7 +873,8 @@
       ],
       "pattern": "en",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "baer.svg"
     },
     {
       "id": "kino",
@@ -848,7 +885,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "kino.svg"
     },
     {
       "id": "radio",
@@ -859,7 +897,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "radio.svg"
     },
     {
       "id": "foto",
@@ -870,7 +909,8 @@
       ],
       "pattern": "s",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "foto.svg"
     },
     {
       "id": "igel",
@@ -881,7 +921,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "igel.svg"
     },
     {
       "id": "kaefer",
@@ -892,7 +933,8 @@
       ],
       "pattern": "none",
       "umlaut": false,
-      "verified": false
+      "verified": false,
+      "image": "kaefer.svg"
     },
     {
       "id": "kissen",

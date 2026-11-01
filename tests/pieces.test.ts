@@ -9,7 +9,7 @@ import {
   pieceArt,
   textureUrl,
 } from '../src/data/pieceArt';
-import { PIECES, getPiece, isStackable, piecesOf } from '../src/data/pieces';
+import { PIECES, getPiece, isStackable, piecesOf, rarityOf } from '../src/data/pieces';
 import type { PieceDef } from '../src/types';
 
 describe('Bauteil-Katalog', () => {
@@ -72,16 +72,18 @@ describe('Bauteil-Katalog', () => {
     expect(big('basic').length).toBeGreaterThanOrEqual(4);
     expect(big('finish').length).toBeGreaterThanOrEqual(1);
     expect(big('damaged').length).toBeGreaterThanOrEqual(2);
-    expect(getPiece('windmill')).toMatchObject({ width: 2, height: 2, animated: true });
+    expect(getPiece('windmill')).toMatchObject({ width: 2, height: 2, rarity: 'legendary' });
   });
 
   it('Umgebungsteile stehen auf dem Boden', () => {
-    expect(piecesOf('environment').map((p) => p.kind)).toEqual(['ground', 'ground', 'ground', 'ground']);
+    expect(piecesOf('environment').every((p) => p.kind === 'ground')).toBe(true);
+    expect(getPiece('unicorn').kind).toBe('ground');
+    expect(getPiece('treasureChest').kind).toBe('ground');
   });
 });
 
 describe('pieceArt', () => {
-  const files = Object.keys(import.meta.glob('../public/assets/placeholder/**/*.svg'));
+  const files = Object.keys(import.meta.glob('../public/assets/art/**/*.svg'));
   const exists = (url: string) => files.includes(`../public/${url}`);
 
   it('Blöcke entstehen aus Materialtextur, nur Merkmale haben eine Grafik', () => {
@@ -119,9 +121,11 @@ describe('pieceArt', () => {
     }
   });
 
-  it('genau die animierten Teile haben einen bewegten Teil', () => {
+  it('bewegte Teile sind mindestens selten, legendäre bewegen sich alle', () => {
     for (const piece of PIECES) {
-      expect(pieceArt(piece.id).animation !== null, piece.id).toBe(piece.animated === true);
+      const animated = pieceArt(piece.id).animation !== null;
+      if (animated) expect(rarityOf(piece), piece.id).not.toBe('common');
+      if (rarityOf(piece) === 'legendary') expect(animated, piece.id).toBe(true);
     }
   });
 

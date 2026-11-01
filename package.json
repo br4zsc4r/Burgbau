@@ -11,7 +11,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "art": "node scripts/art/generate.ts",
+    "words": "node scripts/words/openmoji.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

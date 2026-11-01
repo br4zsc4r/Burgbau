@@ -46,6 +46,8 @@ export interface Settings {
   requireCapitalization: boolean;
   /** Vorlese-Knopf anzeigen (Web Speech API). */
   readAloud: boolean;
+  /** Leise Töne bei Erfolgen (nie bei Fehlern). */
+  sound: boolean;
   tasksPerCastle: TasksPerCastle;
   /** Kinder dürfen über „Ich bin neu“ selbst Profile anlegen. */
   allowSelfRegistration: boolean;
@@ -109,12 +111,15 @@ export type NormalPieceId =
   | 'gateBig'
   | 'towerBig'
   | 'windowWallBig'
+  | 'arch'
+  | 'portcullis'
   // Abschlüsse
   | 'battlements'
   | 'pointedRoof'
   | 'coneRoof'
   | 'pointedRoofTall'
   | 'roofBig'
+  | 'bellRoof'
   // Dekorationen
   | 'flag'
   | 'pennant'
@@ -123,21 +128,29 @@ export type NormalPieceId =
   | 'torch'
   | 'ivy'
   | 'flowerBox'
-  // Premium
+  | 'stairs'
+  // Selten in ihrer Kategorie
   | 'goldenRoof'
   | 'banner'
   | 'stainedGlass'
-  | 'dragon'
   // Umgebung
   | 'tree'
   | 'well'
   | 'moat'
   | 'drawbridge'
-  // Animiert (ab Serie 12)
+  | 'barrels'
+  | 'fountain'
+  // Premium (episch und legendär)
+  | 'dragon'
   | 'fireDragon'
   | 'giantFlag'
   | 'crystal'
-  | 'windmill';
+  | 'windmill'
+  | 'ghost'
+  | 'treasureChest'
+  | 'balloon'
+  | 'observatory'
+  | 'unicorn';
 
 export type DamagedPieceId =
   | 'crumblingWall'
@@ -160,6 +173,12 @@ export type PieceId = NormalPieceId | DamagedPieceId;
  * ground = nur auf dem Boden (Umgebung); attachment = dockt an ein bestehendes Teil an.
  */
 export type PieceKind = 'block' | 'cap' | 'ground' | 'attachment';
+
+/**
+ * Wie besonders ein Teil ist. Seltenere Teile gibt es erst ab einer längeren Serie,
+ * und sie werden seltener gezogen (Spezifikation Abschnitt 4).
+ */
+export type Rarity = 'common' | 'rare' | 'epic' | 'legendary';
 
 /** Andockstelle einer Dekoration: Bewuchs, Vorderseite oder oben drauf. */
 export type AttachSlot = 'growth' | 'front' | 'top';
@@ -193,8 +212,8 @@ export interface PieceDef {
   base?: NormalPieceId;
   /** Dach: wird in den letzten Aufgaben garantiert angeboten. */
   roof?: boolean;
-  /** Bewegt sich in der Szene; Belohnung für eine besonders lange Serie. */
-  animated?: boolean;
+  /** Fehlt = gewöhnlich. */
+  rarity?: Rarity;
   /** Wird nicht mehr angeboten, bleibt aber für gespeicherte Burgen darstellbar. */
   retired?: boolean;
 }

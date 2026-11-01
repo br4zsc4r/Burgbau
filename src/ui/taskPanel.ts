@@ -1,6 +1,7 @@
+import { wordImageUrl } from '../data/wordImages';
 import { solutionSegments } from '../logic/pluralPattern';
 import type { AnswerResult, InputMode, QuizState, Word } from '../types';
-import { element } from './dom';
+import { element, reducedMotion } from './dom';
 import { createSpecialCharBar } from './specialCharBar';
 import type { Speaker } from './speech';
 import { createTilesInput } from './tilesInput';
@@ -19,6 +20,8 @@ export interface TaskPanel {
   /** Leert die Eingabe und setzt den Fokus hinein (neue Aufgabe). */
   startNewTask: () => void;
   focusForPhase: (quiz: QuizState) => void;
+  /** Kleiner Sternenregen um das Wort (richtige Antwort). */
+  celebrate: () => void;
 }
 
 const SPEAKER_ICON =
@@ -139,6 +142,25 @@ export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
     callbacks.speaker.speak(quiz.phase === 'feedback' ? `${word.article} ${word.singular}, ${solution}` : intro);
   });
 
+  /** Bild zum Wort; ohne Bild (oder wenn es fehlt) der Anfangsbuchstabe als Platzhalter. */
+  const showImage = (word: Word): void => {
+    image.setAttribute('aria-label', texts.imageFallbackLabel(word.singular));
+    const letter = (): void => {
+      image.classList.remove('has-picture');
+      image.textContent = word.singular.charAt(0);
+    };
+    if (word.image === undefined) {
+      letter();
+      return;
+    }
+    const picture = element('img', 'word-picture');
+    picture.alt = '';
+    picture.src = wordImageUrl(word.image);
+    picture.addEventListener('error', letter);
+    image.classList.add('has-picture');
+    image.replaceChildren(picture);
+  };
+
   return {
     element: panel,
     render: (quiz, word, nextMode) => {
@@ -147,8 +169,7 @@ export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
       speakButton.hidden = callbacks.speaker?.ready() !== true;
       answering = quiz.phase === 'answering';
       mode = nextMode;
-      image.textContent = word.singular.charAt(0);
-      image.setAttribute('aria-label', texts.imageFallbackLabel(word.singular));
+      showImage(word);
       singular.replaceChildren(element('span', 'article', word.article), ' ', word.singular);
 
       keyboardArea.hidden = mode !== 'keyboard';
@@ -173,6 +194,25 @@ export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
     focusForPhase: (quiz) => {
       if (quiz.phase === 'feedback') actionButton.focus();
       else if (mode === 'keyboard') input.focus();
+    },
+    celebrate: () => {
+      if (reducedMotion()) return;
+      card.classList.remove('cheer');
+      // Neu auslösen, auch wenn die Klasse eben noch gesetzt war.
+      card.getBoundingClientRect();
+      card.classList.add('cheer');
+      const burst = element('div', 'star-burst');
+      burst.setAttribute('aria-hidden', 'true');
+      for (let i = 0; i < 10; i++) {
+        const star = element('span', 'burst-star');
+        star.style.setProperty('--angle', `${String(i * 36)}deg`);
+        star.style.setProperty('--delay', `${String((i % 3) * 60)}ms`);
+        burst.append(star);
+      }
+      card.append(burst);
+      window.setTimeout(() => {
+        burst.remove();
+      }, 1200);
     },
   };
 }

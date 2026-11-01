@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { wordImageUrl } from '../src/data/wordImages';
 import { checkWordConsistency, parseWordList, validateWordList } from '../src/logic/wordlist';
 import { makeWord } from './helpers';
+
+const images = Object.keys(import.meta.glob('../public/assets/words/*.svg'));
 
 const files = import.meta.glob<unknown>('../src/data/wordlists/*.json', {
   eager: true,
@@ -26,6 +29,17 @@ describe('mitgelieferte Wortlisten', () => {
       const raw = JSON.stringify(data);
       expect(raw).toBe(raw.normalize('NFC'));
     });
+
+    it('jedes Wort-Bild liegt lokal vor', () => {
+      for (const word of parseWordList(data).words) {
+        if (word.image !== undefined) expect(images.includes(`../public/${wordImageUrl(word.image)}`), word.id).toBe(true);
+      }
+    });
+  });
+
+  it('die meisten Wörter haben ein Bild', () => {
+    const words = Object.values(files).flatMap((data) => parseWordList(data).words);
+    expect(words.filter((word) => word.image !== undefined).length).toBeGreaterThan(words.length * 0.6);
   });
 });
 

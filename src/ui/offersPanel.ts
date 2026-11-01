@@ -1,4 +1,4 @@
-import { getPiece } from '../data/pieces';
+import { getPiece, rarityOf } from '../data/pieces';
 import type { PieceId } from '../types';
 import { element } from './dom';
 import { createPieceIcon } from './pieceIcon';
@@ -29,6 +29,7 @@ export function createOffersPanel(onChoose: (piece: PieceId) => void): {
           card.type = 'button';
           card.dataset['piece'] = id;
           card.dataset['category'] = getPiece(id).category;
+          card.dataset['rarity'] = rarityOf(getPiece(id));
           card.append(createPieceIcon(id), element('span', 'offer-name', texts.pieceNames[id]));
           card.addEventListener('click', () => {
             onChoose(id);

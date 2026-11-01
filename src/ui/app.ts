@@ -16,6 +16,7 @@ import {
   undoPlacement,
   withKnownWords,
 } from '../logic/game';
+import { gameEvents } from '../logic/gameEvents';
 import { coveredCells, createGrid, resolvePlacement, validPlacements } from '../logic/grid';
 import {
   addProfile,
@@ -44,6 +45,7 @@ import type {
 } from '../types';
 import { createBuildControls } from './buildControls';
 import { createCastleViewBar } from './castleViewBar';
+import { createCelebration } from './celebration';
 import { createCollectionScreen, type CollectionScope } from './collectionScreen';
 import { element } from './dom';
 import { createNamingPanel } from './namingPanel';
@@ -53,6 +55,7 @@ import { createPictureCodeScreen } from './pictureCode';
 import { createProfileHome } from './profileHome';
 import { createProfileSelect } from './profileSelect';
 import { createProgressDots } from './progressDots';
+import { createSound } from './sound';
 import { createSpeaker } from './speech';
 import { createStashBar } from './stashBar';
 import { createStreakTorches } from './streakTorches';
@@ -110,6 +113,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   let boxes: WordBoxes = {};
   let screen: Screen = { kind: 'profiles' };
   const speaker = createSpeaker();
+  const sound = createSound(settings.sound);
+  const celebration = createCelebration();
   const thumbnails = new Map<string, string>();
 
   const report = (error: unknown): void => {
@@ -298,6 +303,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     pauseButton,
     gameOverlay,
     castleViewBar.element,
+    celebration.element,
     screens,
     storageWarning,
   );
@@ -364,6 +370,11 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       void repository.saveBoxes(profile.id, boxes).catch(report);
     }
     render();
+    for (const event of gameEvents(previous, next)) {
+      sound.play(event);
+      if (event === 'correct') taskPanel.celebrate();
+      if (event === 'finished') celebration.play();
+    }
     focusGame(previous === null || previous.step !== 'task' || previous.taskNumber !== next.taskNumber);
   }
 

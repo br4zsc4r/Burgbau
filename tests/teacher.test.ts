@@ -25,6 +25,15 @@ describe('Einstellungen', () => {
     expect(parseSettings({ tasksPerCastle: 12, inputMode: 'sprache', readAloud: 'ja' })).toEqual(defaultSettings);
   });
 
+  it('Töne sind standardmäßig an (leise) und lassen sich abschalten', () => {
+    expect(defaultSettings.sound).toBe(true);
+    // Ältere Einstellungen ohne das Feld bekommen den Standard.
+    const withoutSound: Record<string, unknown> = { ...defaultSettings };
+    delete withoutSound['sound'];
+    expect(parseSettings(withoutSound).sound).toBe(true);
+    expect(parseSettings({ ...defaultSettings, sound: false }).sound).toBe(false);
+  });
+
   it('übernimmt gültige Werte', () => {
     const custom = { ...defaultSettings, tasksPerCastle: 20, inputMode: 'keyboard', pictureCode: true } as const;
     expect(parseSettings(custom)).toEqual(custom);

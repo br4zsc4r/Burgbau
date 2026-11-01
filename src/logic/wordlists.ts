@@ -8,6 +8,18 @@ export interface ListEntry {
   edited: boolean;
 }
 
+/** Bearbeitete Fassung: Bilder fehlender Wörter aus der mitgelieferten Liste übernehmen. */
+function withBuiltinImages(edited: WordList, builtin: WordList): WordList {
+  const images = new Map(builtin.words.flatMap((word) => (word.image === undefined ? [] : [[word.id, word.image]])));
+  return {
+    ...edited,
+    words: edited.words.map((word) => {
+      const image = images.get(word.id);
+      return word.image !== undefined || image === undefined ? word : { ...word, image };
+    }),
+  };
+}
+
 /**
  * Mitgelieferte und gespeicherte Listen zusammenführen. Eine gespeicherte Liste mit der ID
  * einer mitgelieferten ersetzt diese (bearbeitete Fassung), alle anderen kommen dazu.
@@ -18,7 +30,11 @@ export function mergeLists(builtins: readonly WordList[], stored: readonly WordL
   return [
     ...builtins.map((list) => {
       const edited = storedById.get(list.id);
-      return { list: edited ?? list, builtin: true, edited: edited !== undefined };
+      return {
+        list: edited === undefined ? list : withBuiltinImages(edited, list),
+        builtin: true,
+        edited: edited !== undefined,
+      };
     }),
     ...stored.filter((list) => !builtinIds.has(list.id)).map((list) => ({ list, builtin: false, edited: false })),
   ];

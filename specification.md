@@ -116,22 +116,37 @@ Nach jeder Aufgabe werden **drei Bauteile** angeboten. Das Kind wählt eines und
 | **Falsche Antwort** | 3 **beschädigte** Teile zur Auswahl (das Kind entscheidet also auch hier selbst) |
 | Richtig, Serie 1–2 | 3 Grundbauteile |
 | Richtig, Serie 3–4 | 2 Grundbauteile + 1 Dekoration |
-| Richtig, Serie 5–9 | 1 Grundbauteil + 1 Dekoration + 1 Abschluss (Dach/Zinnen) |
-| Richtig, Serie 10+ | mindestens 1 **Premium-Teil** |
+| Richtig, Serie 5–7 | 1 Grundbauteil + 1 Dekoration + 1 Abschluss (Dach/Zinnen) |
+| Richtig, Serie 8+ | 1 **Premium-Teil** + 1 Grundbauteil + 1 Dekoration oder Abschluss |
 
 - **Serie (Streak):** Anzahl richtiger Antworten in Folge. Eine falsche Antwort **halbiert** die Serie (abgerundet), statt sie auf 0 zu setzen.
 - Die Serie wird sichtbar angezeigt (z. B. als Fackeln, die nacheinander aufleuchten), damit Kinder den Zusammenhang „mehr richtig in Folge → schönere Teile“ verstehen.
 - Die drei Angebote sollen sich unterscheiden (keine drei gleichen Teile).
 - **Umgebungsteile** (Baum, Brunnen, Wassergraben, Zugbrücke): Bei richtigen Antworten kann ab und zu ein Grundbauteil durch ein Umgebungsteil ersetzt werden (siehe Abschnitt 13, Vorgaben für Phase 4).
 
+### Seltenheit (seit Phase 8)
+Je cooler ein Teil, desto seltener ist es. Eine Stufe kommt erst ab ihrer Serie in den Topf und wird dann seltener gezogen als die gewöhnlichen Teile.
+
+| Stufe | ab Serie | Gewicht | Karte |
+|---|---|---|---|
+| gewöhnlich | 0 | 12 | normal |
+| selten | 5 | 4 | blauer Schimmer |
+| episch | 8 | 2 | lila Schimmer |
+| legendär | 10 | 1 | goldener Schimmer mit Lichtstreifen |
+
+- Gezogen wird pro Angebotsplatz in zwei Schritten: erst eine Stufe nach Gewicht (nur Stufen, die gerade Teile haben), dann gleich verteilt ein Teil daraus. So bleibt Legendäres selten, egal wie viele Teile es gibt. Am Premium-Platz (nur episch und legendär) ist ein legendäres Teil damit etwa jedes dritte Mal dabei.
+- Große Teile behalten zusätzlich ihre Mindest-Serie; es gilt die höhere der beiden Schwellen.
+- Die Karte zeigt die Stufe nur über Farbe und Schimmer, ohne Text, Zahlen oder Sterne. Bei „Bewegung reduzieren“ entfällt der Lichtstreifen.
+- Beschädigte Teile sind immer gewöhnlich.
+
 ### Bauteil-Katalog
 | Kategorie | Beispiele |
 |---|---|
-| Grundbauteile | Mauerblock, Turmblock, Tor, Mauer mit Fenster |
-| Abschlüsse | Zinnen, Spitzdach, Kegeldach |
-| Dekorationen | Fahne, Wimpel, Balkon, Wappen, Fackel, Efeu, Blumenkasten |
-| Premium | goldenes Dach, Bannerfahne, Buntglasfenster, Drache auf dem Turm |
-| Umgebung | Baum, Brunnen, Wassergraben, Zugbrücke |
+| Grundbauteile | Mauerblock, Turmblock, Tor, Mauer mit Fenster, große Varianten; *selten:* Buntglasfenster, Tor mit Fallgitter, Burgbogen |
+| Abschlüsse | ~~Zinnen~~ (automatisch), Spitzdach, Kegeldach, hohes und großes Dach; *selten:* goldenes Dach, Glockenturm |
+| Dekorationen | Fahne, Wimpel, Balkon (mit Tür), Wappen, Fackel, Efeu, Blumenkasten, Holztreppe; *selten:* Bannerfahne |
+| Premium | *episch:* Drache, Riesenfahne, Funkelkristall, Burggespenst, Schatztruhe; *legendär:* Feuerdrache, Windmühle, Heißluftballon, Sternwarte, Einhorn |
+| Umgebung | Baum, Brunnen, Wassergraben, Zugbrücke, Fässer und Kisten; *selten:* Springbrunnen |
 | **Beschädigt** | Bröckelmauer, Mauer mit Loch, Mauer mit Riss, Turmblock mit fehlender Ecke, schiefes Dach mit fehlenden Ziegeln, zerrissene Fahne, Holzbretter-Flickwerk, Steinhaufen |
 
 ### Gestaltung der beschädigten Teile
@@ -230,6 +245,8 @@ Empfohlener Weg in drei Stufen:
 Wichtig: Das **Raster- und Overlay-System zuerst festlegen**, dann Grafiken passend dazu erstellen bzw. auswählen, nicht umgekehrt. Fremde Asset-Pakete enthalten selten beschädigte Varianten. Die Schadens-Overlays werden deshalb voraussichtlich selbst gezeichnet.
 
 Wort-Bilder (Hund, Katze …): einheitliches Icon-Set, z. B. OpenMoji (CC BY-SA) oder selbst erzeugte SVGs.
+
+**Umsetzung (Phase 8):** Stufe 2 ist umgesetzt. Alle Spielgrafiken erzeugt ein Generator in `scripts/art/` (`npm run art`) als SVG nach `public/assets/art/`. Feste Palette in `scripts/art/palette.ts`, Kontur 4 px, Licht von links oben. Wort-Bilder kommen von OpenMoji (siehe Abschnitt 13, Phase 8).
 
 ## 10. Technik-Stack
 
@@ -410,7 +427,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Zinnen-Teil stillgelegt:** Es wird nicht mehr angeboten, weil Zinnen automatisch entstehen. In gespeicherten Burgen bleibt es darstellbar.
 - **Oben drauf auch auf Mauern:** Fahne, Wimpel, Drache usw. stecken jetzt auch auf Mauern, und zwar auf deren automatischen Zinnen.
 - **Dach-Garantie:** In den letzten 2 Aufgaben ist immer ein Dach im Angebot, nach richtiger Antwort Spitz-, Kegel- oder hohes Spitzdach, nach falscher das schiefe Dach. Es ersetzt nie ein Premium-Teil und nie das einzige Teil zum Weiterbauen.
-- **Animierte Teile:** Feuerdrache (pustet Flammen), Riesenfahne (weht), Funkelkristall (glitzert), alle drei oben drauf, sowie die Windmühle (Flügel drehen sich; steht wie ein Dach, nichts darauf). Ab **Serie 12** ist das Premium-Teil immer eines davon. Sie bewegen sich in der Bauszene und auf den Angebotskarten. Vorschaubilder der Galerie sind Standbilder.
+- **Animierte Teile:** Feuerdrache (pustet Flammen), Riesenfahne (weht), Funkelkristall (glitzert), alle drei oben drauf, sowie die Windmühle (Flügel drehen sich; steht wie ein Dach, nichts darauf). ~~Ab **Serie 12** ist das Premium-Teil immer eines davon.~~ Seit Phase 8 regelt das die Seltenheit (Abschnitt 4). Sie bewegen sich in der Bauszene und auf den Angebotskarten. Vorschaubilder der Galerie sind Standbilder.
 - **Zwischenspeicher:** Er ist unbegrenzt. Die Leiste steht links, im Hochformat unten. Beim Setzen kann man das Teil „In den Speicher“ legen; das zählt wie gesetzt und lässt sich rückgängig machen. Oder man tippt ein Speicher-Teil an und tauscht es gegen das gewählte.
 - **Bearbeitungsmodus:** Nach dem Setzen (oder Ablegen) des letzten Teils geht es **automatisch** in den Bearbeitungsmodus. Antippen nimmt das oberste Ding einer Zelle auf, erst Fahne, dann Front-Deko, dann Efeu, dann das Teil. Was dadurch keinen Halt mehr hat, fällt samt Deko in den Speicher. Speicher-Teile lassen sich setzen, ein gehaltenes Teil kann zurück in den Speicher.
 - **„Burg ist fertig“ erst, wenn alles gesetzt ist:** Es darf nichts in der Hand und nichts im Speicher liegen. Damit kein Kind festsitzt, gibt es eine Ausnahme: Passt keines der restlichen Speicher-Teile noch irgendwo hin, darf es trotzdem abschließen (Hinweis im Text), und die Reste entfallen.
@@ -432,7 +449,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Eingabemodus (wie in der Liste / Bausteine / Tastatur). Die Wortlisten werden seit dem Nachtrag eingeschaltet statt einzeln gewählt.
 - Aufgaben pro Burg 10/15/20 (15), Großschreibung Pflicht (aus), Vorlesen (an).
 - „Ich bin neu“ erlaubt (an), Bild-Code (aus), „Alle Burgen“ zeigen (an).
-- Die Einstellung „Sound an/aus“ kommt mit den Sounds in Phase 8.
+- Die Einstellung „Sound an/aus“ kam mit den Sounds in Phase 8 („Leise Töne bei Erfolgen“, an).
 
 **Profile verwalten**
 - **Klasse anlegen:** ein Spitzname pro Zeile, die Symbole werden der Reihe nach vergeben (höchstens 30).
@@ -468,3 +485,43 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **„geprüft“ pro Wort:** Im Editor gibt es dafür ein Häkchen; die Listenübersicht zeigt, wie viele Wörter noch ungeprüft sind. Damit lassen sich die mitgelieferten Wörter direkt in der App gegen Duden/Wiktionary abhaken. Selbst eingetragene oder geänderte Wörter gelten als geprüft.
 - **Lernfortschritt** wird pro Wort geführt (nicht mehr pro Liste); ältere Stände werden beim Laden zusammengeführt.
 - **Speicherformat:** Einstellungen Version 2 (`activeListIds` statt `wordListId`, mit Migration), PIN als eigener Datensatz `teacherPin`.
+
+### Phase 8 (2026-11-01)
+**Grafiken**
+- **Generator statt Einzeldateien:** `scripts/art/*.ts` zeichnet alle Grafiken als SVG-Text aus gemeinsamen Bausteinen (Steine, Bögen, Fenster, Schindeln, Tuch, Flammen). `npm run art` schreibt sie nach `public/assets/art/`, dazu App-Icon und Favicon. Die erzeugten Dateien sind eingecheckt; die Platzhalter sind entfernt. Der Generator läuft mit Node direkt als TypeScript, ohne neue Abhängigkeit (die wenigen Node-Typen stehen in `scripts/node.d.ts`).
+- **Maße unverändert:** 96 px je Zelle, kachelbare Steintextur 192 × 192, Zinnen 96 × 32. Fenster bleiben bei x 34–62 mit Unterkante 70, damit Blumenkästen passen.
+- **Dächer schließen bündig ab:** Die Traufe liegt genau auf den Außenkanten des Teils darunter, die Kontur mittig auf der Zellgrenze wie bei den Blöcken.
+- **Balkon mit Tür:** Hinter dem Geländer liegt eine Tür, damit der Balkon erreichbar ist.
+- **Hintergrund:** Sonne, Wolken mit Schatten, zwei Hügelreihen mit Bäumchen auf der Kante, Wiese mit Blümchen.
+- **Bewegte Teile:** Jedes hat eine Grundgrafik und eine bewegte Grafik `<id>-moving.svg`. Bewegungsarten: drehen (Windmühle), wehen (Riesenfahne), Feuer (Feuerdrache), funkeln (Kristall, Truhe, Einhorn), pendeln (Glocke, Fernrohr), schweben (Gespenst, Ballon), sprudeln (Springbrunnen). Die Sonderregel „ab Serie 12 immer ein animiertes Teil“ entfällt; das regelt jetzt die Seltenheit (Abschnitt 4).
+
+**Neue Teile**
+- **Holztreppe** (Dekoration, gewöhnlich): steht wie ein Dach auf dem Boden oder einem Block, steigt nach rechts an; darauf kann man nicht bauen.
+- **Fässer und Kisten** (Umgebung, gewöhnlich).
+- **Tor mit Fallgitter** (Grundbauteil, selten): Block mit hochgezogenem Eisengitter.
+- **Burgbogen** (Grundbauteil 2 × 1, selten): Block mit Rundbogen, durch den man hindurchsieht. Die Szene spart die Textur dort aus (eigene Canvas-Textur je Lage im Fugenmuster) und zeichnet unter dem Bogen keine Kante. Er braucht wie alle großen Teile Halt unter mindestens einer Spalte und taugt so als Brücke.
+- **Glockenturm** (Abschluss, selten, Dach): die Glocke pendelt.
+- **Springbrunnen** (Umgebung, selten): das Wasser sprudelt.
+- **Burggespenst** (Premium, episch, an glatter Vorderseite): schwebt sanft.
+- **Schatztruhe** (Premium, episch, Boden): Gold funkelt.
+- **Heißluftballon** (Premium, legendär, 1 × 2, steht wie ein Dach): schwebt.
+- **Sternwarte** (Premium, legendär, Dach): das Fernrohr schwenkt.
+- **Einhorn** (Premium, legendär, Boden): das Horn glitzert.
+- Goldenes Dach, Bannerfahne und Buntglasfenster sind jetzt seltene Teile ihrer Kategorie statt Premium.
+
+**Wort-Bilder**
+- 161 von 226 Wörtern haben ein Bild von **OpenMoji 15.1.0** (CC BY-SA 4.0). `npm run words` lädt sie einmalig nach `public/assets/words/<Wort-ID>.svg` und trägt `image` in die Wortlisten ein. Zur Laufzeit gibt es keine Netzwerkanfragen.
+- Nur eindeutige Bilder: Abstraktes (Thema, Problem, Woche …) und Missverständliches (Gabel: das Emoji zeigt Messer und Gabel) behält den Anfangsbuchstaben.
+- Bearbeitete mitgelieferte Listen behalten die Bilder der Originalwörter; ein im Editor korrigiertes Wort behält sein Bild.
+- Namensnennung: Abschnitt „Bildnachweis“ im Lehrkraft-Bereich und `public/assets/words/LIZENZ.md`.
+
+**Töne**
+- Im Browser erzeugt (Web Audio), keine Dateien. Bewusst leise (Lautstärke 0,12).
+- Klänge: richtig (kleiner Dreiklang), „Fast!“ (ein leiser Ton), seltenes Teil im Angebot (Glitzern), Teil nehmen (Klick), Teil setzen („Plopp“), Burg fertig (kurze Fanfare). **Bei falschen Antworten bleibt es still.**
+- Einstellung „Leise Töne bei Erfolgen“ (an). Ein fehlendes Feld in älteren Einstellungen bekommt den Standard, daher keine neue Speicherversion.
+- Welche Ereignisse es gibt, leitet `logic/gameEvents.ts` rein aus „Zustand vorher → nachher“ ab.
+
+**Animationen**
+- Richtige Antwort: Die Wortkarte hüpft, ein kleiner Sternenregen geht von ihr aus.
+- Burg fertig: Schild „Burg fertig!“ über der Burg und Konfetti, etwa 3,5 Sekunden. Es blockiert keine Eingabe; das Namensfeld ist sofort bedienbar.
+- **Bewegung reduzieren** (`prefers-reduced-motion`): Bewegte Teile stehen auch in der Bauszene still; Sternenregen, Konfetti und Lichtstreifen entfallen.

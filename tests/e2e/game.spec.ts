@@ -68,6 +68,7 @@ test('nach 15 Aufgaben ist die Burg fertig und bekommt einen Namen', async ({ pa
   test.setTimeout(150_000);
   await buildWholeCastle(page);
   await page.getByRole('button', { name: 'Burg ist fertig' }).click();
+  await expect(page.locator('.celebration-banner')).toHaveText('Burg fertig!');
   await expect(page.getByText('Deine Burg ist fertig!')).toBeVisible();
   await expect(page.getByRole('img', { name: '15 von 15 Wörtern geschafft' })).toBeVisible();
   await expect(page.getByLabel('Wie soll deine Burg heißen?')).toBeFocused();

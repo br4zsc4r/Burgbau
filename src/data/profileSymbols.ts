@@ -22,7 +22,7 @@ export const ALL_SYMBOLS: readonly ProfileSymbol[] = SYMBOL_COLORS.flatMap((colo
 
 /** Platzhalter-Grafik des Tiers (bis Phase 8). */
 export function animalArtUrl(animal: Animal): string {
-  return `assets/placeholder/symbols/${animal}.svg`;
+  return `assets/art/symbols/${animal}.svg`;
 }
 
 export function sameSymbol(a: ProfileSymbol, b: ProfileSymbol): boolean {
