@@ -81,19 +81,6 @@ export function removeProfile(profiles: readonly Profile[], id: string): Profile
   return profiles.filter((profile) => profile.id !== id);
 }
 
-/** Eigene Wortliste für ein Kind; undefined = die des Geräts. */
-export function setProfileWordList(
-  profiles: readonly Profile[],
-  id: string,
-  wordListId: string | undefined,
-): Profile[] {
-  return updateProfile(profiles, id, (profile) => {
-    const next = { ...profile };
-    delete next.wordListId;
-    return wordListId === undefined ? next : { ...next, wordListId };
-  });
-}
-
 /** Bild-Code setzen oder (undefined) zurücksetzen – dann wählt das Kind beim nächsten Mal neu. */
 export function setProfileCode(
   profiles: readonly Profile[],

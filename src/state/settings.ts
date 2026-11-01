@@ -1,8 +1,11 @@
 import type { InputModeSetting, Settings, TasksPerCastle } from '../types';
 import { isRecord } from './validate';
 
+/** Diese Liste ist an, solange nichts anderes eingestellt ist. */
+export const DEFAULT_LIST_ID = 'klasse-1-2';
+
 export const defaultSettings: Settings = {
-  wordListId: 'klasse-1-2',
+  activeListIds: [DEFAULT_LIST_ID],
   inputMode: 'list',
   requireCapitalization: false,
   readAloud: true,
@@ -21,10 +24,12 @@ export function parseSettings(value: unknown): Settings {
   const bool = (key: keyof Settings): boolean =>
     typeof value[key] === 'boolean' ? value[key] : (defaultSettings[key] as boolean);
   return {
-    wordListId:
-      typeof value['wordListId'] === 'string' && value['wordListId'] !== ''
-        ? value['wordListId']
-        : defaultSettings.wordListId,
+    activeListIds:
+      Array.isArray(value['activeListIds']) &&
+      value['activeListIds'].length > 0 &&
+      value['activeListIds'].every((id) => typeof id === 'string' && id !== '')
+        ? (value['activeListIds'] as string[])
+        : defaultSettings.activeListIds,
     inputMode: INPUT_MODES.includes(value['inputMode'] as InputModeSetting)
       ? (value['inputMode'] as InputModeSetting)
       : defaultSettings.inputMode,

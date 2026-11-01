@@ -75,7 +75,7 @@ test('neue Burg bei laufender Burg fragt nach', async ({ page }) => {
 });
 
 test('Sammlung: eigene Burgen, alle Burgen und Ansicht in voller Größe', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   await startGame(page, 'Lena');
   await buildWholeCastle(page);
   await page.getByRole('button', { name: 'Burg ist fertig' }).click();

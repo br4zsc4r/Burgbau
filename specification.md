@@ -60,7 +60,7 @@ Der Modus ist in der Wortliste festgelegt (siehe Abschnitt 3) und kann von der L
 
 ## 3. Wortlisten (bestimmen die Klassenstufe)
 
-Die Klassenstufe wird **nicht** separat eingestellt, sondern über die **aktive Wortliste**. Die Lehrkraft wählt pro Gerät eine Liste aus.
+Die Klassenstufe wird **nicht** separat eingestellt, sondern über die **eingeschalteten Wortlisten**. Die Lehrkraft schaltet eine oder mehrere Listen ein. Ihre Wörter kommen gemeinsam für alle Kinder des Geräts dran.
 
 ### Mitgelieferte Listen
 | Datei | Inhalt | Standardmodus |
@@ -185,7 +185,7 @@ Auf einem Schulgerät spielen viele Kinder. Jedes Kind hat deshalb ein eigenes, 
 - **Kein Passwort.** Optional (Lehrkraft-Einstellung, standardmäßig aus): ein **Bild-Code** aus 2 Symbolen, falls Kinder sich gegenseitig in fremden Profilen weiterbauen.
 - **Anlegen:** durch die Lehrkraft (ganze Klasse auf einmal, Namen einfügen) oder, falls erlaubt, durch das Kind selbst über „Ich bin neu“.
 - Bis zu **30 Profile** pro Gerät (eine Klasse).
-- **Pro Profil gespeichert:** laufende Burg, eigene Burg-Sammlung, Lernfortschritt der Wörter, optional eine eigene Wortliste (für Kinder, die mehr Förderung oder mehr Herausforderung brauchen).
+- **Pro Profil gespeichert:** laufende Burg, eigene Burg-Sammlung, Lernfortschritt der Wörter. Gezielte Förderung entsteht über den Lernfortschritt: Jedes Kind übt vor allem seine Problemwörter. Eigene Wortlisten pro Kind gibt es nicht (Entscheidung 2026-11-01).
 - **Datenschutz:** nur Spitzname oder Vorname, alles bleibt lokal auf dem Gerät, kein Server.
 
 ## 7. Burg-Sammlung
@@ -202,10 +202,10 @@ Auf einem Schulgerät spielen viele Kinder. Jedes Kind hat deshalb ein eigenes, 
 
 ## 8. Lehrkraft-Einstellungen
 
-Erreichbar über einen **gesicherten Zugang**, damit Kinder sie nicht versehentlich öffnen (z. B. Zahnrad 3 Sekunden gedrückt halten, dann eine einfache Rechenaufgabe wie 7 × 8).
+Erreichbar über einen **gesicherten Zugang**, damit Kinder sie nicht versehentlich öffnen: Zahnrad antippen, dann eine **PIN** der Lehrkraft eingeben.
 
 - **Profile verwalten:** anlegen (einzeln oder als Liste), umbenennen, löschen; „Kinder dürfen selbst Profile anlegen“ ja/nein; Bild-Code an/aus
-- Aktive Wortliste (= Klassenstufe) für das Gerät, optional abweichend pro Profil
+- Wortlisten ein- und ausschalten (= Klassenstufe), Listen anlegen und bearbeiten
 - Eingabemodus überschreiben (Bausteine / Tastatur)
 - Aufgaben pro Burg (10 / 15 / 20)
 - Großschreibung verpflichtend ja/nein
@@ -388,7 +388,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 **Wortlisten**
 - **Umfang:** `klasse-1-2.json` hat 61 Wörter (Bausteine), `klasse-3.json` 82 Wörter mit vielen Umlauten (Bausteine; die Spezifikation erlaubt beide Modi), `klasse-4.json` 83 Wörter mit Sonderfällen (Tastatur). Alle Wörter stehen auf `verified: false` und müssen vor dem Einsatz gegen Duden/Wiktionary geprüft werden.
 - **Bewusst weggelassen** wurden Wörter mit mehrdeutigem Plural (z. B. Mutter, Bank, Wort, Stock, Band, Hahn, Tuch, Virus). Bei anerkannten Doppelformen gelten beide: Pizzas/Pizzen, Globen/Globusse, Kakteen/Kaktusse, Taxis/Taxen.
-- **Aktive Liste:** Kommt aus den Einstellungen (Standard Klasse 1/2). Bis zu den Lehrkraft-Einstellungen in Phase 7 lässt sie sich zum Ausprobieren über die Adresse wählen: `?liste=klasse-3`.
+- **Aktive Liste:** Kommt aus den Einstellungen (Standard Klasse 1/2). Bis zu den Lehrkraft-Einstellungen in Phase 7 ließ sie sich zum Ausprobieren über die Adresse wählen (`?liste=klasse-3`); seit Phase 7 nicht mehr.
 
 **Bausteine-Modus**
 - Das Wort steht als Bausteine da: „die“, die Buchstaben des Singulars, dahinter ein Endungsfeld. Die Endungen (-e, -er, -n, -en, -s, – für „keine Endung“) werden **angetippt oder ans Wort gezogen**. Pünktchen setzt man durch **Antippen eines Vokals** oder durch Ziehen des ¨-Bausteins auf den Vokal. Vokale sind eigene 64-px-Felder.
@@ -402,7 +402,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Hinweis für Linux-Geräte:** Firefox-basierte Browser brauchen einen laufenden `speech-dispatcher` mit Sprachmodul (z. B. `speech-dispatcher-espeak-ng`). Bei Flatpak-Browsern muss der Dienst über die Socket-Unit erreichbar sein (`systemctl --user enable --now speech-dispatcher.socket`), weil die Sandbox ihn nicht selbst starten kann. Danach den Browser vollständig neu starten.
 
 **Lernfortschritt**
-- Fächer 0–4 je Wort, Profil und Wortliste, gespeichert als `progress:<Profil-ID>`.
+- Fächer 0–4 je Wort und Profil, gespeichert als `progress:<Profil-ID>` (seit dem Nachtrag zu Phase 7 unabhängig von der Liste).
 - Gezählt wird das Endergebnis jeder Aufgabe, auch bei Wiederholungen: richtig → ein Fach höher, falsch → Fach 0.
 - Fach 0–2 gilt als „zu üben“. Neue Aufgaben kommen zu etwa 60 % aus diesen Wörtern, sonst aus neuen oder sicheren (Fach 3–4).
 
@@ -424,19 +424,19 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 
 ### Phase 7 (2026-11-01)
 **Zugang und Wirkung**
-- **Gesicherter Zugang:** Das Zahnrad oben rechts auf „Wer spielt?“ muss 3 Sekunden gedrückt gehalten werden, ein Ring füllt sich dabei. Danach kommt eine Malaufgabe (6–9 × 6–9). Eine falsche Antwort bringt eine neue Aufgabe.
+- **Gesicherter Zugang:** ~~Zahnrad 3 Sekunden halten, dann Malaufgabe~~ – ersetzt durch eine PIN (siehe Nachtrag unten).
 - **Wirkung:** Einstellungen werden sofort gespeichert und gelten nach „Fertig“; die App lädt dafür neu. Laufende Burgen behalten ihre Aufgabenzahl, neue Burgen nutzen die neue.
 - Die vorübergehende Listenwahl über die Adresse (`?liste=`) entfällt.
 
 **Einstellungen** (Standard in Klammern)
-- Wortliste des Geräts (Klasse 1/2) und Eingabemodus (wie in der Liste / Bausteine / Tastatur).
+- Eingabemodus (wie in der Liste / Bausteine / Tastatur). Die Wortlisten werden seit dem Nachtrag eingeschaltet statt einzeln gewählt.
 - Aufgaben pro Burg 10/15/20 (15), Großschreibung Pflicht (aus), Vorlesen (an).
 - „Ich bin neu“ erlaubt (an), Bild-Code (aus), „Alle Burgen“ zeigen (an).
 - Die Einstellung „Sound an/aus“ kommt mit den Sounds in Phase 8.
 
 **Profile verwalten**
 - **Klasse anlegen:** ein Spitzname pro Zeile, die Symbole werden der Reihe nach vergeben (höchstens 30).
-- **Pro Profil:** umbenennen, eigene Wortliste (sonst die des Geräts), Bild-Code ansehen und zurücksetzen, Burgen anzeigen und einzeln löschen, Sammlung leeren, Profil löschen. Beim Löschen fallen laufende Burg, Sammlung und Lernstand mit weg.
+- **Pro Profil:** umbenennen, Bild-Code ansehen und zurücksetzen, Burgen anzeigen und einzeln löschen, Sammlung leeren, Profil löschen. Beim Löschen fallen laufende Burg, Sammlung und Lernstand mit weg.
 
 **Bild-Code**
 - 9 Bilder (bekannte Bauteile), zwei davon in fester Reihenfolge. Dasselbe Bild zweimal ist erlaubt (81 Codes).
@@ -447,7 +447,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Fehlerhafte Zeilen werden mit Zeilennummer und Grund gemeldet, der Rest wird importiert.
 - Muster und Umlaut werden automatisch abgeleitet. Sonderfälle (Museum → Museen) bekommen einen Pluralstamm und laufen nur im Tastatur-Modus.
 - Importierte Wörter gelten als geprüft (`verified: true`), weil die Lehrkraft sie verantwortet. Die Liste startet im Tastatur-Modus, die Einstellung „Eingabemodus“ kann das ändern.
-- Wird eine Liste gelöscht, fallen Gerät und Profile auf ihre Standardliste zurück.
+- Wird eine eingeschaltete Liste gelöscht und ist danach keine mehr an, gilt wieder Klasse 1/2.
 
 **20 Aufgaben (14 × 9)**
 - Die Bauszene passt Welt und Hintergrund an die Rastergröße der gezeigten Burg an. Vorschaubilder nutzen das Layout der jeweiligen Burg, Burgen verschiedener Größe stehen also nebeneinander in der Galerie.
@@ -458,3 +458,13 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Manifest mit App-Symbolen (192, 512, maskable). Ein E2E-Test prüft den Start ohne Netz.
 
 **Nicht umgesetzt** (in Abschnitt 8 als Ausbaustufe markiert): Übersicht der oft falschen Wörter und Backup als Datei.
+
+**Nachtrag zu Phase 7 (Rückmeldung, 2026-11-01)**
+- **PIN statt Gedrückthalten und Rechenaufgabe:** Ein Tipp aufs Zahnrad öffnet die PIN-Abfrage. Beim ersten Mal legt die Lehrkraft eine PIN aus 4–8 Ziffern fest (zweimal eingeben). Im Lehrkraft-Bereich lässt sie sich ändern. Gespeichert wird nur ein SHA-256-Hash. Eine vergessene PIN lässt sich nur durch Löschen der Website-Daten zurücksetzen, was alle Profile und Burgen löscht; darauf weist der Dialog beim Festlegen hin.
+- **Wortlisten ein- und ausschalten statt pro Kind zuweisen:** Jede Liste hat einen Schalter. Die Wörter aller eingeschalteten Listen kommen gemeinsam für alle Kinder dran; doppelte Wörter zählen einmal. Mindestens eine Liste bleibt an. Die Zuordnung einzelner Listen zu Kindern entfällt.
+- **Eingabemodus bei mehreren Listen:** Bei „wie in der Wortliste“ gilt pro Wort der Modus der Liste, aus der es stammt.
+- **Listen über die Oberfläche bearbeiten:** Neue Listen anlegen; Name, Eingabemodus und Wörter bearbeiten (hinzufügen, ändern, entfernen). Muster und Sonderfälle werden wie beim CSV-Import automatisch erkannt, fehlerhafte Zeilen werden markiert.
+- **Mitgelieferte Listen** sind ebenfalls bearbeitbar; die bearbeitete Fassung ersetzt das Original („bearbeitet“), „Original wiederherstellen“ macht das rückgängig. Löschen geht nur bei eigenen Listen.
+- **„geprüft“ pro Wort:** Im Editor gibt es dafür ein Häkchen; die Listenübersicht zeigt, wie viele Wörter noch ungeprüft sind. Damit lassen sich die mitgelieferten Wörter direkt in der App gegen Duden/Wiktionary abhaken. Selbst eingetragene oder geänderte Wörter gelten als geprüft.
+- **Lernfortschritt** wird pro Wort geführt (nicht mehr pro Liste); ältere Stände werden beim Laden zusammengeführt.
+- **Speicherformat:** Einstellungen Version 2 (`activeListIds` statt `wordListId`, mit Migration), PIN als eigener Datensatz `teacherPin`.

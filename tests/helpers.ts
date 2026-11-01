@@ -1,7 +1,7 @@
 import type { RandomFn, Settings, Word } from '../src/types';
 
 export const testSettings: Settings = {
-  wordListId: 'test',
+  activeListIds: ['test'],
   inputMode: 'list',
   requireCapitalization: false,
   readAloud: false,

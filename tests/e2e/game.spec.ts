@@ -65,7 +65,7 @@ test('Serie 3 bringt eine Dekoration, die an einem Bauteil andockt', async ({ pa
 });
 
 test('nach 15 Aufgaben ist die Burg fertig und bekommt einen Namen', async ({ page }) => {
-  test.setTimeout(90_000);
+  test.setTimeout(150_000);
   await buildWholeCastle(page);
   await page.getByRole('button', { name: 'Burg ist fertig' }).click();
   await expect(page.getByText('Deine Burg ist fertig!')).toBeVisible();

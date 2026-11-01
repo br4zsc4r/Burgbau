@@ -9,8 +9,9 @@ export const CURRENT_VERSION = {
   game: 2,
   castles: 1,
   progress: 1,
-  settings: 1,
+  settings: 2,
   wordlists: 1,
+  pin: 1,
 } as const;
 
 export type RecordKind = keyof typeof CURRENT_VERSION;
@@ -29,8 +30,19 @@ const MIGRATIONS: Record<RecordKind, Partial<Record<number, Migration>>> = {
   },
   castles: {},
   progress: {},
-  settings: {},
+  settings: {
+    // Phase 7: statt einer Liste pro Gerät mehrere eingeschaltete Listen.
+    1: (record) => {
+      const settings = isRecord(record['settings']) ? record['settings'] : {};
+      const { wordListId, ...rest } = settings;
+      // Schon vorhandene Liste aktiver Listen hat Vorrang vor dem alten Einzelfeld.
+      const activeListIds =
+        rest['activeListIds'] ?? (typeof wordListId === 'string' ? [wordListId] : undefined);
+      return { ...record, settings: { ...rest, activeListIds } };
+    },
+  },
   wordlists: {},
+  pin: {},
 };
 
 /**

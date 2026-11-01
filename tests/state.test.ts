@@ -143,13 +143,17 @@ describe('Phase 6: Speicherformat', () => {
     expect(parseGameState(JSON.parse(JSON.stringify(stashed)))).toEqual(stashed);
   });
 
-  it('speichert Lernfächer je Profil und Wortliste', async () => {
+  it('führt ältere Lernstände je Liste zu einem Stand pro Wort zusammen', async () => {
+    const store = createMemoryStore();
+    await store.set('progress:p1', { version: 1, lists: { 'klasse-3': { baum: 2 }, 'klasse-4': { museum: 0 } } });
+    expect(await createRepository(store).loadBoxes('p1')).toEqual({ baum: 2, museum: 0 });
+  });
+
+  it('speichert Lernfächer je Profil', async () => {
     const repo = createRepository(createMemoryStore());
-    expect(await repo.loadBoxes('p1', 'klasse-3')).toEqual({});
-    await repo.saveBoxes('p1', 'klasse-3', { baum: 2 });
-    await repo.saveBoxes('p1', 'klasse-4', { museum: 0 });
-    expect(await repo.loadBoxes('p1', 'klasse-3')).toEqual({ baum: 2 });
-    expect(await repo.loadBoxes('p1', 'klasse-4')).toEqual({ museum: 0 });
-    expect(await repo.loadBoxes('p2', 'klasse-3')).toEqual({});
+    expect(await repo.loadBoxes('p1')).toEqual({});
+    await repo.saveBoxes('p1', { baum: 2, museum: 0 });
+    expect(await repo.loadBoxes('p1')).toEqual({ baum: 2, museum: 0 });
+    expect(await repo.loadBoxes('p2')).toEqual({});
   });
 });

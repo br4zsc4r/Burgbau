@@ -26,7 +26,9 @@ import {
   setProfileCode,
 } from '../logic/profiles';
 import { canUseTiles } from '../logic/tiles';
+import { activePool, mergeLists, validActiveIds } from '../logic/wordlists';
 import { createBuildGame } from '../scene/createBuildGame';
+import { DEFAULT_LIST_ID } from '../state/settings';
 import type { Repository } from '../state/repository';
 import type {
   Castle,
@@ -72,7 +74,7 @@ type Screen =
 export interface AppDeps {
   /** Mitgelieferte Wortlisten. */
   builtinLists: readonly WordList[];
-  /** Per CSV importierte Wortlisten der Lehrkraft. */
+  /** Gespeicherte Listen: bearbeitete mitgelieferte und eigene Listen der Lehrkraft. */
   customLists: readonly WordList[];
   /** Neu laden, damit geänderte Lehrkraft-Einstellungen überall wirken. */
   reload: () => void;
@@ -94,22 +96,12 @@ const PAUSE_ICON =
  */
 export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> {
   const { settings, random, repository } = deps;
-  const lists = [...deps.builtinLists, ...deps.customLists];
-  const findList = (id: string | undefined): WordList | undefined => lists.find((l) => l.id === id);
-  const foundList = findList(settings.wordListId) ?? lists[0];
-  if (foundList === undefined) throw new Error('Keine Wortliste vorhanden');
-  const deviceList: WordList = foundList;
-
-  // Wortliste des aktuellen Kindes (eigene Liste oder die des Geräts).
-  let list: WordList = deviceList;
-  let wordsById = new Map<string, Word>();
-  let wordIds: string[] = [];
-  const useList = (next: WordList): void => {
-    list = next;
-    wordsById = new Map(next.words.map((word) => [word.id, word]));
-    wordIds = [...wordsById.keys()];
-  };
-  useList(deviceList);
+  // Wörter aller eingeschalteten Listen – gleich für alle Kinder.
+  const lists = mergeLists(deps.builtinLists, deps.customLists).map((entry) => entry.list);
+  const pool = activePool(lists, validActiveIds(settings.activeListIds, lists, DEFAULT_LIST_ID));
+  if (pool.words.length === 0) throw new Error('Keine Wörter in den aktiven Listen');
+  const wordsById = new Map(pool.words.map((word) => [word.id, word]));
+  const wordIds = [...wordsById.keys()];
   const emptyGrid = createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]);
 
   let profiles: Profile[] = await repository.loadProfiles();
@@ -129,7 +121,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   /** Bausteine nur, wenn die Liste sie vorsieht und sich das Wort damit bauen lässt. */
   const inputModeFor = (word: Word): InputMode =>
-    (settings.inputMode === 'list' ? list.inputMode : settings.inputMode) === 'tiles' && canUseTiles(word)
+    (settings.inputMode === 'list' ? pool.inputModes[word.id] : settings.inputMode) === 'tiles' &&
+    canUseTiles(word)
       ? 'tiles'
       : 'keyboard';
 
@@ -258,7 +251,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     onDone: deps.reload,
   });
 
-  const gate = createTeacherGate(random, () => {
+  const gate = createTeacherGate(repository, () => {
     void teacherScreen
       .open()
       .then(() => {
@@ -336,11 +329,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   async function openProfile(selected: Profile): Promise<void> {
     profile = selected;
-    useList(findList(selected.wordListId) ?? deviceList);
-    [game, boxes] = await Promise.all([
-      repository.loadGame(selected.id),
-      repository.loadBoxes(selected.id, list.id),
-    ]);
+    [game, boxes] = await Promise.all([repository.loadGame(selected.id), repository.loadBoxes(selected.id)]);
     show({ kind: 'home' });
   }
 
@@ -372,7 +361,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     persistGame();
     if (profile !== null && next.boxes !== previous?.boxes) {
       boxes = next.boxes;
-      void repository.saveBoxes(profile.id, list.id, boxes).catch(report);
+      void repository.saveBoxes(profile.id, boxes).catch(report);
     }
     render();
     focusGame(previous === null || previous.step !== 'task' || previous.taskNumber !== next.taskNumber);

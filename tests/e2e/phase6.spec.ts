@@ -53,21 +53,22 @@ test.describe('Bausteine-Modus (Klasse 1/2)', () => {
     await expect(slot).toHaveText('-er');
     await expect(submit(page)).toBeEnabled();
   });
+});
 
-  test('ohne nötige Pünktchen heißt es „Fast!“', async ({ page }) => {
-    // Wörter neu ziehen, bis eines mit Umlaut kommt (Liste hat viele).
-    for (let i = 0; i < 12 && !(await currentWord(page)).umlaut; i++) {
-      await answer(page, true);
-      await chooseOffer(page, (piece) => piece.kind === 'block');
-      await placeAnywhere(page);
-      await page.getByRole('button', { name: 'Nächstes Wort' }).click();
-    }
-    const word = await currentWord(page);
-    test.skip(!word.umlaut, 'kein Umlaut-Wort gezogen');
-    await buildWithTiles(page, null, word.pattern);
-    await submit(page).click();
-    await expect(page.getByText('Fast! Schau noch mal genau.')).toBeVisible();
-  });
+test('ohne nötige Pünktchen heißt es „Fast!“ (Klasse 3, viele Umlaute)', async ({ page }) => {
+  test.setTimeout(90_000);
+  await startGame(page, 'Lena', 'klasse-3');
+  for (let i = 0; i < 12 && !(await currentWord(page)).umlaut; i++) {
+    await answer(page, true);
+    await chooseOffer(page, (piece) => piece.kind === 'block');
+    await placeAnywhere(page);
+    await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+  }
+  const word = await currentWord(page);
+  expect(word.umlaut).toBe(true);
+  await buildWithTiles(page, null, word.pattern);
+  await submit(page).click();
+  await expect(page.getByText('Fast! Schau noch mal genau.')).toBeVisible();
 });
 
 test('ohne Stimmen gibt es keinen Vorlese-Knopf', async ({ page }) => {
@@ -125,7 +126,7 @@ test('Zwischenspeicher: ablegen, rückgängig, tauschen', async ({ page }) => {
 });
 
 test('letzte Aufgaben: Dach im Angebot, danach Bearbeitungsmodus', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(150_000);
   await startGame(page);
   for (let n = 0; n < 15; n++) {
     await answer(page, n % 3 !== 1);

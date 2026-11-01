@@ -1,14 +1,19 @@
-import { parseCsvWordList } from '../logic/csvImport';
-import {
-  addClass,
-  removeProfile,
-  renameProfile,
-  setProfileCode,
-  setProfileWordList,
-} from '../logic/profiles';
+import { parseCsvWordList, wordFromInput } from '../logic/csvImport';
+import { hashPin, isValidPin } from '../logic/pin';
+import { addClass, removeProfile, renameProfile, setProfileCode } from '../logic/profiles';
+import { mergeLists, toggleList, validActiveIds, type ListEntry } from '../logic/wordlists';
 import type { Repository } from '../state/repository';
-import { defaultSettings } from '../state/settings';
-import type { InputModeSetting, Profile, Settings, TasksPerCastle, WordList } from '../types';
+import { DEFAULT_LIST_ID, defaultSettings } from '../state/settings';
+import type {
+  Article,
+  InputMode,
+  InputModeSetting,
+  Profile,
+  Settings,
+  TasksPerCastle,
+  Word,
+  WordList,
+} from '../types';
 import { element } from './dom';
 import { createPieceIcon } from './pieceIcon';
 import { createSymbolBadge } from './profileSymbol';
@@ -91,6 +96,12 @@ function checkbox(text: string, checked: boolean, onChange: (checked: boolean) =
   return label;
 }
 
+const ARTICLES: readonly Article[] = ['der', 'die', 'das'];
+const LIST_MODES: readonly { value: InputMode; label: string }[] = [
+  { value: 'tiles', label: texts.inputModeTiles },
+  { value: 'keyboard', label: texts.inputModeKeyboard },
+];
+
 /** Lehrkraft-Einstellungen (Spezifikation Abschnitt 8). Nur über den gesicherten Zugang erreichbar. */
 export function createTeacherScreen(deps: TeacherDeps): {
   element: HTMLElement;
@@ -104,16 +115,18 @@ export function createTeacherScreen(deps: TeacherDeps): {
     button(texts.teacherDone, 'primary-button', deps.onDone),
   );
   const general = element('section', 'teacher-section');
-  const profilesSection = element('section', 'teacher-section');
   const listsSection = element('section', 'teacher-section');
+  const profilesSection = element('section', 'teacher-section');
+  const pinSection = element('section', 'teacher-section');
   const resetSection = element('section', 'teacher-section');
-  screen.append(header, general, profilesSection, listsSection, resetSection);
+  screen.append(header, general, listsSection, profilesSection, pinSection, resetSection);
 
   let settings: Settings = defaultSettings;
   let profiles: Profile[] = [];
-  let customLists: WordList[] = [];
+  /** Bearbeitete mitgelieferte Listen und eigene Listen der Lehrkraft. */
+  let storedLists: WordList[] = [];
 
-  const allLists = (): WordList[] => [...deps.builtinLists, ...customLists];
+  const entries = (): ListEntry[] => mergeLists(deps.builtinLists, storedLists);
 
   async function saveSettings(change: Partial<Settings>): Promise<void> {
     settings = { ...settings, ...change };
@@ -125,10 +138,18 @@ export function createTeacherScreen(deps: TeacherDeps): {
     await repository.saveProfiles(profiles);
   }
 
+  async function saveStoredLists(next: WordList[]): Promise<void> {
+    storedLists = next;
+    await repository.saveCustomLists(storedLists);
+    // Gelöschte Listen dürfen nicht aktiv bleiben.
+    const lists = entries().map((e) => e.list);
+    const activeListIds = validActiveIds(settings.activeListIds, lists, DEFAULT_LIST_ID);
+    if (activeListIds.join() !== settings.activeListIds.join()) await saveSettings({ activeListIds });
+  }
+
   // ---------- Allgemein ----------
 
   function renderGeneral(): void {
-    const listOptions = allLists().map((l) => ({ value: l.id, label: l.name }));
     const modeOptions: { value: InputModeSetting; label: string }[] = [
       { value: 'list', label: texts.inputModeList },
       { value: 'tiles', label: texts.inputModeTiles },
@@ -140,9 +161,6 @@ export function createTeacherScreen(deps: TeacherDeps): {
     };
     general.replaceChildren(
       element('h2', 'section-title', texts.sectionGeneral),
-      labelled(texts.settingWordList, select(listOptions, settings.wordListId, (wordListId) => {
-        save({ wordListId });
-      })),
       labelled(texts.settingInputMode, select(modeOptions, settings.inputMode, (inputMode) => {
         save({ inputMode });
       })),
@@ -168,6 +186,226 @@ export function createTeacherScreen(deps: TeacherDeps): {
       checkbox(texts.settingShowAll, settings.showAllCastles, (showAllCastles) => {
         save({ showAllCastles });
       }),
+    );
+  }
+
+  // ---------- Wortlisten ----------
+
+  function listRow(entry: ListEntry): HTMLElement {
+    const { list } = entry;
+    const row = element('div', 'list-row');
+    const unverified = list.words.filter((w) => !w.verified).length;
+    const toggle = element('input', '');
+    toggle.type = 'checkbox';
+    toggle.checked = settings.activeListIds.includes(list.id);
+    toggle.setAttribute('aria-label', texts.listActive(list.name));
+    toggle.addEventListener('change', () => {
+      const activeListIds = toggleList(settings.activeListIds, list.id, toggle.checked);
+      toggle.checked = activeListIds.includes(list.id);
+      void saveSettings({ activeListIds }).catch(report);
+    });
+
+    const info = element('span', 'list-info');
+    info.append(element('strong', '', list.name), ' ', texts.listInfo(list.words.length, unverified));
+    if (entry.builtin) info.append(' · ', entry.edited ? texts.listEditedBadge : texts.listBuiltin);
+
+    const actions = element('span', 'list-actions');
+    actions.append(
+      button(texts.listEdit, 'secondary-button', () => {
+        openEditor(list);
+      }),
+    );
+    if (entry.edited) {
+      actions.append(
+        confirmButton(texts.listRestore, texts.confirmDelete, texts.confirmDeleteYes, () => {
+          void saveStoredLists(storedLists.filter((l) => l.id !== list.id)).then(renderLists).catch(report);
+        }),
+      );
+    }
+    if (!entry.builtin) {
+      actions.append(
+        confirmButton(texts.listDelete, texts.confirmDelete, texts.confirmDeleteYes, () => {
+          void saveStoredLists(storedLists.filter((l) => l.id !== list.id)).then(renderLists).catch(report);
+        }),
+      );
+    }
+    row.append(toggle, info, actions);
+    return row;
+  }
+
+  function csvImport(): HTMLElement {
+    const box = element('div', 'csv-import');
+    const file = element('input', 'setting-file');
+    file.type = 'file';
+    file.accept = '.csv,text/csv,text/plain';
+    file.setAttribute('aria-label', texts.listFile);
+    const preview = element('div', 'csv-preview');
+    let pending: WordList | null = null;
+    const take = button(texts.listImport, 'primary-button', () => {
+      if (pending === null) return;
+      void saveStoredLists([...storedLists, pending]).then(renderLists).catch(report);
+    });
+    take.disabled = true;
+    file.addEventListener('change', () => {
+      const chosen = file.files?.[0];
+      if (chosen === undefined) return;
+      void chosen
+        .text()
+        .then((text) => {
+          const name = chosen.name.replace(/\.[^.]+$/, '');
+          const result = parseCsvWordList(text, `eigene-${deps.newId()}`, name);
+          pending = result.list;
+          preview.replaceChildren(
+            element('p', 'setting-note', texts.listPreview(result.list?.words.length ?? 0)),
+            ...result.errors
+              .slice(0, 12)
+              .map((e) => element('p', 'csv-error', texts.csvErrorLine(e.line, texts.csvErrors[e.reason]))),
+          );
+          take.disabled = pending === null;
+        })
+        .catch(report);
+    });
+    box.append(labelled(texts.listFile, file), preview, take);
+    return box;
+  }
+
+  function renderLists(): void {
+    listsSection.replaceChildren(
+      element('h2', 'section-title', texts.sectionLists),
+      element('p', 'setting-note', texts.listsHint),
+      ...entries().map(listRow),
+      button(texts.listNew, 'primary-button', () => {
+        openEditor({ id: `eigene-${deps.newId()}`, name: texts.listNewName, inputMode: 'keyboard', words: [] });
+      }),
+      csvImport(),
+    );
+  }
+
+  /** Editor für eine Liste: Name, Eingabemodus, Wörter (hinzufügen, ändern, entfernen, prüfen). */
+  function openEditor(list: WordList): void {
+    const name = element('input', 'setting-input');
+    name.value = list.name;
+    const mode = select(LIST_MODES, list.inputMode, () => undefined);
+    const rows = element('div', 'editor-rows');
+    // Meldung und Knöpfe oben und unten – lange Listen müssen nicht bis ans Ende gescrollt werden.
+    const topMessage = element('p', 'csv-error');
+    const bottomMessage = element('p', 'csv-error');
+    const messages = [topMessage, bottomMessage];
+    const say = (text: string): void => {
+      for (const m of messages) m.textContent = text;
+    };
+
+    interface Row {
+      element: HTMLElement;
+      article: HTMLSelectElement;
+      singular: HTMLInputElement;
+      plural: HTMLInputElement;
+      verified: HTMLInputElement;
+      original: Word | null;
+    }
+    let editorRows: Row[] = [];
+
+    const addRow = (word: Word | null): void => {
+      const rowEl = element('div', 'editor-row');
+      const article = select(
+        ARTICLES.map((a) => ({ value: a, label: a })),
+        word?.article ?? 'der',
+        () => undefined,
+      );
+      article.setAttribute('aria-label', texts.editorArticle);
+      const singular = element('input', 'setting-input');
+      singular.value = word?.singular ?? '';
+      singular.setAttribute('aria-label', texts.editorSingular);
+      const plural = element('input', 'setting-input');
+      plural.value = word?.plural.join(' | ') ?? '';
+      plural.setAttribute('aria-label', texts.editorPlural);
+      const verifiedBox = element('label', 'setting-check');
+      const verified = element('input', '');
+      verified.type = 'checkbox';
+      verified.checked = word?.verified ?? true;
+      verifiedBox.append(verified, element('span', '', texts.editorVerified));
+      // Wer ein Wort selbst einträgt oder ändert, hat es geprüft.
+      for (const input of [article, singular, plural]) {
+        input.addEventListener('change', () => {
+          verified.checked = true;
+        });
+      }
+      const row: Row = { element: rowEl, article, singular, plural, verified, original: word };
+      rowEl.append(
+        article,
+        singular,
+        plural,
+        verifiedBox,
+        button(texts.editorRemove, 'secondary-button', () => {
+          editorRows = editorRows.filter((r) => r !== row);
+          rowEl.remove();
+        }),
+      );
+      editorRows.push(row);
+      rows.append(rowEl);
+    };
+    list.words.forEach(addRow);
+
+    const save = (): void => {
+      say('');
+      const listName = name.value.trim();
+      if (listName === '') {
+        say(texts.editorNameMissing);
+        return;
+      }
+      const words: Word[] = [];
+      let errors = 0;
+      for (const row of editorRows) {
+        row.element.classList.remove('has-error');
+        const { original } = row;
+        const unchanged =
+          original !== null &&
+          original.article === row.article.value &&
+          original.singular === row.singular.value.trim() &&
+          original.plural.join(' | ') === row.plural.value.trim();
+        const result = unchanged
+          ? { word: original }
+          : wordFromInput(row.article.value, row.singular.value, row.plural.value);
+        if ('error' in result || words.some((w) => w.id === result.word.id)) {
+          row.element.classList.add('has-error');
+          errors++;
+          continue;
+        }
+        words.push({ ...result.word, verified: row.verified.checked });
+      }
+      if (errors > 0) {
+        say(texts.editorHasErrors);
+        return;
+      }
+      if (words.length === 0) {
+        say(texts.editorEmpty);
+        return;
+      }
+      const saved: WordList = { ...list, name: listName, inputMode: mode.value as InputMode, words };
+      const others = storedLists.filter((l) => l.id !== saved.id);
+      void saveStoredLists([...others, saved]).then(renderLists).catch(report);
+    };
+
+    const actions = (message: HTMLElement): HTMLElement => {
+      const bar = element('div', 'editor-actions');
+      bar.append(
+        button(texts.editorSave, 'primary-button', save),
+        button(texts.cancel, 'secondary-button', renderLists),
+        message,
+      );
+      return bar;
+    };
+
+    listsSection.replaceChildren(
+      element('h2', 'section-title', texts.editorTitle(list.name)),
+      labelled(texts.listName, name),
+      labelled(texts.listMode, mode),
+      actions(topMessage),
+      rows,
+      button(texts.editorAdd, 'secondary-button', () => {
+        addRow(null);
+      }),
+      actions(bottomMessage),
     );
   }
 
@@ -206,16 +444,7 @@ export function createTeacherScreen(deps: TeacherDeps): {
       }
     });
 
-    const listOptions = [
-      { value: '', label: texts.listOfDevice },
-      ...allLists().map((l) => ({ value: l.id, label: l.name })),
-    ];
-    const list = select(listOptions, profile.wordListId ?? '', (value) => {
-      void saveProfiles(setProfileWordList(profiles, profile.id, value === '' ? undefined : value)).catch(report);
-    });
-
     const details = element('div', 'teacher-profile-details');
-    details.append(labelled(texts.profileListLabel, list));
 
     if (settings.pictureCode) {
       const code = element('span', 'teacher-code');
@@ -307,88 +536,42 @@ export function createTeacherScreen(deps: TeacherDeps): {
     );
   }
 
-  // ---------- Eigene Wortlisten ----------
+  // ---------- PIN ----------
 
-  function renderLists(): void {
-    const nameInput = element('input', 'setting-input');
-    nameInput.setAttribute('aria-label', texts.listName);
-    const file = element('input', 'setting-file');
-    file.type = 'file';
-    file.accept = '.csv,text/csv,text/plain';
-    file.setAttribute('aria-label', texts.listFile);
-    const preview = element('div', 'csv-preview');
-    const importButton = button(texts.listImport, 'primary-button', () => undefined);
-    importButton.disabled = true;
-
-    let pending: WordList | null = null;
-    file.addEventListener('change', () => {
-      const chosen = file.files?.[0];
-      if (chosen === undefined) return;
-      void chosen
-        .text()
-        .then((text) => {
-          const name = nameInput.value.trim() || chosen.name.replace(/\.[^.]+$/, '');
-          const result = parseCsvWordList(text, `eigene-${deps.newId()}`, name);
-          pending = result.list;
-          preview.replaceChildren(
-            element('p', 'setting-note', texts.listPreview(result.list?.words.length ?? 0)),
-            ...result.errors
-              .slice(0, 12)
-              .map((e) => element('p', 'csv-error', texts.csvErrorLine(e.line, texts.csvErrors[e.reason]))),
-          );
-          importButton.disabled = pending === null;
-        })
-        .catch(report);
-    });
-    importButton.addEventListener('click', () => {
-      if (pending === null) return;
-      const name = nameInput.value.trim();
-      const list = name === '' ? pending : { ...pending, name };
-      customLists = [...customLists, list];
-      void repository
-        .saveCustomLists(customLists)
-        .then(() => {
-          renderLists();
-          renderGeneral();
-          return renderProfiles();
-        })
-        .catch(report);
-    });
-
-    const existing = customLists.map((list) => {
-      const row = element('div', 'castle-row');
-      row.append(
-        element('span', 'castle-row-name', `${list.name} · ${texts.listWords(list.words.length)}`),
-        confirmButton(texts.listDelete, texts.confirmDelete, texts.confirmDeleteYes, () => {
-          customLists = customLists.filter((l) => l.id !== list.id);
-          // Wer die Liste nutzt, bekommt wieder die des Geräts bzw. den Standard.
-          const users = profiles.filter((p) => p.wordListId === list.id);
-          let next = profiles;
-          for (const user of users) next = setProfileWordList(next, user.id, undefined);
-          void repository
-            .saveCustomLists(customLists)
-            .then(() => saveProfiles(next))
-            .then(() =>
-              settings.wordListId === list.id ? saveSettings({ wordListId: defaultSettings.wordListId }) : undefined,
-            )
-            .then(() => {
-              renderLists();
-              renderGeneral();
-              return renderProfiles();
-            })
-            .catch(report);
-        }),
-      );
-      return row;
-    });
-
-    listsSection.replaceChildren(
-      element('h2', 'section-title', texts.sectionLists),
-      ...(existing.length === 0 ? [element('p', 'setting-note', texts.listNone)] : existing),
-      labelled(texts.listName, nameInput),
-      labelled(texts.listFile, file),
-      preview,
-      importButton,
+  function renderPin(): void {
+    const first = element('input', 'setting-input');
+    first.type = 'password';
+    first.inputMode = 'numeric';
+    first.maxLength = 8;
+    const repeat = element('input', 'setting-input');
+    repeat.type = 'password';
+    repeat.inputMode = 'numeric';
+    repeat.maxLength = 8;
+    const message = element('p', 'setting-note');
+    pinSection.replaceChildren(
+      element('h2', 'section-title', texts.sectionPin),
+      labelled(texts.pinNew, first),
+      labelled(texts.pinRepeat, repeat),
+      button(texts.pinChange, 'secondary-button', () => {
+        const pin = first.value.trim();
+        if (!isValidPin(pin)) {
+          message.textContent = texts.pinInvalid;
+          return;
+        }
+        if (pin !== repeat.value.trim()) {
+          message.textContent = texts.pinMismatch;
+          return;
+        }
+        void hashPin(pin)
+          .then((hash) => repository.savePinHash(hash))
+          .then(() => {
+            first.value = '';
+            repeat.value = '';
+            message.textContent = texts.pinSaved;
+          })
+          .catch(report);
+      }),
+      message,
     );
   }
 
@@ -407,13 +590,14 @@ export function createTeacherScreen(deps: TeacherDeps): {
   return {
     element: screen,
     open: async () => {
-      [settings, profiles, customLists] = await Promise.all([
+      [settings, profiles, storedLists] = await Promise.all([
         repository.loadSettings(),
         repository.loadProfiles(),
         repository.loadCustomLists(),
       ]);
       renderGeneral();
       renderLists();
+      renderPin();
       renderReset();
       await renderProfiles();
     },

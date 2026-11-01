@@ -145,8 +145,6 @@ export function parseProfile(value: unknown): Profile | null {
     symbol: symbol as unknown as Profile['symbol'],
     createdAt: value['createdAt'],
   };
-  const wordListId = value['wordListId'];
-  if (isNonEmptyString(wordListId)) profile.wordListId = wordListId;
   const code = value['code'];
   if (Array.isArray(code) && code.length === 2 && code.every(isPieceId)) {
     profile.code = [code[0], code[1]] as Profile['code'] & [PieceId, PieceId];

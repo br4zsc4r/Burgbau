@@ -6,7 +6,6 @@ import {
   removeProfile,
   renameProfile,
   setProfileCode,
-  setProfileWordList,
 } from '../src/logic/profiles';
 import { createRepository } from '../src/state/repository';
 import { defaultSettings, parseSettings } from '../src/state/settings';
@@ -44,7 +43,7 @@ describe('Profilverwaltung', () => {
     expect(() => addClass([], names, newId, now)).toThrow();
   });
 
-  it('benennt um, löscht und setzt eine eigene Wortliste', () => {
+  it('benennt um und löscht', () => {
     let profiles: Profile[] = addClass([], ['Lena', 'Max'], newId, now);
     const [lena, max] = profiles;
     if (lena === undefined || max === undefined) throw new Error('fehlt');
@@ -52,10 +51,6 @@ describe('Profilverwaltung', () => {
     expect(profiles[0]?.nickname).toBe('Lena Marie');
     expect(() => renameProfile(profiles, lena.id, '  ')).toThrow();
 
-    profiles = setProfileWordList(profiles, max.id, 'klasse-4');
-    expect(profiles[1]?.wordListId).toBe('klasse-4');
-    profiles = setProfileWordList(profiles, max.id, undefined);
-    expect(profiles[1]).not.toHaveProperty('wordListId');
 
     expect(removeProfile(profiles, lena.id).map((p) => p.id)).toEqual([max.id]);
   });
@@ -77,7 +72,6 @@ describe('Repository für die Lehrkraft', () => {
     nickname: 'Lena',
     symbol: { animal: 'fox', color: 'blue' },
     createdAt: now.toISOString(),
-    wordListId: 'klasse-3',
     code: ['tree', 'well'],
   };
   const castle = (id: string) => ({
@@ -101,7 +95,7 @@ describe('Repository für die Lehrkraft', () => {
     expect(await repo.loadCustomLists()).toEqual([list]);
   });
 
-  it('behält Wortliste und Bild-Code eines Profils', async () => {
+  it('behält den Bild-Code eines Profils', async () => {
     const repo = createRepository(createMemoryStore());
     await repo.saveProfiles([profile]);
     expect(await repo.loadProfiles()).toEqual([profile]);
@@ -118,11 +112,11 @@ describe('Repository für die Lehrkraft', () => {
 
     await repo.addCastle(castle('c'));
     await repo.saveGame('p1', createGame(['hund'], testSettings, seededRandom(1)));
-    await repo.saveBoxes('p1', 'klasse-3', { baum: 2 });
+    await repo.saveBoxes('p1', { baum: 2 });
     await repo.deleteProfileData('p1');
     expect(await repo.loadCastles('p1')).toEqual([]);
     expect(await repo.loadGame('p1')).toBeNull();
-    expect(await repo.loadBoxes('p1', 'klasse-3')).toEqual({});
+    expect(await repo.loadBoxes('p1')).toEqual({});
   });
 
   it('setzt alles zurück', async () => {
@@ -132,5 +126,26 @@ describe('Repository für die Lehrkraft', () => {
     await repo.resetAll();
     expect(await repo.loadProfiles()).toEqual([]);
     expect(await repo.loadSettings()).toEqual(defaultSettings);
+  });
+});
+
+describe('Einstellungen Version 2', () => {
+  it('macht aus der Gerätelisten-ID eine Liste aktiver Listen', async () => {
+    const store = createMemoryStore();
+    await store.set('settings', { version: 1, settings: { ...defaultSettings, activeListIds: undefined, wordListId: 'klasse-3' } });
+    expect((await createRepository(store).loadSettings()).activeListIds).toEqual(['klasse-3']);
+  });
+
+  it('behält bereits vorhandene aktive Listen bei der Migration', async () => {
+    const store = createMemoryStore();
+    await store.set('settings', { version: 1, settings: { ...defaultSettings, activeListIds: ['klasse-4'] } });
+    expect((await createRepository(store).loadSettings()).activeListIds).toEqual(['klasse-4']);
+  });
+
+  it('PIN-Hash: erst keiner, dann gespeichert', async () => {
+    const repo = createRepository(createMemoryStore());
+    expect(await repo.loadPinHash()).toBeNull();
+    await repo.savePinHash('abc');
+    expect(await repo.loadPinHash()).toBe('abc');
   });
 });

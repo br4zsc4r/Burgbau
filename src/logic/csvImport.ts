@@ -44,6 +44,30 @@ export function deriveWord(article: Article, singular: string, plural: string[])
   return stem === singular ? word : { ...word, stem };
 }
 
+export type WordInputError = Exclude<CsvError['reason'], 'columns'>;
+
+/**
+ * Ein Wort aus Eingabefeldern (Wortlisten-Editor): Artikel, Singular und Plurale mit „|“.
+ * Liefert das Wort oder den Fehlergrund.
+ */
+export function wordFromInput(
+  articleText: string,
+  singularText: string,
+  pluralText: string,
+): { word: Word } | { error: WordInputError } {
+  const article = articleText.trim().toLocaleLowerCase('de-DE') as Article;
+  const singular = singularText.normalize('NFC').trim();
+  const plural = pluralText
+    .normalize('NFC')
+    .split('|')
+    .map((p) => p.trim())
+    .filter((p) => p !== '');
+  if (!ARTICLES.includes(article)) return { error: 'article' };
+  if (singular === '' || /\s/.test(singular)) return { error: 'singular' };
+  if (plural.length === 0) return { error: 'plural' };
+  return { word: deriveWord(article, singular, plural) };
+}
+
 /**
  * Eigene Wortliste aus CSV: „Artikel;Singular;Plural“, mehrere Plurale mit „|“.
  * Eine Kopfzeile wird übersprungen, fehlerhafte Zeilen werden gemeldet und ausgelassen.
@@ -62,17 +86,11 @@ export function parseCsvWordList(text: string, id: string, name: string): CsvRes
       errors.push({ line, reason: 'columns' });
       return;
     }
-    const [articleCell = '', singular = '', pluralCell = ''] = cells;
-    const article = articleCell.toLocaleLowerCase('de-DE') as Article;
-    const plural = pluralCell
-      .split('|')
-      .map((p) => p.trim())
-      .filter((p) => p !== '');
-    if (!ARTICLES.includes(article)) errors.push({ line, reason: 'article' });
-    else if (singular === '' || /\s/.test(singular)) errors.push({ line, reason: 'singular' });
-    else if (plural.length === 0) errors.push({ line, reason: 'plural' });
-    else if (words.some((w) => w.id === wordId(singular))) errors.push({ line, reason: 'duplicate' });
-    else words.push(deriveWord(article, singular, plural));
+    const [article = '', singular = '', plural = ''] = cells;
+    const result = wordFromInput(article, singular, plural);
+    if ('error' in result) errors.push({ line, reason: result.error });
+    else if (words.some((w) => w.id === result.word.id)) errors.push({ line, reason: 'duplicate' });
+    else words.push(result.word);
   });
 
   return {

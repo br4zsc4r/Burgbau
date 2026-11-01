@@ -39,8 +39,8 @@ export type InputModeSetting = 'list' | InputMode;
 
 /** Lehrkraft-Einstellungen des Geräts (Spezifikation Abschnitt 8). */
 export interface Settings {
-  /** Aktive Wortliste (= Klassenstufe) des Geräts. */
-  wordListId: string;
+  /** Eingeschaltete Wortlisten; ihre Wörter kommen gemeinsam für alle Kinder dran. */
+  activeListIds: string[];
   inputMode: InputModeSetting;
   /** Großschreibung verpflichtend. */
   requireCapitalization: boolean;
@@ -294,8 +294,6 @@ export interface Profile {
   /** Nur Spitzname oder Vorname. */
   nickname: string;
   symbol: ProfileSymbol;
-  /** Eigene Wortliste für dieses Kind (mehr Förderung oder Herausforderung). */
-  wordListId?: string;
   /** Bild-Code, sobald das Kind einen gewählt hat (nur wenn Bild-Codes eingeschaltet sind). */
   code?: PictureCode;
   /** ISO-Datum. */

@@ -1037,9 +1037,7 @@ button:focus-visible {
   border: 4px solid var(--border);
   border-radius: 50%;
   cursor: pointer;
-  touch-action: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 .gear-button svg {
@@ -1048,23 +1046,6 @@ button:focus-visible {
   fill: var(--muted);
 }
 
-@property --hold {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-
-/* Füllt sich beim Gedrückthalten (3 Sekunden). */
-.gear-button.holding {
-  background: conic-gradient(var(--highlight-bg) var(--hold), var(--card) var(--hold));
-  animation: gear-hold 3s linear forwards;
-}
-
-@keyframes gear-hold {
-  to {
-    --hold: 360deg;
-  }
-}
 
 .teacher-gate {
   position: fixed;
@@ -1110,6 +1091,12 @@ button:focus-visible {
 .gate-message {
   margin: 0;
   min-height: 1.5em;
+}
+
+.gate-hint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--muted);
 }
 
 /* ---------- Lehrkraft-Einstellungen ---------- */
@@ -1314,4 +1301,62 @@ button:focus-visible {
 
 .castle-thumb {
   object-fit: contain;
+}
+
+/* ---------- Wortlisten (Lehrkraft) ---------- */
+.list-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-top: 2px solid #e2dccf;
+}
+
+.list-row > input[type='checkbox'] {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.list-info {
+  flex: 1 1 14rem;
+}
+
+.list-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editor-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(7rem, 1fr) minmax(9rem, 1.4fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+
+.editor-row.has-error {
+  background: #fff3c4;
+  outline: 3px solid var(--almost);
+}
+
+@media (max-width: 40rem) {
+  .editor-row {
+    grid-template-columns: 5rem 1fr;
+  }
+}
+
+.editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
 }

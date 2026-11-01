@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { GRID_SIZE_BY_TASKS } from '../../src/data/grid';
 import { getPiece } from '../../src/data/pieces';
 import { cellCenter, worldLayout } from '../../src/logic/gridLayout';
+import { CURRENT_VERSION } from '../../src/state/migrations';
 import { defaultSettings } from '../../src/state/settings';
 import type { Cell, PieceCategory, PieceDef, PieceId, Settings } from '../../src/types';
 import klasse12 from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
@@ -52,7 +53,7 @@ export async function setSettings(page: Page, change: Partial<Settings>): Promis
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Wer spielt?' })).toBeVisible();
   const settings = { ...defaultSettings, ...change };
-  await page.evaluate(async (value) => {
+  await page.evaluate(async ({ value, version }) => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open('burgbau');
       request.onsuccess = () => {
@@ -64,19 +65,19 @@ export async function setSettings(page: Page, change: Partial<Settings>): Promis
     });
     await new Promise<void>((resolve) => {
       const tx = db.transaction('data', 'readwrite');
-      tx.objectStore('data').put({ version: 1, settings: value }, 'settings');
+      tx.objectStore('data').put({ version, settings: value }, 'settings');
       tx.oncomplete = () => {
         resolve();
       };
     });
-  }, settings);
+  }, { value: settings, version: CURRENT_VERSION.settings });
   await page.reload();
 }
 
 /** Seite öffnen (optional mit anderer Wortliste), Profil anlegen und eine neue Burg beginnen. */
 export async function startGame(page: Page, nickname = 'Lena', list?: string): Promise<void> {
   if (list === undefined) await page.goto('/');
-  else await setSettings(page, { wordListId: list });
+  else await setSettings(page, { activeListIds: [list] });
   await createProfile(page, nickname);
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
   await expect(page.locator('.task-panel')).toBeVisible();

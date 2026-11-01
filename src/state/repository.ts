@@ -12,6 +12,9 @@ const WORDLISTS_KEY = 'wordlists';
 const gameKey = (profileId: string): string => `game:${profileId}`;
 const castlesKey = (profileId: string): string => `castles:${profileId}`;
 const progressKey = (profileId: string): string => `progress:${profileId}`;
+const PIN_KEY = 'teacherPin';
+/** Lernfortschritt gilt pro Wort, egal aus welcher Liste es kommt. */
+const ALL_WORDS = 'alle';
 
 function listOf<T>(record: Record<string, unknown> | null, field: string, parse: (v: unknown) => T | null): T[] {
   const raw = record?.[field];
@@ -104,17 +107,31 @@ export function createRepository(store: KeyValueStore) {
       return store.clear();
     },
 
-    /** Lernfortschritt eines Profils für eine Wortliste (Fach je Wort). */
-    async loadBoxes(profileId: string, listId: string): Promise<WordBoxes> {
+    /**
+     * Lernfortschritt eines Profils (Fach je Wort). Ältere Stände wurden je Liste geführt;
+     * sie werden beim ersten Laden zusammengeführt.
+     */
+    async loadBoxes(profileId: string): Promise<WordBoxes> {
       const record = migrate('progress', await store.get(progressKey(profileId)));
       const lists = record?.['lists'];
-      return isRecord(lists) ? sanitizeBoxes(lists[listId]) : {};
+      if (!isRecord(lists)) return {};
+      if (lists[ALL_WORDS] !== undefined) return sanitizeBoxes(lists[ALL_WORDS]);
+      return Object.values(lists).reduce<WordBoxes>((all, boxes) => ({ ...all, ...sanitizeBoxes(boxes) }), {});
     },
 
-    async saveBoxes(profileId: string, listId: string, boxes: WordBoxes): Promise<void> {
-      const record = migrate('progress', await store.get(progressKey(profileId)));
-      const lists = isRecord(record?.['lists']) ? record['lists'] : {};
-      await store.set(progressKey(profileId), withVersion('progress', { lists: { ...lists, [listId]: boxes } }));
+    async saveBoxes(profileId: string, boxes: WordBoxes): Promise<void> {
+      await store.set(progressKey(profileId), withVersion('progress', { lists: { [ALL_WORDS]: boxes } }));
+    },
+
+    /** Hash der Lehrkraft-PIN; null, solange keine festgelegt ist. */
+    async loadPinHash(): Promise<string | null> {
+      const record = migrate('pin', await store.get(PIN_KEY));
+      const hash = record?.['hash'];
+      return typeof hash === 'string' && hash !== '' ? hash : null;
+    },
+
+    savePinHash(hash: string): Promise<void> {
+      return store.set(PIN_KEY, withVersion('pin', { hash }));
     },
 
     /** Burgen aller Profile, neueste zuerst. */
