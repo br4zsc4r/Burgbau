@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
-import { answer, chooseOffer, offerCategories, placeAnywhere } from './helpers';
+import {
+  answer,
+  buildWholeCastle,
+  chooseOffer,
+  offerCategories,
+  placeAnywhere,
+  startGame,
+} from './helpers';
 
 const finishButton = (page: Page) => page.locator('.build-controls .primary-button');
 
@@ -11,7 +18,7 @@ async function buildBlock(page: Page): Promise<void> {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await startGame(page);
 });
 
 test('falsche Antwort: drei beschädigte Teile mit freundlichem Hinweis', async ({ page }) => {
@@ -57,23 +64,17 @@ test('Serie 3 bringt eine Dekoration, die an einem Bauteil andockt', async ({ pa
   await expect(page.getByRole('img', { name: '1 Fackel leuchtet' })).toBeVisible();
 });
 
-test('nach 15 Aufgaben ist die Burg fertig, danach beginnt eine neue', async ({ page }) => {
-  for (let n = 0; n < 15; n++) {
-    await answer(page, n % 4 !== 3);
-    if (n === 14) {
-      await chooseOffer(page, (piece) => piece.kind === 'block');
-      await placeAnywhere(page);
-      await expect(page.getByRole('button', { name: 'Burg fertig!' })).toBeVisible();
-      await finishButton(page).click();
-    } else {
-      await buildBlock(page);
-    }
-  }
+test('nach 15 Aufgaben ist die Burg fertig und bekommt einen Namen', async ({ page }) => {
+  test.setTimeout(90_000);
+  await buildWholeCastle(page);
   await expect(page.getByText('Deine Burg ist fertig!')).toBeVisible();
   await expect(page.getByRole('img', { name: '15 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByLabel('Wie soll deine Burg heißen?')).toBeFocused();
+  await expect(page.getByLabel('Wie soll deine Burg heißen?')).toHaveAttribute('placeholder', 'Lenas Fuchsburg');
 
-  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
-  await expect(page.getByLabel('Mehrzahl eintippen')).toBeVisible();
-  await expect(page.getByRole('img', { name: '0 Fackeln leuchten' })).toBeAttached();
-  await expect(page.getByRole('img', { name: '0 von 15 Wörtern geschafft' })).toBeAttached();
+  await page.getByLabel('Wie soll deine Burg heißen?').fill('Drachenfels');
+  await page.getByRole('button', { name: 'In die Sammlung' }).click();
+  await expect(page.getByRole('heading', { name: 'Meine Burgen' })).toBeVisible();
+  await expect(page.locator('.castle-card')).toHaveCount(1);
+  await expect(page.locator('.castle-card')).toContainText('Drachenfels');
 });

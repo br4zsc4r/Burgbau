@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { startGame } from './helpers';
 import list from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
 
 async function currentPlural(page: Page): Promise<string> {
@@ -10,7 +11,7 @@ async function currentPlural(page: Page): Promise<string> {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await startGame(page);
 });
 
 test('richtige Antwort führt zur Bauteil-Auswahl', async ({ page }) => {

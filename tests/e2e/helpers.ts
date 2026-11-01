@@ -21,6 +21,23 @@ export async function tapCell(page: Page, cell: Cell): Promise<void> {
   await page.mouse.click(x, y);
 }
 
+/** Neues Profil anlegen (erstes freies Symbol) und auf dessen Startseite landen. */
+export async function createProfile(page: Page, nickname: string): Promise<void> {
+  await page.getByRole('button', { name: 'Ich bin neu' }).click();
+  await page.locator('.symbol-option').first().click();
+  await page.getByLabel('Wie heißt du?').fill(nickname);
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  await expect(page.getByRole('heading', { name: `Hallo ${nickname}!` })).toBeVisible();
+}
+
+/** Seite öffnen, Profil anlegen und eine neue Burg beginnen. */
+export async function startGame(page: Page, nickname = 'Lena'): Promise<void> {
+  await page.goto('/');
+  await createProfile(page, nickname);
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await expect(page.getByLabel('Mehrzahl eintippen')).toBeVisible();
+}
+
 export const undoButton = (page: Page): Locator => page.getByRole('button', { name: 'Rückgängig' });
 
 /** Aufgabe beantworten und zur Bauteil-Auswahl weitergehen. */
@@ -68,4 +85,16 @@ export async function placeAnywhere(page: Page): Promise<void> {
     }
   }
   throw new Error('Teil passt nirgends');
+}
+
+/** Alle 15 Aufgaben spielen (jede vierte falsch), immer einen Block setzen. */
+export async function buildWholeCastle(page: Page): Promise<void> {
+  const finishButton = page.locator('.build-controls .primary-button');
+  for (let n = 0; n < 15; n++) {
+    await answer(page, n % 4 !== 3);
+    await chooseOffer(page, (piece) => piece.kind === 'block');
+    await placeAnywhere(page);
+    if (n === 14) await expect(page.getByRole('button', { name: 'Burg fertig!' })).toBeVisible();
+    await finishButton.click();
+  }
 }

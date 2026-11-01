@@ -417,3 +417,300 @@ button:focus-visible {
 .progress-dot.done {
   background: var(--accent);
 }
+
+/* ---------- Menü-Bildschirme (Profile, Start, Sammlung) ---------- */
+.screens {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow-y: auto;
+  background: linear-gradient(var(--sky) 0 75%, var(--grass) 75% 100%);
+}
+
+.screen {
+  max-width: 60rem;
+  min-height: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.screen-title {
+  margin: 0;
+  font-size: 2rem;
+  text-align: center;
+}
+
+.symbol-badge {
+  display: inline-grid;
+  place-items: center;
+  border: 4px solid var(--border);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.symbol-badge[data-color='blue'] {
+  background: #8fbdeb;
+}
+
+.symbol-badge[data-color='yellow'] {
+  background: #f5d97a;
+}
+
+.symbol-badge[data-color='pink'] {
+  background: #f4b6cb;
+}
+
+.symbol-large {
+  width: 6rem;
+  height: 6rem;
+}
+
+.symbol-small {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-width: 2px;
+}
+
+.symbol-animal {
+  width: 82%;
+  height: 82%;
+}
+
+.profile-grid,
+.symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 8.5rem);
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.profile-tile,
+.symbol-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--touch);
+  padding: 0.75rem 0.5rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.25rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.profile-name {
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.profile-new {
+  border-style: dashed;
+}
+
+.profile-plus {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.nickname-form,
+.home-actions,
+.confirm-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(28rem, 100%);
+}
+
+.nickname-label,
+.castle-name-label {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.nickname-input,
+.castle-name-input {
+  width: 100%;
+  min-height: var(--touch);
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+}
+
+.castle-name-input::placeholder {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.nickname-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.home-badge .symbol-large {
+  width: 8rem;
+  height: 8rem;
+}
+
+.big-button {
+  width: 100%;
+  min-height: 5rem;
+  font-size: 2rem;
+}
+
+.home-actions .secondary-button,
+.confirm-box button {
+  width: 100%;
+}
+
+.primary-button.secondary-look {
+  background: var(--card);
+  color: var(--ink);
+}
+
+.confirm-text {
+  margin: 0;
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+/* ---------- Sammlung ---------- */
+.collection-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.collection-empty {
+  font-size: 1.4rem;
+}
+
+.castle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+.castle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.5rem 0.75rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.25rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.castle-thumb {
+  width: 100%;
+  aspect-ratio: 300 / 246;
+  border-radius: 0.75rem;
+  background: var(--sky);
+}
+
+.castle-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.castle-owner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.1rem;
+}
+
+.castle-date {
+  color: var(--muted);
+}
+
+/* ---------- Spiel: Pause, Burg ansehen, Hinweise ---------- */
+.pause-button {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  padding: 0;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pause-button svg {
+  width: 2rem;
+  height: 2rem;
+  fill: var(--ink);
+}
+
+.castle-view-bar {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.castle-view-name {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 1.75rem;
+  background: rgb(255 253 247 / 85%);
+  border-radius: 1rem;
+}
+
+.finished-panel {
+  width: min(32rem, 100%);
+}
+
+.storage-warning {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  z-index: 10;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  transform: translateX(-50%);
+  background: #fff3c4;
+  border: 3px solid var(--almost);
+  border-radius: 1rem;
+}

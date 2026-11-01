@@ -124,3 +124,23 @@ export function completedTasks(state: GameState): number {
   const current = state.step === 'task' && state.quiz.phase === 'answering' ? 0 : 1;
   return state.taskNumber - 1 + current;
 }
+
+/**
+ * Gespeicherte Partie an die aktuelle Wortliste anpassen: Wörter, die es nicht mehr gibt,
+ * werden aus Wiederholungen entfernt, ein unbekanntes aktuelles Wort wird ersetzt.
+ * Die Burg selbst bleibt unverändert.
+ */
+export function withKnownWords(
+  state: GameState,
+  wordIds: readonly string[],
+  random: RandomFn,
+): GameState {
+  const known = (id: string): boolean => wordIds.includes(id);
+  const picker = {
+    used: state.picker.used.filter(known),
+    retries: state.picker.retries.filter((retry) => known(retry.wordId)),
+  };
+  if (known(state.quiz.wordId)) return { ...state, picker };
+  const next = pickWord(picker, wordIds, state.taskNumber, random);
+  return { ...state, quiz: { ...state.quiz, wordId: next.wordId }, picker: next.picker };
+}

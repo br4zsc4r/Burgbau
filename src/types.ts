@@ -220,3 +220,42 @@ export interface GameState {
   /** Zuletzt gesetztes Teil, solange es noch rückgängig gemacht werden darf. */
   lastPlacement: { piece: PieceId; anchor: Cell } | null;
 }
+
+export type Animal =
+  | 'fox'
+  | 'owl'
+  | 'dragon'
+  | 'lion'
+  | 'bear'
+  | 'cat'
+  | 'rabbit'
+  | 'frog'
+  | 'hedgehog'
+  | 'fish';
+
+export type SymbolColor = 'blue' | 'yellow' | 'pink';
+
+/** Profil-Symbol: Tier auf farbigem Grund. Jede Kombination gibt es nur einmal pro Gerät. */
+export interface ProfileSymbol {
+  animal: Animal;
+  color: SymbolColor;
+}
+
+export interface Profile {
+  id: string;
+  /** Nur Spitzname oder Vorname. */
+  nickname: string;
+  symbol: ProfileSymbol;
+  /** ISO-Datum. */
+  createdAt: string;
+}
+
+/** Fertige Burg in der Sammlung: gespeichert werden Rasterdaten, keine Bilder. */
+export interface Castle {
+  id: string;
+  profileId: string;
+  name: string;
+  /** ISO-Datum. */
+  createdAt: string;
+  grid: GridState;
+}

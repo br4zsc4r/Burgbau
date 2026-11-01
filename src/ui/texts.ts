@@ -1,4 +1,4 @@
-import type { PieceId } from '../types';
+import type { Animal, PieceId, SymbolColor } from '../types';
 
 const pieceNames: Readonly<Record<PieceId, string>> = {
   wall: 'Mauerblock',
@@ -41,9 +41,46 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   ruinWall: 'Ruinenmauer',
 };
 
+const animalNames: Readonly<Record<Animal, string>> = {
+  fox: 'Fuchs',
+  owl: 'Eule',
+  dragon: 'Drache',
+  lion: 'Löwe',
+  bear: 'Bär',
+  cat: 'Katze',
+  rabbit: 'Hase',
+  frog: 'Frosch',
+  hedgehog: 'Igel',
+  fish: 'Fisch',
+};
+
+/** Für Namensvorschläge: „Lenas Fuchsburg“. */
+const castleWords: Readonly<Record<Animal, string>> = {
+  fox: 'Fuchsburg',
+  owl: 'Eulenburg',
+  dragon: 'Drachenburg',
+  lion: 'Löwenburg',
+  bear: 'Bärenburg',
+  cat: 'Katzenburg',
+  rabbit: 'Hasenburg',
+  frog: 'Froschburg',
+  hedgehog: 'Igelburg',
+  fish: 'Fischburg',
+};
+
+const colorNames: Readonly<Record<SymbolColor, string>> = {
+  blue: 'Blau',
+  yellow: 'Gelb',
+  pink: 'Rosa',
+};
+
 // Alle sichtbaren Texte zentral an einer Stelle.
 export const texts = {
   pieceNames,
+  animalNames,
+  castleWords,
+  symbolLabel: (animal: Animal, color: SymbolColor): string =>
+    `${animalNames[animal]} auf ${colorNames[color]}`,
   appTitle: 'Burgbau',
   taskPrompt: 'Wie heißt die Mehrzahl?',
   pluralArticle: 'die',
@@ -71,5 +108,33 @@ export const texts = {
   progressLabel: (done: number, total: number): string =>
     `${String(done)} von ${String(total)} Wörtern geschafft`,
   finishedTitle: 'Deine Burg ist fertig!',
+  castleNameLabel: 'Wie soll deine Burg heißen?',
+  saveCastle: 'In die Sammlung',
   newCastle: 'Neue Burg bauen',
+
+  // Profile
+  whoIsPlaying: 'Wer spielt?',
+  newProfile: 'Ich bin neu',
+  chooseSymbol: 'Such dir ein Bild aus!',
+  nicknameLabel: 'Wie heißt du?',
+  nicknameHint: 'Nur dein Spitzname oder Vorname.',
+  createProfile: 'Fertig',
+  back: 'Zurück',
+  hello: (nickname: string): string => `Hallo ${nickname}!`,
+  continueCastle: 'Weiterbauen',
+  confirmNewCastle: 'Deine angefangene Burg wird dann nicht fertig gebaut. Wirklich neu anfangen?',
+  confirmYes: 'Ja, neue Burg',
+  confirmNo: 'Nein, weiterbauen',
+  switchProfile: 'Anderes Kind',
+  pause: 'Pause',
+
+  // Sammlung
+  myCastles: 'Meine Burgen',
+  allCastles: 'Alle Burgen',
+  noCastlesMine: 'Hier ist noch keine Burg. Bau deine erste!',
+  noCastlesAll: 'Hier ist noch keine Burg.',
+  castleBy: (nickname: string): string => `von ${nickname}`,
+  formatDate: (iso: string): string =>
+    new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' }),
+  storageWarning: 'Speichern ist hier nicht möglich. Die Burg geht beim Schließen verloren.',
 } as const;

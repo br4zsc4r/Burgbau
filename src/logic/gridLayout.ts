@@ -24,7 +24,8 @@ export function worldLayout(size: GridSize): WorldLayout {
     gridLeft: SIDE_MARGIN,
     gridTop,
     groundTop,
-    tray: { x: SIDE_MARGIN + CELL_SIZE, y: SKY_HEIGHT / 2 },
+    // Links oben bleibt Platz für den Pause-Knopf.
+    tray: { x: SIDE_MARGIN + 2 * CELL_SIZE, y: SKY_HEIGHT / 2 },
   };
 }
 

@@ -371,3 +371,14 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Schadens-Overlays statt Farbe:** Die Einfärbung aus Phase 3 entfällt. Jedes beschädigte Teil hat eigene Overlays je Zelle: Riss mit Moos, abgebröckelte Steine, Loch mit Vogelnest, Bretter-Flicken, Steinhaufen, fehlende Turmecke, fehlende Dachziegel, geflickte Fahne. Große beschädigte Teile mischen mehrere davon.
 - **Vorschau-Karten** setzen Blöcke genauso zusammen (Textur als SVG-Muster, Merkmal, Schaden, Kontur).
 - **Dächer dürfen überall stehen** (Entscheidung 2026-11-01): Die frühere Vorgabe „nur auf dem obersten Turmblock“ entfällt, damit die Kinder frei bauen können. Es gilt allein die Schwerkraft-Regel.
+
+### Phase 5 (2026-11-01)
+- **Profil-Symbole:** 30 Stück, nämlich 10 Tiere (Fuchs, Eule, Drache, Löwe, Bär, Katze, Hase, Frosch, Igel, Fisch) auf je drei Hintergrundfarben (Blau, Gelb, Rosa). Vergebene Symbole erscheinen beim Anlegen nicht mehr. Spitznamen sind auf 20 Zeichen begrenzt.
+- **„Ich bin neu“** ist immer möglich, bis die Lehrkraft-Einstellung „Kinder dürfen selbst Profile anlegen“ in Phase 7 kommt.
+- **Profilseite** nach dem Antippen: „Weiterbauen“ (falls eine Burg läuft), „Neue Burg bauen“, „Meine Burgen“, „Anderes Kind“. Läuft schon eine Burg, fragt „Neue Burg bauen“ nach, weil die angefangene Burg dann verworfen wird.
+- **Pause-Knopf** oben links im Spiel führt zur Profilseite. Die Ablage für das nächste Teil ist dafür eine Zelle nach rechts gerückt.
+- **Burg fertig:** Das Namensfeld zeigt einen Vorschlag „<Spitzname>s <Tier>burg“ (z. B. „Lenas Fuchsburg“, bei s/ß/x/z mit Apostroph: „Max’ Drachenburg“). Bleibt das Feld leer, gilt der Vorschlag. Danach öffnet sich „Meine Burgen“.
+- **Volle Sammlung (30 Burgen):** Die älteste Burg wird automatisch ersetzt. Die Spezifikation erlaubt beides, die automatische Variante kommt ohne zusätzliche Frage aus.
+- **Speicherung:** IndexedDB über `idb-keyval` (Datenbank „burgbau“). Die Datensätze `profiles`, `game:<Profil-ID>` und `castles:<Profil-ID>` haben jeweils `version`, Migrationen stehen in `src/state/migrations.ts`. Beim Laden fallen nur einzelne kaputte Teile oder Burgen weg, nie eine ganze Sammlung. Wörter, die es in der Liste nicht mehr gibt, werden in einer laufenden Burg ersetzt.
+- **Ohne IndexedDB** (z. B. privates Fenster) läuft das Spiel im Speicher weiter, ein Hinweis sagt, dass nichts gespeichert wird.
+- **Vorschaubilder:** Phaser zeichnet sie mit derselben Render-Funktion wie die Bauszene in eine Dynamic Texture (Viertel-Größe). Sie werden nur im Speicher zwischengespeichert, nicht dauerhaft. Die Vollansicht nutzt die Bauszene selbst, ohne Rasterlinien und ohne Eingabe.

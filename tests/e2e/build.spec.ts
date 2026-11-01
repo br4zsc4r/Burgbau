@@ -1,6 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 import { cellCenter } from '../../src/logic/gridLayout';
-import { answer, chooseOffer, isSmallBlock, layout, tapCell, toScreen, undoButton } from './helpers';
+import {
+  answer,
+  chooseOffer,
+  isSmallBlock,
+  layout,
+  startGame,
+  tapCell,
+  toScreen,
+  undoButton,
+} from './helpers';
 
 const placeHint = (page: Page) => page.getByText('Setz dein Bauteil auf ein leuchtendes Feld!');
 const nextButton = (page: Page) => page.getByRole('button', { name: 'Nächstes Wort' });
@@ -13,7 +22,7 @@ async function getSmallBlock(page: Page): Promise<void> {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
+  await startGame(page);
   await getSmallBlock(page);
 });
 
