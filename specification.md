@@ -319,3 +319,14 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Rasterdaten:** Reihe 0 ist die unterste Reihe (auf der Wiese). Der Hügel ist nur Hintergrund, die Schwerkraft gilt allein im Raster.
 - **Raster voll:** Gibt es keine gültige Zelle mehr, wird das Setzen übersprungen.
 - **Welt:** Zellmaß 96 Weltpixel, darüber 144 px Himmel (Ablage), darunter 72 px Wiese (`src/data/grid.ts`). Phaser skaliert die Welt passend auf den Bildschirm. Rechnerisch sind die Zellen damit auf 1366 × 680 (Chromebook) und auf dem iPad im Hoch- und Querformat mindestens 64 px groß. Für 1280 × 800 prüft das ein E2E-Test.
+
+### Phase 3 (2026-11-01)
+- **Ablauf:** Feedback → „Weiter“ → „Such dir ein Bauteil aus!“ (drei große Karten mit Bild und Namen) → setzen → „Rückgängig“ oder „Nächstes Wort“. Bei der letzten Aufgabe heißt der Button „Burg fertig!“. Danach erscheint „Deine Burg ist fertig!“ mit „Neue Burg bauen“. Name und Sammlung folgen in Phase 5.
+- **Serie:** Sie zählt die aktuelle Antwort mit, die erste richtige Antwort ergibt also Serie 1. „Fast“ ändert die Serie nicht, richtig im zweiten Versuch zählt als richtig. Angezeigt wird sie als **10 Fackeln** am unteren Rand. Ab der zehnten Fackel gibt es Premium-Teile.
+- **Serie 10+:** 1 Premium-Teil + 1 Grundbauteil + 1 Dekoration oder Abschluss.
+- **Weiterbauen immer möglich:** Jedes Angebot enthält mindestens ein Teil, auf das man bauen kann, auch bei drei beschädigten Teilen.
+- **Stapelbar:** Grundbauteile, Buntglasfenster und beschädigte Mauer- und Turmteile. Auf Abschlüsse, Dekorationen und die übrigen Premium-Teile kann man nichts setzen. Bis zu den Andockpunkten (Phase 4) belegt jedes Teil eine Zelle und folgt der Schwerkraft-Regel.
+- **Umgebungsteile** (Baum, Brunnen, Wassergraben, Zugbrücke) kommen in der Angebotstabelle nicht vor und werden noch nicht angeboten.
+- **Beschädigte Teile:** Grafik des Basisteils, multiplikativ eingefärbt mit einer eigenen Farbe je Teil, dazu ein gemeinsames Riss-und-Moos-Overlay. In der Szene läuft das über Phasers `setTint`, auf den Karten über einen SVG-Farbmatrix-Filter, damit beides gleich aussieht. Bei beschädigten Angeboten steht der Hinweis: „Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!“
+- **Wortauswahl:** Ein falsch beantwortetes Wort kommt 3–5 Aufgaben später wieder. Sind mehrere fällig, kommt das älteste zuerst. Wiederholungen, die nach dem Partie-Ende fällig wären, entfallen. Ist die Liste kürzer als die Partie, dürfen Wörter wiederkommen, aber nie direkt hintereinander.
+- **Raster:** 12 × 8 bei 10 und 15 Aufgaben, 14 × 9 bei 20 Aufgaben.

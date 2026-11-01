@@ -1,3 +1,4 @@
+import { getPiece } from '../data/pieces';
 import type { Cell, GridSize, GridState, PieceId } from '../types';
 
 export function createGrid(size: GridSize): GridState {
@@ -13,10 +14,12 @@ export function getCell(grid: GridState, cell: Cell): PieceId | null {
   return grid.cells[cell.row * grid.cols + cell.col] ?? null;
 }
 
-/** Schwerkraft-Regel: Zelle frei und darunter Boden oder ein Teil. */
+/** Schwerkraft-Regel: Zelle frei und darunter Boden oder ein Teil, auf dem man bauen kann. */
 export function canPlace(grid: GridState, cell: Cell): boolean {
   if (!isInside(grid, cell) || getCell(grid, cell) !== null) return false;
-  return cell.row === 0 || getCell(grid, { col: cell.col, row: cell.row - 1 }) !== null;
+  if (cell.row === 0) return true;
+  const below = getCell(grid, { col: cell.col, row: cell.row - 1 });
+  return below !== null && getPiece(below).stackable;
 }
 
 /** Alle Zellen, auf die gerade ein Teil gesetzt werden darf (höchstens eine pro Spalte). */

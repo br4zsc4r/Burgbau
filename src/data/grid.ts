@@ -1,7 +1,11 @@
-import type { GridSize } from '../types';
+import type { GridSize, TasksPerCastle } from '../types';
 
-/** Raster für eine Burg mit 15 Aufgaben (Spezifikation Abschnitt 5). */
-export const DEFAULT_GRID_SIZE: GridSize = { cols: 12, rows: 8 };
+/** Rastergröße je Aufgabenzahl (Spezifikation Abschnitt 5). */
+export const GRID_SIZE_BY_TASKS: Readonly<Record<TasksPerCastle, GridSize>> = {
+  10: { cols: 12, rows: 8 },
+  15: { cols: 12, rows: 8 },
+  20: { cols: 14, rows: 9 },
+};
 
 /** Kantenlänge einer Zelle in Weltpixeln. Phaser skaliert die Welt auf den Bildschirm. */
 export const CELL_SIZE = 96;

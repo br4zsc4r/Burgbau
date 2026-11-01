@@ -1,18 +1,21 @@
-import { DEFAULT_GRID_SIZE } from '../data/grid';
 import {
   answerTask,
+  choosePiece,
   continueAfterPlacement,
   createGame,
   finishTask,
+  isLastTask,
   placeAt,
   undoPlacement,
 } from '../logic/game';
 import { validCells } from '../logic/grid';
-import { currentWordId } from '../logic/quiz';
 import { createBuildGame } from '../scene/createBuildGame';
 import type { GameState, RandomFn, Settings, Word, WordList } from '../types';
 import { createBuildControls } from './buildControls';
 import { element } from './dom';
+import { createFinishedPanel } from './finishedPanel';
+import { createOffersPanel } from './offersPanel';
+import { createStreakTorches } from './streakTorches';
 import { createTaskPanel } from './taskPanel';
 
 /** Hält den einen Spielzustand und verbindet Aufgaben-UI, Bauszene und Logik. */
@@ -23,34 +26,46 @@ export function mountApp(
   random: RandomFn,
 ): void {
   const wordsById = new Map(list.words.map((word) => [word.id, word]));
-  let state: GameState = createGame([...wordsById.keys()], DEFAULT_GRID_SIZE, random);
+  const wordIds = [...wordsById.keys()];
+  let state: GameState = createGame(wordIds, settings, random);
 
   const currentWord = (): Word => {
-    const word = wordsById.get(currentWordId(state.quiz));
+    const word = wordsById.get(state.quiz.wordId);
     if (word === undefined) throw new Error('Wort nicht in der Liste');
     return word;
   };
 
   const sceneContainer = element('div', 'scene');
-  const taskOverlay = element('div', 'task-overlay');
+  const overlay = element('div', 'overlay');
 
   const update = (next: GameState): void => {
-    const previousStep = state.step;
+    const previous = state;
     state = next;
     render();
     if (state.step === 'task') {
-      if (previousStep !== 'task') taskPanel.startNewTask();
-      else taskPanel.focusForPhase(state.quiz);
+      if (previous.step !== 'task' || previous.taskNumber !== state.taskNumber) {
+        taskPanel.startNewTask();
+      } else {
+        taskPanel.focusForPhase(state.quiz);
+      }
     }
   };
 
   const taskPanel = createTaskPanel({
     onSubmit: (input) => {
-      update(answerTask(state, currentWord(), input, settings));
+      update(answerTask(state, currentWord(), input, settings, random));
     },
     onContinue: () => {
-      update(finishTask(state, random));
+      update(finishTask(state, wordIds, random));
     },
+  });
+
+  const offersPanel = createOffersPanel((piece) => {
+    update(choosePiece(state, piece));
+  });
+
+  const finishedPanel = createFinishedPanel(() => {
+    update(createGame(wordIds, settings, random));
   });
 
   const controls = createBuildControls({
@@ -58,12 +73,14 @@ export function mountApp(
       update(undoPlacement(state));
     },
     onNextTask: () => {
-      update(continueAfterPlacement(state, random));
+      update(continueAfterPlacement(state, wordIds, random));
     },
   });
 
-  taskOverlay.append(taskPanel.element);
-  root.replaceChildren(sceneContainer, controls.element, taskOverlay);
+  const torches = createStreakTorches();
+
+  overlay.append(taskPanel.element, offersPanel.element, finishedPanel);
+  root.replaceChildren(sceneContainer, torches.element, controls.element, overlay);
 
   const scene = createBuildGame(sceneContainer, state.grid, {
     onCellChosen: (cell) => {
@@ -72,14 +89,22 @@ export function mountApp(
   });
 
   function render(): void {
-    taskOverlay.hidden = state.step !== 'task';
+    const { step } = state;
+    overlay.hidden = step !== 'task' && step !== 'choosing' && step !== 'finished';
+    overlay.dataset['step'] = step;
+    taskPanel.element.hidden = step !== 'task';
+    offersPanel.element.hidden = step !== 'choosing';
+    finishedPanel.hidden = step !== 'finished';
+
     taskPanel.render(state.quiz, currentWord());
-    controls.render(state.step);
+    offersPanel.render(state.offers);
+    controls.render(step, isLastTask(state));
+    torches.render(state.streak);
     scene.setView({
       grid: state.grid,
-      validCells: state.step === 'placing' ? validCells(state.grid) : [],
-      pieceWaiting: state.step === 'placing',
-      lastPlacement: state.lastPlacement,
+      validCells: step === 'placing' ? validCells(state.grid) : [],
+      pendingPiece: step === 'placing' ? state.pendingPiece : null,
+      lastPlacement: state.lastPlacement?.cell ?? null,
     });
   }
 

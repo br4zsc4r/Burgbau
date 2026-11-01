@@ -79,7 +79,7 @@ body {
   border-radius: 1rem;
 }
 
-.task-overlay {
+.overlay {
   position: absolute;
   inset: 0;
   overflow-y: auto;
@@ -87,7 +87,19 @@ body {
   background: rgb(46 42 36 / 35%);
 }
 
-.task-panel {
+/* Bei „Burg fertig“ soll die Burg gut sichtbar bleiben. */
+.overlay[data-step='finished'] {
+  background: transparent;
+  pointer-events: none;
+}
+
+.overlay[data-step='finished'] > * {
+  pointer-events: auto;
+}
+
+.task-panel,
+.offers-panel,
+.finished-panel {
   max-width: 40rem;
   margin: 0 auto;
   padding: 1.25rem 1rem 1.5rem;
@@ -274,5 +286,106 @@ button:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .feedback[data-status='correct'] .feedback-title {
     animation: none;
+  }
+}
+
+/* „1 aus 3“ */
+.offers-title,
+.finished-title {
+  margin: 0;
+  font-size: 1.75rem;
+  text-align: center;
+}
+
+.offers-hint {
+  margin: 0;
+  max-width: 30rem;
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+.offers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.offer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 10rem;
+  min-height: var(--touch);
+  padding: 1rem 0.5rem;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.25rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.offer-card:hover,
+.offer-card:focus-visible {
+  transform: translateY(-3px);
+  outline: 4px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.offer-card[data-category='premium'] {
+  border-color: #b8860b;
+  background: linear-gradient(#fff8dc, var(--card));
+}
+
+.piece-icon {
+  width: 6rem;
+  height: 6rem;
+}
+
+/* Serie als Fackeln am unteren Rand (auf der Wiese). */
+.streak-torches {
+  position: absolute;
+  left: 50%;
+  bottom: 0.25rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.25rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.torch {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.torch.just-lit {
+  animation: flare 600ms ease-out;
+}
+
+@keyframes flare {
+  0% {
+    transform: scale(0.7);
+    filter: brightness(1.8);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .torch.just-lit,
+  .offer-card:hover {
+    animation: none;
+    transform: none;
   }
 }

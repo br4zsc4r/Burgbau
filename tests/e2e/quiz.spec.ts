@@ -13,13 +13,13 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('richtige Antwort führt zum Bauen', async ({ page }) => {
+test('richtige Antwort führt zur Bauteil-Auswahl', async ({ page }) => {
   await page.getByLabel('Mehrzahl eintippen').fill(await currentPlural(page));
   await page.getByRole('button', { name: 'Fertig' }).click();
   await expect(page.getByText('Richtig!')).toBeVisible();
 
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByText('Setz deinen Block auf ein leuchtendes Feld!')).toBeVisible();
+  await expect(page.getByText('Such dir ein Bauteil aus!')).toBeVisible();
   await expect(page.getByLabel('Mehrzahl eintippen')).toBeHidden();
 });
 

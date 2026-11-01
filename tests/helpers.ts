@@ -1,4 +1,6 @@
-import type { RandomFn, Word } from '../src/types';
+import type { RandomFn, Settings, Word } from '../src/types';
+
+export const testSettings: Settings = { requireCapitalization: false, tasksPerCastle: 15 };
 
 export function makeWord(overrides: Partial<Word> & Pick<Word, 'singular' | 'plural'>): Word {
   return {

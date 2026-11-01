@@ -10,7 +10,7 @@ export interface BuildControlsCallbacks {
 /** Hinweis und Buttons über der Bauszene, während ein Teil gesetzt wird. */
 export function createBuildControls(callbacks: BuildControlsCallbacks): {
   element: HTMLElement;
-  render: (step: GameStep) => void;
+  render: (step: GameStep, lastTask: boolean) => void;
 } {
   const bar = element('div', 'build-controls');
   const hint = element('p', 'build-hint', texts.placeHint);
@@ -26,11 +26,12 @@ export function createBuildControls(callbacks: BuildControlsCallbacks): {
 
   return {
     element: bar,
-    render: (step) => {
-      bar.hidden = step === 'task';
+    render: (step, lastTask) => {
+      bar.hidden = step !== 'placing' && step !== 'placed';
       hint.hidden = step !== 'placing';
       undo.hidden = step !== 'placed';
       next.hidden = step !== 'placed';
+      next.textContent = lastTask ? texts.finishCastle : texts.nextTask;
     },
   };
 }

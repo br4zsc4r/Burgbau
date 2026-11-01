@@ -27,13 +27,27 @@ describe('grid', () => {
     });
 
     it('erlaubt Teile auf anderen Teilen', () => {
-      const grid = placePiece(createGrid(size), { col: 1, row: 0 }, 'block');
+      const grid = placePiece(createGrid(size), { col: 1, row: 0 }, 'wall');
       expect(canPlace(grid, { col: 1, row: 1 })).toBe(true);
       expect(canPlace(grid, { col: 0, row: 1 })).toBe(false);
     });
 
+    it('verbietet Teile auf Dächern und Dekorationen', () => {
+      for (const top of ['pointedRoof', 'battlements', 'flag', 'dragon', 'tornFlag'] as const) {
+        const grid = placePiece(createGrid(size), { col: 1, row: 0 }, top);
+        expect(canPlace(grid, { col: 1, row: 1 })).toBe(false);
+      }
+    });
+
+    it('erlaubt Teile auf beschädigten Blöcken', () => {
+      for (const damaged of ['crackedWall', 'rubble', 'chippedTower'] as const) {
+        const grid = placePiece(createGrid(size), { col: 1, row: 0 }, damaged);
+        expect(canPlace(grid, { col: 1, row: 1 })).toBe(true);
+      }
+    });
+
     it('verbietet belegte Zellen', () => {
-      const grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'block');
+      const grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'wall');
       expect(canPlace(grid, { col: 0, row: 0 })).toBe(false);
     });
 
@@ -58,9 +72,9 @@ describe('grid', () => {
 
     it('liegt pro Spalte über dem obersten Teil', () => {
       let grid = createGrid(size);
-      grid = placePiece(grid, { col: 0, row: 0 }, 'block');
-      grid = placePiece(grid, { col: 0, row: 1 }, 'block');
-      grid = placePiece(grid, { col: 2, row: 0 }, 'block');
+      grid = placePiece(grid, { col: 0, row: 0 }, 'wall');
+      grid = placePiece(grid, { col: 0, row: 1 }, 'wall');
+      grid = placePiece(grid, { col: 2, row: 0 }, 'wall');
       expect(validCells(grid)).toEqual([
         { col: 0, row: 2 },
         { col: 1, row: 0 },
@@ -68,10 +82,18 @@ describe('grid', () => {
       ]);
     });
 
+    it('lässt Spalten mit Dach aus', () => {
+      const grid = placePiece(createGrid(size), { col: 1, row: 0 }, 'coneRoof');
+      expect(validCells(grid)).toEqual([
+        { col: 0, row: 0 },
+        { col: 2, row: 0 },
+      ]);
+    });
+
     it('ist leer, wenn das Raster voll ist', () => {
       let grid = createGrid({ cols: 2, rows: 1 });
-      grid = placePiece(grid, { col: 0, row: 0 }, 'block');
-      grid = placePiece(grid, { col: 1, row: 0 }, 'block');
+      grid = placePiece(grid, { col: 0, row: 0 }, 'wall');
+      grid = placePiece(grid, { col: 1, row: 0 }, 'wall');
       expect(validCells(grid)).toEqual([]);
     });
   });
@@ -79,28 +101,28 @@ describe('grid', () => {
   describe('placePiece / removePiece', () => {
     it('verändert das Original nicht', () => {
       const grid = createGrid(size);
-      const placed = placePiece(grid, { col: 0, row: 0 }, 'block');
+      const placed = placePiece(grid, { col: 0, row: 0 }, 'wall');
       expect(getCell(grid, { col: 0, row: 0 })).toBeNull();
-      expect(getCell(placed, { col: 0, row: 0 })).toBe('block');
+      expect(getCell(placed, { col: 0, row: 0 })).toBe('wall');
     });
 
     it('wirft bei ungültiger Zelle', () => {
-      expect(() => placePiece(createGrid(size), { col: 0, row: 2 }, 'block')).toThrow();
+      expect(() => placePiece(createGrid(size), { col: 0, row: 2 }, 'wall')).toThrow();
     });
 
     it('entfernt ein oben liegendes Teil', () => {
-      const grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'block');
+      const grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'wall');
       expect(getCell(removePiece(grid, { col: 0, row: 0 }), { col: 0, row: 0 })).toBeNull();
     });
 
     it('entfernt kein Teil, auf dem noch etwas steht', () => {
-      let grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'block');
-      grid = placePiece(grid, { col: 0, row: 1 }, 'block');
+      let grid = placePiece(createGrid(size), { col: 0, row: 0 }, 'wall');
+      grid = placePiece(grid, { col: 0, row: 1 }, 'wall');
       expect(() => removePiece(grid, { col: 0, row: 0 })).toThrow();
     });
 
     it('bleibt als JSON serialisierbar', () => {
-      const grid = placePiece(createGrid(size), { col: 1, row: 0 }, 'block');
+      const grid = placePiece(createGrid(size), { col: 1, row: 0 }, 'wall');
       expect(JSON.parse(JSON.stringify(grid))).toEqual(grid);
     });
   });

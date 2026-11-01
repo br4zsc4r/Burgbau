@@ -1,5 +1,37 @@
+import type { PieceId } from '../types';
+
+const pieceNames: Readonly<Record<PieceId, string>> = {
+  wall: 'Mauerblock',
+  tower: 'Turmblock',
+  gate: 'Tor',
+  windowWall: 'Mauer mit Fenster',
+  battlements: 'Zinnen',
+  pointedRoof: 'Spitzdach',
+  coneRoof: 'Kegeldach',
+  flag: 'Fahne',
+  pennant: 'Wimpel',
+  balcony: 'Balkon',
+  coatOfArms: 'Wappen',
+  torch: 'Fackel',
+  ivy: 'Efeu',
+  flowerBox: 'Blumenkasten',
+  goldenRoof: 'Goldenes Dach',
+  banner: 'Bannerfahne',
+  stainedGlass: 'Buntglasfenster',
+  dragon: 'Drache',
+  crumblingWall: 'Bröckelmauer',
+  holeWall: 'Mauer mit Loch',
+  crackedWall: 'Mauer mit Riss',
+  plankPatch: 'Holzbretter-Flickwerk',
+  rubble: 'Steinhaufen',
+  chippedTower: 'Turmblock mit fehlender Ecke',
+  crookedRoof: 'Schiefes Dach',
+  tornFlag: 'Zerrissene Fahne',
+};
+
 // Alle sichtbaren Texte zentral an einer Stelle.
 export const texts = {
+  pieceNames,
   appTitle: 'Burgbau',
   taskPrompt: 'Wie heißt die Mehrzahl?',
   pluralArticle: 'die',
@@ -15,7 +47,14 @@ export const texts = {
   insertChar: (char: string): string => `${char} einfügen`,
   imageFallbackLabel: (singular: string): string => `Bild: ${singular}`,
   loadError: 'Die Wörter konnten nicht geladen werden.',
-  placeHint: 'Setz deinen Block auf ein leuchtendes Feld!',
+  placeHint: 'Setz dein Bauteil auf ein leuchtendes Feld!',
   undo: 'Rückgängig',
   nextTask: 'Nächstes Wort',
+  finishCastle: 'Burg fertig!',
+  offersTitle: 'Such dir ein Bauteil aus!',
+  offersDamagedHint: 'Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!',
+  streakLabel: (lit: number): string =>
+    lit === 1 ? '1 Fackel leuchtet' : `${lit} Fackeln leuchten`,
+  finishedTitle: 'Deine Burg ist fertig!',
+  newCastle: 'Neue Burg bauen',
 } as const;
