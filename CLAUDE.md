@@ -66,6 +66,10 @@ src/
 - **Keine Pluralformen erfinden.** Neu hinzugefügte Wörter mit `"verified": false` markieren, damit sie vor dem Einsatz gegen Duden/Wiktionary geprüft werden. Unklare Fälle nicht aufnehmen.
 - Ein Test (`tests/wordlists.test.ts`) prüft alle Listen: Schema gültig, keine doppelten IDs, `pattern` und `umlaut` passen zur ersten Pluralform.
 
+## Neue Spielart
+
+Wie eine weitere Spielart (neben Mehrzahl und kleinem 1×1) hinzukommt, steht Schritt für Schritt in **`docs/neue-spielart.md`**: Typen, Logik, Panel, Einstellungen, Pakete, Lehrkraft-Bereich, exklusive Bauteile, Tests sowie die Stellen, die der Compiler nicht findet. Vor jeder neuen Spielart lesen und befolgen.
+
 ## Grafiken
 
 - Bis Phase 8 nur **Platzhalter**: einfache, selbst gezeichnete SVGs bzw. farbige Formen in `public/assets/placeholder/`.
