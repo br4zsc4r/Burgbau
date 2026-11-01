@@ -2,10 +2,10 @@
 
 Burgbau ist ein Rahmen für mehrere Lernspiele: Bauen, Angebote, Serie, Seltenheit, Speicher und Sammlung bleiben gleich, nur die **Aufgabe** wechselt. Eine solche Aufgabenart heißt im Projekt **Spielart** (`ExerciseId`). Zurzeit gibt es zwei:
 
-| Spielart | ID | Inhalt (woraus die Aufgaben kommen) | Logik | Panel |
-|---|---|---|---|---|
-| Mehrzahl | `plural` | eingeschaltete Wortlisten | `src/logic/exercises/plural.ts` | `src/ui/exercises/pluralPanel.ts` |
-| Kleines 1×1 | `multiplication` | eingeschaltete Reihen 1–10 | `src/logic/exercises/multiplication.ts` | `src/ui/exercises/multiplicationPanel.ts` |
+| Spielart | ID | Inhalt (woraus die Aufgaben kommen) | Logik | Panel | Einstellungen |
+|---|---|---|---|---|---|
+| Mehrzahl | `plural` | eingeschaltete Wortlisten | `src/logic/exercises/plural.ts` | `src/ui/exercises/pluralPanel.ts` | `src/ui/exercises/pluralSettings.ts` |
+| Kleines 1×1 | `multiplication` | eingeschaltete Reihen 1–10 | `src/logic/exercises/multiplication.ts` | `src/ui/exercises/multiplicationPanel.ts` | `src/ui/exercises/multiplicationSettings.ts` |
 
 **Das kleine 1×1 ist die beste Vorlage**: Es ist klein und berührt jede Stelle genau einmal. Mit `grep -rn multiplication src tests` findest du alle Stellen, die eine neue Spielart ebenfalls braucht.
 
@@ -182,11 +182,11 @@ const panels = {
 
 - `exerciseNames` und `exerciseSamples`: Name und Beispiel für die Auswahlkarte, z. B. `'Plus und Minus'`, `'7 + 5 = 12'`. Beide sind mit `satisfies Record<ExerciseId, string>` abgesichert, der Compiler meldet also, wenn etwas fehlt.
 - Aufgabentexte: Aufforderung, `aria-label`, Vorlesetexte für Frage und Lösung.
-- Lehrkraft-Texte:
-  - Titel und Hinweis für den Inhalt
-  - Titel im Paket-Editor
-  - Teil der Paket-Zusammenfassung, z. B. `packAdditionPart`
-- `packEmpty` anpassen: „Wähle mindestens eine Wortliste, eine Reihe oder …“.
+- Lehrkraft-Texte für die Popups:
+  - Überschriften und Hinweise der Einstellungen, z. B. `rangesTitle`, `rangesHint`
+  - Hinweis im Paket-Popup, z. B. `packRangesHint` („Diese Zahlenräume kommen im Paket dran …“)
+  - Kurzbeschreibung des Inhalts, z. B. `rangesSummary` („bis 10, bis 20“)
+- Allgemeine Texte wie „+ Spielart“, „Einstellungen: …“, „Inhalt: …“ und die Paket-Zusammenfassung setzen sich aus `exerciseNames` zusammen. Sie brauchen keine Änderung.
 
 ---
 
@@ -206,18 +206,79 @@ Mehr ist in `app.ts` nicht nötig. Auswahlkarten, Pakete und der Start der Burg 
 
 ---
 
-## 9. Lehrkraft-Bereich (`src/ui/teacherScreen.ts`)
+## 9. Einstellungen und Optionen (`src/ui/exercises/additionSettings.ts`)
 
-Drei Stellen, jeweils neben dem 1×1:
+Der Lehrkraft-Bereich (`src/ui/teacherScreen.ts`) kennt die einzelnen Spielarten nicht. Er zeigt:
 
-1. **`renderExercises()`:** Den Ein-/Ausschalter der Spielart erzeugt die Schleife über `EXERCISE_IDS` von selbst. Neu dazu kommt die Einstellung für den freigegebenen Inhalt, z. B. Knöpfe wie die `row-toggles`. Mit `toggleKeepingOne` bleibt immer mindestens einer an.
-2. **`packSummary()`:** den Inhalt in der Paketliste kurz nennen.
-3. **`renderPackEditor()`:**
-   - eigene Variable für den Inhalt
-   - Abschnitt mit Überschrift
-   - in `save()` `contents.addition = { … }` setzen, wenn etwas gewählt ist
+- **Abschnitt „Spielarten“:** je Spielart eine Zeile mit Haken (im freien Spiel verfügbar), dem freigegebenen Inhalt in Kurzform und einem **Zahnrad**. Das Zahnrad öffnet ein **Popup** mit allen Einstellungen der Spielart.
+- **Abschnitt „Übungspakete“:** Im Editor eines Pakets steht eine Liste von **Aufgabenbereichen**, je Spielart höchstens einer. „+ Plus und Minus“ fügt einen Bereich hinzu. Sein Zahnrad öffnet ein Popup, in dem nur der Inhalt gewählt wird.
 
-Der Lehrkraft-Bereich bleibt hinter der PIN. Neue Einstellungen gehören nicht in den Kinderbereich.
+Was in den Popups steht, liefert jede Spielart selbst über `ExerciseSettings<E>` (`src/ui/exercises/settings.ts`):
+
+| Feld | Aufgabe |
+|---|---|
+| `freeContent(ctx)` | Freigegebener Inhalt im freien Spiel, gelesen aus den Einstellungen. Zugleich der Startwert, wenn die Spielart als Bereich in ein Paket kommt. |
+| `summary(content)` | Kurzform des Inhalts für die Listen, z. B. „bis 10, bis 20“. |
+| `renderFree(body, ctx)` | Füllt das Popup der Spielart im freien Spiel: alle ihre Einstellungen. Speichert **sofort** über `ctx.saveSettings`. |
+| `renderPack(body, content, ctx, change)` | Füllt das Popup eines Aufgabenbereichs im Paket: nur den Inhalt wählen. Jede Änderung über `change(next)` melden. Gespeichert wird später mit dem Paket. |
+
+`ctx` (`SettingsContext`) bietet:
+
+- `settings()` und `saveSettings(change)`
+- `lists()`, `storedLists()` und `saveStoredLists(next)` für die Wortlisten
+- `newId()`
+
+Vorlage ist `multiplicationSettings.ts`:
+
+```ts
+export const additionSettings: ExerciseSettings<'addition'> = {
+  freeContent: (ctx) => ({ ranges: [...ctx.settings().additionRanges] }),
+  summary: (content) => texts.rangesSummary(content.ranges),
+  renderFree: (body, ctx) => {
+    const draw = (): void => {
+      body.replaceChildren(
+        element('h3', 'subsection-title', texts.rangesTitle),
+        element('p', 'setting-note', texts.rangesHint),
+        toggleButtons(ADDITION_RANGES, (r) => ctx.settings().additionRanges.includes(r), texts.rangeLabel, (r) => {
+          const additionRanges = toggleKeepingOne(ctx.settings().additionRanges, r, !ctx.settings().additionRanges.includes(r));
+          void ctx.saveSettings({ additionRanges }).then(draw).catch(report);
+        }),
+      );
+    };
+    draw();
+  },
+  renderPack: (body, content, _ctx, change) => {
+    let ranges = content.ranges;
+    const draw = (): void => {
+      body.replaceChildren(/* wie oben, aber: */);
+      // beim Umschalten: ranges = toggleKeepingOne(…); change({ ranges }); draw();
+    };
+    draw();
+  },
+};
+```
+
+Eintragen in **`src/ui/exercises/settings.ts`**:
+
+```ts
+export const EXERCISE_SETTINGS: { readonly [E in ExerciseId]: ExerciseSettings<E> } = {
+  plural: pluralSettings,
+  multiplication: multiplicationSettings,
+  addition: additionSettings,
+};
+```
+
+Regeln für die Popups:
+
+- **Bausteine aus `src/ui/settingsControls.ts` nutzen:** `checkbox`, `select`, `labelled`, `button`, `confirmButton`, `toggleButtons` (große Umschalter wie die Reihen), `report` für Fehler beim Speichern.
+- **Inhalt nie leer:** Mit `toggleKeepingOne` bleibt immer mindestens ein Eintrag an. So gibt es im Paket keine leeren Bereiche. Entfernt wird ein Bereich mit „Entfernen“.
+- **Nach jeder Änderung neu zeichnen** (`draw()` wie im Beispiel). Das Popup wird nicht von außen aktualisiert.
+- **Ein Unter-Editor** (wie der Listen-Editor der Mehrzahl) darf den Inhalt von `body` ersetzen und nach „Speichern“/„Abbrechen“ mit `draw()` zurückkehren.
+- **Was nur die Spielart betrifft, gehört ins Popup,** nicht in „Allgemein“. Beispiele: Eingabemodus und Großschreibung der Mehrzahl. „Allgemein“ bleibt für alles, was für alle Spielarten gilt: Aufgaben pro Burg, Vorlesen, Töne, Profile.
+- **Einstellungen wie der Eingabemodus gelten auch in Paketen.** Ins Paket-Popup kommt nur der Inhalt. Soll eine Einstellung pro Paket wählbar sein, ist das eine Änderung des Speicherformats (`PackContents`): vorher fragen.
+- Nach dem Schließen eines Popups zeichnet der Lehrkraft-Bereich die Kurzinhalte und Pakete neu. Darum muss sich die Spielart nicht kümmern.
+
+`teacherScreen.ts` braucht für eine neue Spielart **keine Änderung.**
 
 ---
 
@@ -257,6 +318,8 @@ Nach dem Erweitern von `ExerciseId` meldet `npm run typecheck` fehlende Einträg
 - `packExercises` (`logic/packs.ts`)
 - `tasksByExercise` (`ui/app.ts`)
 - `panels` in `createTaskArea` (`ui/exercises/index.ts`)
+- `EXERCISE_SETTINGS` (`ui/exercises/settings.ts`)
+- `PackContents` ohne Eintrag für die neue Spielart (über `PackContent<E>`)
 
 **Nicht** gemeldet werden diese Stellen, sie musst du selbst prüfen:
 
@@ -265,8 +328,7 @@ Nach dem Erweitern von `ExerciseId` meldet `npm run typecheck` fehlende Einträg
 - [ ] `defaultSettings` und `parseSettings` in `state/settings.ts`
 - [ ] `parsePack` in `state/validate.ts`
 - [ ] Migration für `freeExercises` auf bestehenden Geräten (falls gewünscht)
-- [ ] Lehrkraft-Bereich: Inhalts-Einstellung, `packSummary`, `renderPackEditor`
-- [ ] `texts.packEmpty`
+- [ ] Popups: Inhalt bleibt nie leer, Einstellungen speichern sofort, Paket-Popup meldet über `change`
 - [ ] CSS für Hochformat, Tablet und Kompaktmodus
 - [ ] `specification.md` Abschnitt 14
 
@@ -291,8 +353,8 @@ Nach dem Erweitern von `ExerciseId` meldet `npm run typecheck` fehlende Einträg
 - Kind wählt die Spielart mit `chooseExercise(page, 'Plus und Minus')`, löst eine Aufgabe richtig und bekommt drei Angebote.
 - Eine falsche Antwort zeigt die Lösung.
 - Mit `setSettings(page, { freeExercises: ['addition'] })` startet die Burg ohne Auswahl.
-- Die Lehrkraft schaltet den Inhalt ein und aus, und es kommt nur noch das Eingeschaltete.
-- Ein Paket mit dem neuen Inhalt lässt sich anlegen und spielen.
+- Die Lehrkraft öffnet mit `openExerciseSettings(page, 'Plus und Minus')` das Popup, schaltet den Inhalt um und schließt mit `closeDialog(page)`. Danach kommt nur noch das Eingeschaltete.
+- Ein Paket mit dem Bereich „+ Plus und Minus“ lässt sich anlegen, sein Inhalt über das Zahnrad „Inhalt: Plus und Minus“ ändern und spielen. Vorlage ist `createPack` in `phase9.spec.ts`.
 - Tablet 1024 × 690: `.task-panel:visible .primary-button` ist ohne Scrollen sichtbar.
 
 Hinweise zu den Helfern:
@@ -307,8 +369,8 @@ Hinweise zu den Helfern:
 1. `npm run typecheck`, `npm run lint`, `npm test` sind grün, ebenso `npm run test:e2e`.
 2. `specification.md` ist ergänzt: Abschnitt 14 und gegebenenfalls eine Entscheidung in Abschnitt 13.
 3. Im Browser ausprobieren:
-   - Lehrkraft-Bereich: Spielart und Inhalt einschalten.
+   - Lehrkraft-Bereich: Haken bei der Spielart setzen, Zahnrad öffnen, Inhalt einstellen.
    - Profil wählen, „Neue Burg bauen“, neue Spielart wählen.
    - Antworten: richtig, „Fast!“, falsch. Vorlesen testen.
-   - Ein Paket anlegen, das die Spielart mit der Mehrzahl mischt.
+   - Ein Paket mit den Bereichen „Mehrzahl“ und der neuen Spielart anlegen und spielen.
    - Auf dem Tablet ohne Scrollen spielen.

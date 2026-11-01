@@ -1457,6 +1457,94 @@ button:focus-visible {
   gap: 0.75rem;
 }
 
+/* ---------- Spielarten, Aufgabenbereiche und Popups (Lehrkraft) ---------- */
+.exercise-row .setting-check {
+  flex: 0 1 14rem;
+  font-weight: 700;
+}
+
+.exercise-row .list-info,
+.pack-area .list-info {
+  flex: 1 1 10rem;
+}
+
+.settings-gear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  padding: 0;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.settings-gear svg {
+  width: 2rem;
+  height: 2rem;
+  fill: var(--ink);
+}
+
+.pack-areas {
+  display: flex;
+  flex-direction: column;
+}
+
+.pack-adders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.settings-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(44rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.25rem;
+}
+
+.settings-dialog:not([open]) {
+  display: none;
+}
+
+.settings-dialog::backdrop {
+  background: rgb(46 42 36 / 45%);
+}
+
+.dialog-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 3px solid #e2dccf;
+}
+
+.dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem 1.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.settings-dialog .secondary-button,
+.settings-dialog .primary-button {
+  min-height: 3rem;
+  font-size: 1.1rem;
+}
+
 /* ---------- Feiern (Phase 8) ---------- */
 .word-card.cheer {
   animation: cheer 600ms ease-out;

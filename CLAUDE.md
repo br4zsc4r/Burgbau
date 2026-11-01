@@ -68,7 +68,7 @@ src/
 
 ## Neue Spielart
 
-Wie eine weitere Spielart (neben Mehrzahl und kleinem 1×1) hinzukommt, steht Schritt für Schritt in **`docs/neue-spielart.md`**: Typen, Logik, Panel, Einstellungen, Pakete, Lehrkraft-Bereich, exklusive Bauteile, Tests sowie die Stellen, die der Compiler nicht findet. Vor jeder neuen Spielart lesen und befolgen.
+Wie eine weitere Spielart (neben Mehrzahl und kleinem 1×1) hinzukommt, steht Schritt für Schritt in **`docs/neue-spielart.md`**: Typen, Logik, Panel, Speicher, Einstellungs-Popups (Spielarten-Liste mit Zahnrad und Aufgabenbereiche der Übungspakete, `src/ui/exercises/*Settings.ts`), exklusive Bauteile, Tests sowie die Stellen, die der Compiler nicht findet. Vor jeder neuen Spielart lesen und befolgen.
 
 ## Grafiken
 

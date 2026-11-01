@@ -1,28 +1,18 @@
-import { parseCsvWordList, wordFromInput } from '../logic/csvImport';
-import { toggleKeepingOne } from '../logic/exercises/freePlay';
-import { MULTIPLICATION_ROWS } from '../logic/exercises/multiplication';
 import { EXERCISE_IDS } from '../logic/exercises/taskId';
+import { toggleKeepingOne } from '../logic/exercises/freePlay';
 import { packExercises, packProblems, removePack, upsertPack, withoutMissingLists } from '../logic/packs';
 import { hashPin, isValidPin } from '../logic/pin';
 import { addClass, removeProfile, renameProfile, setProfileCode } from '../logic/profiles';
-import { mergeLists, toggleList, validActiveIds, type ListEntry } from '../logic/wordlists';
+import { mergeLists, validActiveIds, type ListEntry } from '../logic/wordlists';
 import type { Repository } from '../state/repository';
 import { DEFAULT_LIST_ID, TASK_COUNTS, defaultSettings } from '../state/settings';
-import type {
-  Article,
-  ExercisePack,
-  InputMode,
-  InputModeSetting,
-  PackContents,
-  Profile,
-  Settings,
-  TasksPerCastle,
-  Word,
-  WordList,
-} from '../types';
+import type { ExerciseId, ExercisePack, PackContents, Profile, Settings, TasksPerCastle, WordList } from '../types';
 import { element } from './dom';
+import { exerciseSettings, type PackContent, type SettingsContext } from './exercises/settings';
 import { createPieceIcon } from './pieceIcon';
 import { createSymbolBadge } from './profileSymbol';
+import { button, checkbox, confirmButton, gearButton, labelled, report, select } from './settingsControls';
+import { openSettingsDialog } from './settingsDialog';
 import { texts } from './texts';
 
 export interface TeacherDeps {
@@ -34,79 +24,25 @@ export interface TeacherDeps {
   onDone: () => void;
 }
 
-const report = (error: unknown): void => {
-  console.error(error);
-};
-
-function button(label: string, className: string, onClick: () => void): HTMLButtonElement {
-  const b = element('button', className, label);
-  b.type = 'button';
-  b.addEventListener('click', onClick);
-  return b;
+function withContent(contents: PackContents, exercise: ExerciseId, content: PackContent<ExerciseId>): PackContents {
+  return { ...contents, [exercise]: content };
 }
 
-/** Knopf, der vor dem Ausführen einmal nachfragt. */
-function confirmButton(label: string, question: string, yes: string, onConfirm: () => void): HTMLElement {
-  const box = element('span', 'confirm-inline');
-  const start = button(label, 'secondary-button', () => {
-    start.hidden = true;
-    ask.hidden = false;
-  });
-  const ask = element('span', 'confirm-ask');
-  ask.hidden = true;
-  ask.append(
-    element('span', 'confirm-question', question),
-    button(yes, 'danger-button', onConfirm),
-    button(texts.cancel, 'secondary-button', () => {
-      ask.hidden = true;
-      start.hidden = false;
-    }),
-  );
-  box.append(start, ask);
-  return box;
+function withoutContent(contents: PackContents, exercise: ExerciseId): PackContents {
+  return Object.fromEntries(Object.entries(contents).filter(([key]) => key !== exercise));
 }
 
-function labelled(text: string, control: HTMLElement): HTMLElement {
-  const label = element('label', 'setting-row');
-  label.append(element('span', 'setting-label', text), control);
-  return label;
+/** Spielarten, die im Paket als Aufgabenbereich stehen – in fester Reihenfolge. */
+function packAreas(contents: PackContents): ExerciseId[] {
+  return EXERCISE_IDS.filter((exercise) => contents[exercise] !== undefined);
 }
 
-function select<T extends string>(
-  options: readonly { value: T; label: string }[],
-  value: T,
-  onChange: (value: T) => void,
-): HTMLSelectElement {
-  const el = element('select', 'setting-select');
-  for (const option of options) {
-    const opt = element('option', '', option.label);
-    opt.value = option.value;
-    opt.selected = option.value === value;
-    el.append(opt);
-  }
-  el.addEventListener('change', () => {
-    onChange(el.value as T);
-  });
-  return el;
+/** „Kleines 1×1 (Reihen 3, 7)“ – ein Aufgabenbereich in Kurzform. */
+function areaSummary(contents: PackContents, exercise: ExerciseId): string {
+  const content = contents[exercise];
+  if (content === undefined) return '';
+  return texts.packPart(texts.exerciseNames[exercise], exerciseSettings(exercise).summary(content));
 }
-
-function checkbox(text: string, checked: boolean, onChange: (checked: boolean) => void): HTMLElement {
-  const label = element('label', 'setting-check');
-  const input = element('input', '');
-  input.type = 'checkbox';
-  input.checked = checked;
-  input.addEventListener('change', () => {
-    onChange(input.checked);
-  });
-  label.append(input, element('span', '', text));
-  return label;
-}
-
-const ARTICLES: readonly Article[] = ['der', 'die', 'das'];
-const LIST_MODES: readonly { value: InputMode; label: string }[] = [
-  { value: 'tiles', label: texts.inputModeTiles },
-  { value: 'keyboard', label: texts.inputModeKeyboard },
-];
 
 /** Lehrkraft-Einstellungen (Spezifikation Abschnitt 8). Nur über den gesicherten Zugang erreichbar. */
 export function createTeacherScreen(deps: TeacherDeps): {
@@ -121,7 +57,6 @@ export function createTeacherScreen(deps: TeacherDeps): {
     button(texts.teacherDone, 'primary-button', deps.onDone),
   );
   const general = element('section', 'teacher-section');
-  const listsSection = element('section', 'teacher-section');
   const profilesSection = element('section', 'teacher-section');
   const pinSection = element('section', 'teacher-section');
   const resetSection = element('section', 'teacher-section');
@@ -139,7 +74,6 @@ export function createTeacherScreen(deps: TeacherDeps): {
     general,
     exercisesSection,
     packsSection,
-    listsSection,
     profilesSection,
     pinSection,
     resetSection,
@@ -183,23 +117,25 @@ export function createTeacherScreen(deps: TeacherDeps): {
     if (JSON.stringify(cleaned) !== JSON.stringify(packs)) await savePacks(cleaned);
   }
 
+  /** Was die Einstellungen der Spielarten (src/ui/exercises/*Settings.ts) brauchen. */
+  const context: SettingsContext = {
+    settings: () => settings,
+    saveSettings,
+    lists: entries,
+    storedLists: () => storedLists,
+    saveStoredLists,
+    newId: deps.newId,
+  };
+
   // ---------- Allgemein ----------
 
   function renderGeneral(): void {
-    const modeOptions: { value: InputModeSetting; label: string }[] = [
-      { value: 'list', label: texts.inputModeList },
-      { value: 'tiles', label: texts.inputModeTiles },
-      { value: 'keyboard', label: texts.inputModeKeyboard },
-    ];
     const taskOptions = TASK_COUNTS.map((n) => ({ value: String(n), label: String(n) }));
     const save = (change: Partial<Settings>): void => {
       void saveSettings(change).catch(report);
     };
     general.replaceChildren(
       element('h2', 'section-title', texts.sectionGeneral),
-      labelled(texts.settingInputMode, select(modeOptions, settings.inputMode, (inputMode) => {
-        save({ inputMode });
-      })),
       labelled(
         texts.settingTasks,
         select(taskOptions, String(settings.tasksPerCastle), (value) => {
@@ -207,9 +143,6 @@ export function createTeacherScreen(deps: TeacherDeps): {
         }),
       ),
       element('p', 'setting-note', texts.settingsNote),
-      checkbox(texts.settingCapitalization, settings.requireCapitalization, (requireCapitalization) => {
-        save({ requireCapitalization });
-      }),
       checkbox(texts.settingReadAloud, settings.readAloud, (readAloud) => {
         save({ readAloud });
       }),
@@ -230,57 +163,56 @@ export function createTeacherScreen(deps: TeacherDeps): {
 
   // ---------- Spielarten ----------
 
-  function renderExercises(): void {
-    const save = (change: Partial<Settings>): void => {
-      void saveSettings(change)
-        .then(renderExercises)
-        .catch(report);
-    };
-    const exerciseChecks = EXERCISE_IDS.map((exercise) =>
-      checkbox(texts.exerciseNames[exercise], settings.freeExercises.includes(exercise), (on) => {
-        save({ freeExercises: toggleKeepingOne(settings.freeExercises, exercise, on) });
+  /** Eine Zeile der Spielarten: im freien Spiel verfügbar (Haken) und Zahnrad zu ihren Einstellungen. */
+  function exerciseRow(exercise: ExerciseId): HTMLElement {
+    const name = texts.exerciseNames[exercise];
+    const ui = exerciseSettings(exercise);
+    const row = element('div', 'list-row exercise-row');
+    row.dataset['exercise'] = exercise;
+    row.append(
+      checkbox(name, settings.freeExercises.includes(exercise), (on) => {
+        void saveSettings({ freeExercises: toggleKeepingOne(settings.freeExercises, exercise, on) })
+          .then(renderExercises)
+          .catch(report);
+      }),
+      element('span', 'list-info setting-note', ui.summary(ui.freeContent(context))),
+      gearButton(texts.exerciseSettingsLabel(name), () => {
+        openSettingsDialog(
+          texts.exerciseSettingsTitle(name),
+          (body) => {
+            ui.renderFree(body, context);
+          },
+          () => {
+            // Wortlisten können sich geändert haben: Zusammenfassungen und Pakete neu zeichnen.
+            renderExercises();
+            renderPacks();
+          },
+        );
       }),
     );
-    const rows = element('div', 'row-toggles');
-    for (const row of MULTIPLICATION_ROWS) {
-      const on = settings.multiplicationRows.includes(row);
-      const toggle = element('button', `row-toggle${on ? ' on' : ''}`, String(row));
-      toggle.type = 'button';
-      toggle.setAttribute('aria-pressed', String(on));
-      toggle.setAttribute('aria-label', texts.rowLabel(row));
-      toggle.addEventListener('click', () => {
-        const next = toggleKeepingOne(settings.multiplicationRows, row, !on);
-        save({ multiplicationRows: [...next].sort((a, b) => a - b) });
-      });
-      rows.append(toggle);
-    }
+    return row;
+  }
+
+  function renderExercises(): void {
     const canStart = settings.freePlay || packs.some((pack) => packExercises(pack).length > 0);
     const warning = element('p', 'setting-warning', texts.noStartWarning);
     warning.hidden = canStart;
     exercisesSection.replaceChildren(
       element('h2', 'section-title', texts.sectionExercises),
       checkbox(texts.settingFreePlay, settings.freePlay, (freePlay) => {
-        save({ freePlay });
+        void saveSettings({ freePlay }).then(renderExercises).catch(report);
       }),
       element('p', 'setting-note', texts.freePlayHint),
       warning,
       element('p', 'setting-note', texts.exercisesHint),
-      ...exerciseChecks,
-      element('h3', 'subsection-title', texts.rowsTitle),
-      element('p', 'setting-note', texts.rowsHint),
-      rows,
+      ...EXERCISE_IDS.map((exercise) => exerciseRow(exercise)),
     );
   }
 
   // ---------- Übungspakete ----------
 
   function packSummary(pack: ExercisePack): string {
-    const parts: string[] = [];
-    const listCount = pack.contents.plural?.listIds.length ?? 0;
-    if (listCount > 0) parts.push(texts.packPluralPart(listCount));
-    const rows = pack.contents.multiplication?.rows ?? [];
-    if (rows.length > 0) parts.push(texts.packMultiplicationPart(rows));
-    return texts.packSummary(parts);
+    return texts.packSummary(packAreas(pack.contents).map((exercise) => areaSummary(pack.contents, exercise)));
   }
 
   function renderPacks(): void {
@@ -315,47 +247,75 @@ export function createTeacherScreen(deps: TeacherDeps): {
     );
   }
 
-  /** Paket bearbeiten: Name, Wortlisten der Mehrzahl, Reihen des 1×1. */
+  /**
+   * Paket bearbeiten: Name und eine Liste von Aufgabenbereichen (je Spielart einer). Das Zahnrad
+   * eines Bereichs öffnet ein Popup, in dem sein Inhalt gewählt wird. Gespeichert wird mit „Speichern“.
+   */
   function renderPackEditor(pack: ExercisePack): void {
-    let listIds = [...(pack.contents.plural?.listIds ?? [])];
-    let rows = [...(pack.contents.multiplication?.rows ?? [])];
+    let contents: PackContents = { ...pack.contents };
     const name = element('input', 'setting-input');
     name.value = pack.name;
     name.maxLength = 40;
+    const areas = element('div', 'pack-areas');
+    const adders = element('div', 'pack-adders');
 
-    const listChecks = entries().map(({ list }) =>
-      checkbox(list.name, listIds.includes(list.id), (on) => {
-        listIds = on ? [...listIds, list.id] : listIds.filter((id) => id !== list.id);
-      }),
-    );
-
-    const rowToggles = element('div', 'row-toggles');
-    const drawRows = (): void => {
-      rowToggles.replaceChildren(
-        ...MULTIPLICATION_ROWS.map((row) => {
-          const on = rows.includes(row);
-          const toggle = element('button', `row-toggle${on ? ' on' : ''}`, String(row));
-          toggle.type = 'button';
-          toggle.setAttribute('aria-pressed', String(on));
-          toggle.setAttribute('aria-label', texts.rowLabel(row));
-          toggle.addEventListener('click', () => {
-            rows = on ? rows.filter((r) => r !== row) : [...rows, row].sort((a, b) => a - b);
-            drawRows();
+    /** Popup eines Aufgabenbereichs: Änderungen landen im Entwurf des Pakets. */
+    const openArea = (exercise: ExerciseId): void => {
+      const content = contents[exercise];
+      if (content === undefined) return;
+      const packName = name.value.trim() === '' ? texts.packEditorTitle : name.value.trim();
+      const title = texts.packAreaTitle(packName, texts.exerciseNames[exercise]);
+      openSettingsDialog(
+        title,
+        (body) => {
+          exerciseSettings(exercise).renderPack(body, content, context, (next) => {
+            contents = withContent(contents, exercise, next);
           });
-          return toggle;
-        }),
+        },
+        drawAreas,
       );
     };
-    drawRows();
+
+    const addArea = (exercise: ExerciseId): void => {
+      contents = withContent(contents, exercise, exerciseSettings(exercise).freeContent(context));
+      drawAreas();
+      openArea(exercise);
+    };
+
+    function drawAreas(): void {
+      const present = packAreas(contents);
+      areas.replaceChildren(
+        ...(present.length === 0 ? [element('p', 'setting-note', texts.noPackAreas)] : []),
+        ...present.map((exercise) => {
+          const row = element('div', 'list-row pack-area');
+          row.dataset['exercise'] = exercise;
+          const exerciseName = texts.exerciseNames[exercise];
+          row.append(
+            element('span', 'list-info', areaSummary(contents, exercise)),
+            gearButton(texts.packAreaSettingsLabel(exerciseName), () => {
+              openArea(exercise);
+            }),
+            button(texts.packAreaRemove, 'secondary-button', () => {
+              contents = withoutContent(contents, exercise);
+              drawAreas();
+            }),
+          );
+          return row;
+        }),
+      );
+      adders.replaceChildren(
+        ...EXERCISE_IDS.filter((exercise) => !present.includes(exercise)).map((exercise) =>
+          button(texts.packAddArea(texts.exerciseNames[exercise]), 'secondary-button', () => {
+            addArea(exercise);
+          }),
+        ),
+      );
+    }
+    drawAreas();
 
     const message = element('p', 'csv-error');
     message.setAttribute('aria-live', 'polite');
     const save = (): void => {
-      const contents: PackContents = {};
-      const known = entries().map((e) => e.list.id);
-      const chosenLists = listIds.filter((id) => known.includes(id));
-      if (chosenLists.length > 0) contents.plural = { listIds: chosenLists };
-      if (rows.length > 0) contents.multiplication = { rows };
       const draft: ExercisePack = { ...pack, name: name.value, contents };
       const problems = packProblems(draft);
       if (problems.length > 0) {
@@ -375,235 +335,13 @@ export function createTeacherScreen(deps: TeacherDeps): {
     packsSection.replaceChildren(
       element('h2', 'section-title', texts.packEditorTitle),
       labelled(texts.packName, name),
-      element('h3', 'subsection-title', texts.packPluralTitle),
-      ...listChecks,
-      element('h3', 'subsection-title', texts.packMultiplicationTitle),
-      rowToggles,
+      element('h3', 'subsection-title', texts.packAreasTitle),
+      element('p', 'setting-note', texts.packAreasHint),
+      areas,
+      adders,
       bar,
     );
     name.focus();
-  }
-
-  // ---------- Wortlisten ----------
-
-  function listRow(entry: ListEntry): HTMLElement {
-    const { list } = entry;
-    const row = element('div', 'list-row');
-    const unverified = list.words.filter((w) => !w.verified).length;
-    const toggle = element('input', '');
-    toggle.type = 'checkbox';
-    toggle.checked = settings.activeListIds.includes(list.id);
-    toggle.setAttribute('aria-label', texts.listActive(list.name));
-    toggle.addEventListener('change', () => {
-      const activeListIds = toggleList(settings.activeListIds, list.id, toggle.checked);
-      toggle.checked = activeListIds.includes(list.id);
-      void saveSettings({ activeListIds }).catch(report);
-    });
-
-    const info = element('span', 'list-info');
-    info.append(element('strong', '', list.name), ' ', texts.listInfo(list.words.length, unverified));
-    if (entry.builtin) info.append(' · ', entry.edited ? texts.listEditedBadge : texts.listBuiltin);
-
-    const actions = element('span', 'list-actions');
-    actions.append(
-      button(texts.listEdit, 'secondary-button', () => {
-        openEditor(list);
-      }),
-    );
-    if (entry.edited) {
-      actions.append(
-        confirmButton(texts.listRestore, texts.confirmDelete, texts.confirmDeleteYes, () => {
-          void saveStoredLists(storedLists.filter((l) => l.id !== list.id)).then(renderLists).catch(report);
-        }),
-      );
-    }
-    if (!entry.builtin) {
-      actions.append(
-        confirmButton(texts.listDelete, texts.confirmDelete, texts.confirmDeleteYes, () => {
-          void saveStoredLists(storedLists.filter((l) => l.id !== list.id)).then(renderLists).catch(report);
-        }),
-      );
-    }
-    row.append(toggle, info, actions);
-    return row;
-  }
-
-  function csvImport(): HTMLElement {
-    const box = element('div', 'csv-import');
-    const file = element('input', 'setting-file');
-    file.type = 'file';
-    file.accept = '.csv,text/csv,text/plain';
-    file.setAttribute('aria-label', texts.listFile);
-    const preview = element('div', 'csv-preview');
-    let pending: WordList | null = null;
-    const take = button(texts.listImport, 'primary-button', () => {
-      if (pending === null) return;
-      void saveStoredLists([...storedLists, pending]).then(renderLists).catch(report);
-    });
-    take.disabled = true;
-    file.addEventListener('change', () => {
-      const chosen = file.files?.[0];
-      if (chosen === undefined) return;
-      void chosen
-        .text()
-        .then((text) => {
-          const name = chosen.name.replace(/\.[^.]+$/, '');
-          const result = parseCsvWordList(text, `eigene-${deps.newId()}`, name);
-          pending = result.list;
-          preview.replaceChildren(
-            element('p', 'setting-note', texts.listPreview(result.list?.words.length ?? 0)),
-            ...result.errors
-              .slice(0, 12)
-              .map((e) => element('p', 'csv-error', texts.csvErrorLine(e.line, texts.csvErrors[e.reason]))),
-          );
-          take.disabled = pending === null;
-        })
-        .catch(report);
-    });
-    box.append(labelled(texts.listFile, file), preview, take);
-    return box;
-  }
-
-  function renderLists(): void {
-    listsSection.replaceChildren(
-      element('h2', 'section-title', texts.sectionLists),
-      element('p', 'setting-note', texts.listsHint),
-      ...entries().map(listRow),
-      button(texts.listNew, 'primary-button', () => {
-        openEditor({ id: `eigene-${deps.newId()}`, name: texts.listNewName, inputMode: 'keyboard', words: [] });
-      }),
-      csvImport(),
-    );
-  }
-
-  /** Editor für eine Liste: Name, Eingabemodus, Wörter (hinzufügen, ändern, entfernen, prüfen). */
-  function openEditor(list: WordList): void {
-    const name = element('input', 'setting-input');
-    name.value = list.name;
-    const mode = select(LIST_MODES, list.inputMode, () => undefined);
-    const rows = element('div', 'editor-rows');
-    // Meldung und Knöpfe oben und unten – lange Listen müssen nicht bis ans Ende gescrollt werden.
-    const topMessage = element('p', 'csv-error');
-    const bottomMessage = element('p', 'csv-error');
-    const messages = [topMessage, bottomMessage];
-    const say = (text: string): void => {
-      for (const m of messages) m.textContent = text;
-    };
-
-    interface Row {
-      element: HTMLElement;
-      article: HTMLSelectElement;
-      singular: HTMLInputElement;
-      plural: HTMLInputElement;
-      verified: HTMLInputElement;
-      original: Word | null;
-    }
-    let editorRows: Row[] = [];
-
-    const addRow = (word: Word | null): void => {
-      const rowEl = element('div', 'editor-row');
-      const article = select(
-        ARTICLES.map((a) => ({ value: a, label: a })),
-        word?.article ?? 'der',
-        () => undefined,
-      );
-      article.setAttribute('aria-label', texts.editorArticle);
-      const singular = element('input', 'setting-input');
-      singular.value = word?.singular ?? '';
-      singular.setAttribute('aria-label', texts.editorSingular);
-      const plural = element('input', 'setting-input');
-      plural.value = word?.plural.join(' | ') ?? '';
-      plural.setAttribute('aria-label', texts.editorPlural);
-      const verifiedBox = element('label', 'setting-check');
-      const verified = element('input', '');
-      verified.type = 'checkbox';
-      verified.checked = word?.verified ?? true;
-      verifiedBox.append(verified, element('span', '', texts.editorVerified));
-      // Wer ein Wort selbst einträgt oder ändert, hat es geprüft.
-      for (const input of [article, singular, plural]) {
-        input.addEventListener('change', () => {
-          verified.checked = true;
-        });
-      }
-      const row: Row = { element: rowEl, article, singular, plural, verified, original: word };
-      rowEl.append(
-        article,
-        singular,
-        plural,
-        verifiedBox,
-        button(texts.editorRemove, 'secondary-button', () => {
-          editorRows = editorRows.filter((r) => r !== row);
-          rowEl.remove();
-        }),
-      );
-      editorRows.push(row);
-      rows.append(rowEl);
-    };
-    list.words.forEach(addRow);
-
-    const save = (): void => {
-      say('');
-      const listName = name.value.trim();
-      if (listName === '') {
-        say(texts.editorNameMissing);
-        return;
-      }
-      const words: Word[] = [];
-      let errors = 0;
-      for (const row of editorRows) {
-        row.element.classList.remove('has-error');
-        const { original } = row;
-        const unchanged =
-          original !== null &&
-          original.article === row.article.value &&
-          original.singular === row.singular.value.trim() &&
-          original.plural.join(' | ') === row.plural.value.trim();
-        const result = unchanged
-          ? { word: original }
-          : wordFromInput(row.article.value, row.singular.value, row.plural.value);
-        if ('error' in result || words.some((w) => w.id === result.word.id)) {
-          row.element.classList.add('has-error');
-          errors++;
-          continue;
-        }
-        // Ein korrigiertes Wort behält sein Bild.
-        const image = original?.id === result.word.id ? original.image : undefined;
-        words.push({ ...result.word, ...(image === undefined ? {} : { image }), verified: row.verified.checked });
-      }
-      if (errors > 0) {
-        say(texts.editorHasErrors);
-        return;
-      }
-      if (words.length === 0) {
-        say(texts.editorEmpty);
-        return;
-      }
-      const saved: WordList = { ...list, name: listName, inputMode: mode.value as InputMode, words };
-      const others = storedLists.filter((l) => l.id !== saved.id);
-      void saveStoredLists([...others, saved]).then(renderLists).catch(report);
-    };
-
-    const actions = (message: HTMLElement): HTMLElement => {
-      const bar = element('div', 'editor-actions');
-      bar.append(
-        button(texts.editorSave, 'primary-button', save),
-        button(texts.cancel, 'secondary-button', renderLists),
-        message,
-      );
-      return bar;
-    };
-
-    listsSection.replaceChildren(
-      element('h2', 'section-title', texts.editorTitle(list.name)),
-      labelled(texts.listName, name),
-      labelled(texts.listMode, mode),
-      actions(topMessage),
-      rows,
-      button(texts.editorAdd, 'secondary-button', () => {
-        addRow(null);
-      }),
-      actions(bottomMessage),
-    );
   }
 
   // ---------- Profile ----------
@@ -796,7 +534,6 @@ export function createTeacherScreen(deps: TeacherDeps): {
       renderGeneral();
       renderExercises();
       renderPacks();
-      renderLists();
       renderPin();
       renderReset();
       await renderProfiles();

@@ -2,7 +2,7 @@ import { hashPin, isValidPin, pinMatches } from '../logic/pin';
 import { element } from './dom';
 import { texts } from './texts';
 
-const GEAR_ICON =
+export const GEAR_ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.6 4.9-1.7 1 .1 2-2 1.2-1.7-1.1-1.9.8-.3 2h-2.4l-.3-2-1.9-.8-1.7 1.1-2-1.2.1-2-1.7-1v-2.4l1.7-1-.1-2 2-1.2 1.7 1.1 1.9-.8.3-2h2.4l.3 2 1.9.8 1.7-1.1 2 1.2-.1 2 1.7 1z"/></svg>';
 
 export interface PinStore {

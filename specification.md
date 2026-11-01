@@ -220,12 +220,10 @@ Auf einem Schulgerät spielen viele Kinder. Jedes Kind hat deshalb ein eigenes, 
 Erreichbar über einen **gesicherten Zugang**, damit Kinder sie nicht versehentlich öffnen: Zahnrad antippen, dann eine **PIN** der Lehrkraft eingeben.
 
 - **Profile verwalten:** anlegen (einzeln oder als Liste), umbenennen, löschen; „Kinder dürfen selbst Profile anlegen“ ja/nein; Bild-Code an/aus
-- Wortlisten ein- und ausschalten (= Klassenstufe), Listen anlegen und bearbeiten
-- Eingabemodus überschreiben (Bausteine / Tastatur)
+- Wortlisten ein- und ausschalten (= Klassenstufe), Listen anlegen und bearbeiten, eigene Wortliste importieren (CSV) – im Popup der Spielart Mehrzahl (Abschnitt 14)
+- Eingabemodus überschreiben (Bausteine / Tastatur), Großschreibung verpflichtend ja/nein – ebenfalls im Popup der Mehrzahl
 - Aufgaben pro Burg (10 / 15 / 20 / 25 / 30)
-- Großschreibung verpflichtend ja/nein
 - Vorlesen an/aus, Sound an/aus
-- Eigene Wortliste importieren (CSV)
 - Sammlungen verwalten; Button „Alle Burgen“ ein-/ausblenden
 - Übersicht pro Profil: Wörter, die oft falsch sind (nur für die Lehrkraft sichtbar, Ausbaustufe)
 - Alles zurücksetzen (z. B. am Schuljahresende)
@@ -579,6 +577,13 @@ Umbau ohne sichtbare Änderung: Die Mehrzahl ist jetzt die erste Spielart.
 - **Behoben nebenbei:** Die Lichtkante des Bogenkranzes lief als Linie quer durch die Öffnung (auch beim Burgbogen).
 - **E2E-Tests:** höchstens 6 parallele Browser (jede Instanz rendert WebGL in Software) und mehr Zeit für Tests, die ganze Burgen bauen; unter Last liefen sie sonst ins Zeitlimit.
 
+### Umbau der Lehrkraft-Einstellungen (2026-11-01)
+- **Je Spielart ein Popup** (modales `<dialog>`, „Schließen“ oder Esc). Die Liste der Spielarten zeigt Haken (freies Spiel), Kurzinhalt und Zahnrad.
+- **Wortlisten-Verwaltung komplett ins Popup der Mehrzahl** (ein-/ausschalten, bearbeiten, neu, CSV-Import); der eigene Abschnitt „Wortlisten“ entfällt. Der Listen-Editor ersetzt dort den Inhalt des Popups und kehrt nach „Speichern“/„Abbrechen“ zurück.
+- **Eingabemodus und Großschreibung** wandern aus „Allgemein“ ins Popup der Mehrzahl. Sie gelten für die Mehrzahl überall, auch in Paketen (nicht pro Paket).
+- **Übungspakete mit Aufgabenbereichen:** je Spielart ein Bereich mit Zahnrad (Inhalt im Popup), „Entfernen“ und „+ Spielart“. Ein neuer Bereich startet mit dem Inhalt des freien Spiels. Im Popup bleibt immer mindestens eine Liste bzw. Reihe an, leere Bereiche gibt es also nicht; ein Paket ohne Bereich wird nicht gespeichert.
+- **Technik:** Die Einstellungen jeder Spielart liegen in `src/ui/exercises/<spielart>Settings.ts` und sind in `EXERCISE_SETTINGS` (`src/ui/exercises/settings.ts`) eingetragen: freigegebener Inhalt, Kurzbeschreibung, Popup fürs freie Spiel, Popup für den Paket-Bereich. Der Lehrkraft-Bildschirm ist dadurch von den einzelnen Spielarten unabhängig. Speicherformat unverändert.
+
 ## 14. Spielarten und Übungspakete (ab Phase 9)
 
 Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur die Aufgabe wechselt. Erste weitere Spielart ist das **kleine 1×1**, später kommen weitere dazu.
@@ -605,6 +610,12 @@ Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur di
   - Kleines 1×1: die eingeschalteten Reihen (alle 1–10 an, mindestens eine bleibt an).
 - **Übungspakete:** anlegen, umbenennen, bearbeiten, löschen. Pro Paket für jede Spielart den Inhalt auswählen (Wortlisten bzw. Reihen); mindestens ein Inhalt muss gewählt sein. Pakete gelten für alle Kinder des Geräts.
 - Aufgaben pro Burg, Eingabemodus der Mehrzahl, Großschreibung, Vorlesen und Töne gelten weiter für alle Spielarten bzw. die jeweilige Spielart.
+- **Aufbau (ab dem Umbau der Einstellungen):**
+  - Abschnitt „Spielarten“: „Kinder dürfen frei spielen“, darunter eine Liste aller Spielarten. Jede Zeile hat einen Haken (im freien Spiel verfügbar), den freigegebenen Inhalt in Kurzform und ein **Zahnrad**. Das Zahnrad öffnet ein **Popup** mit allen Einstellungen dieser Spielart; Änderungen gelten sofort.
+    - Mehrzahl: Eingabemodus, Großschreibung, Wortlisten (ein-/ausschalten, bearbeiten, neu anlegen, CSV-Import).
+    - Kleines 1×1: Reihen.
+  - Abschnitt „Übungspakete“: Liste der Pakete. Im Editor eines Pakets stehen Name und die Liste seiner **Aufgabenbereiche** (je Spielart höchstens einer). „+ Spielart“ fügt einen Bereich hinzu – er startet mit dem freigegebenen Inhalt und öffnet gleich sein Popup. Das Zahnrad eines Bereichs öffnet das Popup mit seinem Inhalt (Wortlisten bzw. Reihen; mindestens einer bleibt an), „Entfernen“ nimmt ihn heraus. Gespeichert wird das Paket mit „Speichern“.
+  - Eingabemodus und Großschreibung gelten auch in Paketen; sie sind nicht pro Paket einstellbar.
 
 ### Kleines 1×1
 - **Aufgaben:** nur Malaufgaben `a · r = ?` mit a = 1–10. Die **Reihe** r ist der zweite Faktor: Die 7er-Reihe ist 1 · 7 bis 10 · 7. (3 · 7 gehört zur 7er-, 7 · 3 zur 3er-Reihe.)

@@ -1,5 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { PIN, chooseExercise, createProfile, openTeacher, setSettings, startGame } from './helpers';
+import {
+  PIN,
+  chooseExercise,
+  closeDialog,
+  createProfile,
+  openExerciseSettings,
+  openTeacher,
+  setSettings,
+  startGame,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -44,7 +53,9 @@ test('Klasse anlegen: Profile erscheinen auf dem Startbildschirm', async ({ page
 
 test('Einstellungen wirken: Tastatur statt Bausteine, „Ich bin neu“ aus, „Alle Burgen“ aus', async ({ page }) => {
   await openTeacher(page);
+  await openExerciseSettings(page, 'Mehrzahl');
   await page.getByLabel('Eingabemodus').selectOption('keyboard');
+  await closeDialog(page);
   await page.getByLabel('Klasse anlegen').fill('Lena');
   await page.getByRole('button', { name: 'Profile anlegen' }).click();
   await page.getByText('Kinder dürfen selbst Profile anlegen', { exact: false }).click();
@@ -66,12 +77,15 @@ test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinde
   await page.getByLabel('Klasse anlegen').fill('Lena');
   await page.getByRole('button', { name: 'Profile anlegen' }).click();
 
+  await openExerciseSettings(page, 'Mehrzahl');
   await page.getByLabel(/CSV-Datei/).setInputFiles('tests/e2e/fixtures/tiere.csv');
   await expect(page.getByText('2 Wörter erkannt.')).toBeVisible();
   await expect(page.getByText('Zeile 4: Artikel muss der, die oder das sein')).toBeVisible();
   await page.getByRole('button', { name: 'Als neue Liste übernehmen' }).click();
   await page.getByLabel('tiere einschalten').check();
   await page.getByLabel('Klasse 1/2 – Grundwortschatz einschalten').uncheck();
+  await closeDialog(page);
+  await expect(page.locator('.exercise-row[data-exercise="plural"]')).toContainText('1 Liste');
   await page.getByRole('button', { name: 'Fertig' }).click();
 
   await page.getByRole('button', { name: /Lena/ }).click();
@@ -82,6 +96,7 @@ test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinde
 
 test('die letzte eingeschaltete Liste lässt sich nicht ausschalten', async ({ page }) => {
   await openTeacher(page);
+  await openExerciseSettings(page, 'Mehrzahl');
   const k12 = page.getByLabel('Klasse 1/2 – Grundwortschatz einschalten');
   await expect(k12).toBeChecked();
   await k12.click();
@@ -90,6 +105,7 @@ test('die letzte eingeschaltete Liste lässt sich nicht ausschalten', async ({ p
 
 test('Liste bearbeiten: Wort ändern, hinzufügen, Fehler markieren, Original wiederherstellen', async ({ page }) => {
   await openTeacher(page);
+  await openExerciseSettings(page, 'Mehrzahl');
   const k12 = page.locator('.list-row', { hasText: 'Klasse 1/2' });
   await expect(k12).toContainText('61 Wörter, 61 ungeprüft');
   await k12.getByRole('button', { name: 'Bearbeiten' }).click();
@@ -120,6 +136,7 @@ test('Liste bearbeiten: Wort ändern, hinzufügen, Fehler markieren, Original wi
 
 test('neue Liste anlegen und mehrere Listen gemeinsam nutzen', async ({ page }) => {
   await openTeacher(page);
+  await openExerciseSettings(page, 'Mehrzahl');
   await page.getByRole('button', { name: 'Neue Liste', exact: true }).click();
   await page.getByLabel('Name der Liste').fill('Meer');
   await page.getByRole('button', { name: 'Wort hinzufügen' }).click();
@@ -129,6 +146,8 @@ test('neue Liste anlegen und mehrere Listen gemeinsam nutzen', async ({ page }) 
   await row.getByLabel('Mehrzahl', { exact: false }).fill('Kraken');
   await page.getByRole('button', { name: 'Speichern' }).first().click();
   await page.getByLabel('Meer einschalten').check();
+  await closeDialog(page);
+  await expect(page.locator('.exercise-row[data-exercise="plural"]')).toContainText('2 Listen');
   await page.getByRole('button', { name: 'Fertig' }).click();
 
   // Klasse 1/2 bleibt an, „Meer“ kommt dazu: beide Listen zusammen im Topf.
@@ -228,4 +247,18 @@ test('30 Aufgaben: Raster 16 × 10 und 30 Fortschrittspunkte, die auf den Tablet
   const box = await page.locator('canvas').boundingBox();
   // Welt 16 × 96 + 48 = 1584 breit, 144 + 10 × 96 + 72 = 1176 hoch.
   expect((box?.width ?? 0) / (box?.height ?? 1)).toBeCloseTo(1584 / 1176, 1);
+});
+
+test('Tablet 1024 × 690: Popup der Mehrzahl scrollt in sich, „Schließen“ bleibt sichtbar, Esc schließt', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 690 });
+  await openTeacher(page);
+  const dialog = await openExerciseSettings(page, 'Mehrzahl');
+  await expect(dialog.getByRole('heading', { name: 'Mehrzahl: Einstellungen' })).toBeVisible();
+  await expect(dialog.getByLabel('Großschreibung ist Pflicht')).toBeVisible();
+  // Eingabemodus und Großschreibung stehen nicht mehr unter „Allgemein“.
+  await expect(page.locator('.teacher-screen').getByLabel('Eingabemodus')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Als neue Liste übernehmen' }).scrollIntoViewIfNeeded();
+  await expect(dialog.getByRole('button', { name: 'Schließen' })).toBeInViewport({ ratio: 1 });
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
 });

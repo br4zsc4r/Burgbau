@@ -204,3 +204,17 @@ export async function openTeacher(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Öffnen' }).click();
   await expect(page.getByRole('heading', { name: 'Einstellungen für Lehrkräfte' })).toBeVisible();
 }
+
+/** Zahnrad einer Spielart im Lehrkraft-Bereich antippen: öffnet das Popup mit ihren Einstellungen. */
+export async function openExerciseSettings(page: Page, name: string): Promise<Locator> {
+  await page.getByRole('button', { name: `Einstellungen: ${name}` }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
+/** Offenes Popup im Lehrkraft-Bereich schließen. */
+export async function closeDialog(page: Page): Promise<void> {
+  await page.getByRole('dialog').getByRole('button', { name: 'Schließen' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+}

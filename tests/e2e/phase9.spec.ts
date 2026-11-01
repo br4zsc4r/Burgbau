@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { chooseExercise, createProfile, openTeacher, setSettings } from './helpers';
+import { chooseExercise, closeDialog, createProfile, openExerciseSettings, openTeacher, setSettings } from './helpers';
 
 test('eine laufende Burg aus der Zeit vor den Spielarten lässt sich weiterbauen', async ({ page }) => {
   await page.goto('/');
@@ -108,8 +108,11 @@ test('Lehrkraft: Spielarten und Reihen ein- und ausschalten', async ({ page }) =
   await page.goto('/');
   await openTeacher(page);
   await page.getByRole('checkbox', { name: 'Mehrzahl' }).uncheck();
-  await page.getByRole('button', { name: '3er-Reihe' }).click();
-  await expect(page.getByRole('button', { name: '3er-Reihe' })).toHaveAttribute('aria-pressed', 'false');
+  const dialog = await openExerciseSettings(page, 'Kleines 1×1');
+  await dialog.getByRole('button', { name: '3er-Reihe' }).click();
+  await expect(dialog.getByRole('button', { name: '3er-Reihe' })).toHaveAttribute('aria-pressed', 'false');
+  await closeDialog(page);
+  await expect(page.locator('.exercise-row[data-exercise="multiplication"]')).toContainText('Reihen 1, 2, 4,');
   // Die letzte Spielart bleibt an.
   await page.getByRole('checkbox', { name: 'Kleines 1×1' }).click();
   await expect(page.getByRole('checkbox', { name: 'Kleines 1×1' })).toBeChecked();
@@ -128,13 +131,35 @@ test('Tablet 1024 × 690: 1×1 mit Ziffernfeld passt ohne Scrollen', async ({ pa
   expect(await page.locator('.overlay').evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(false);
 });
 
+/** Im offenen Popup genau diese Reihen einschalten (neue Bereiche starten mit allen Reihen). */
+async function chooseRows(page: Page, rows: number[]): Promise<void> {
+  const dialog = page.getByRole('dialog');
+  // Erst die gewünschten an, dann die übrigen aus – die letzte Reihe bleibt sonst stehen.
+  for (const on of [true, false]) {
+    for (let row = 1; row <= 10; row++) {
+      if (rows.includes(row) !== on) continue;
+      const toggle = dialog.getByRole('button', { name: `${String(row)}er-Reihe` });
+      if ((await toggle.getAttribute('aria-pressed')) !== String(on)) await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-pressed', String(on));
+    }
+  }
+}
+
 /** Paket im Lehrkraft-Bereich anlegen (Lehrkraft-Bereich muss offen sein). */
 async function createPack(page: Page, name: string, list: string | null, rows: number[]): Promise<void> {
   await page.getByRole('button', { name: 'Neues Paket' }).click();
   await page.getByLabel('Name').fill(name);
-  if (list !== null) await page.getByRole('checkbox', { name: list, exact: true }).check();
+  if (list !== null) {
+    await page.getByRole('button', { name: '+ Mehrzahl' }).click();
+    await page.getByRole('dialog').getByRole('checkbox', { name: list, exact: true }).check();
+    await closeDialog(page);
+  }
+  if (rows.length > 0) {
+    await page.getByRole('button', { name: '+ Kleines 1×1' }).click();
+    await chooseRows(page, rows);
+    await closeDialog(page);
+  }
   const editor = page.locator('.teacher-section', { has: page.getByRole('heading', { name: 'Übungspaket' }) });
-  for (const row of rows) await editor.getByRole('button', { name: `${String(row)}er-Reihe` }).click();
   await editor.getByRole('button', { name: 'Speichern' }).click();
   await expect(page.locator('.pack-row', { hasText: name })).toBeVisible();
 }
@@ -190,16 +215,26 @@ test('Paket bearbeiten und löschen; leere Pakete lassen sich nicht speichern', 
   await page.getByRole('button', { name: 'Neues Paket' }).click();
   await page.getByLabel('Name').fill('Leer');
   await page.getByRole('button', { name: 'Speichern' }).first().click();
-  await expect(page.getByText('Wähle mindestens eine Wortliste oder eine Reihe.')).toBeVisible();
+  await expect(page.getByText('Füge mindestens einen Aufgabenbereich hinzu.')).toBeVisible();
   await page.getByRole('button', { name: 'Abbrechen' }).first().click();
 
   await createPack(page, 'Probe', null, [3]);
   const row = page.locator('.pack-row', { hasText: 'Probe' });
   await row.getByRole('button', { name: 'Bearbeiten' }).click();
   await page.getByLabel('Name').fill('Dreier und Vierer');
-  await page.getByRole('button', { name: '4er-Reihe' }).last().click();
+  await page.getByRole('button', { name: 'Inhalt: Kleines 1×1' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Dreier und Vierer: Kleines 1×1');
+  await page.getByRole('dialog').getByRole('button', { name: '4er-Reihe' }).click();
+  await closeDialog(page);
+  await expect(page.locator('.pack-area')).toContainText('Kleines 1×1 (Reihen 3, 4)');
+  // Mehrzahl dazu und wieder weg: es bleibt beim 1×1.
+  await page.getByRole('button', { name: '+ Mehrzahl' }).click();
+  await closeDialog(page);
+  await expect(page.locator('.pack-area')).toHaveCount(2);
+  await page.locator('.pack-area[data-exercise="plural"]').getByRole('button', { name: 'Entfernen' }).click();
   await page.getByRole('button', { name: 'Speichern' }).first().click();
-  await expect(page.locator('.pack-row', { hasText: 'Dreier und Vierer' })).toContainText('Reihen 3, 4');
+  await expect(page.locator('.pack-row', { hasText: 'Dreier und Vierer' })).toContainText('Kleines 1×1 (Reihen 3, 4)');
+  await expect(page.locator('.pack-row', { hasText: 'Dreier und Vierer' })).not.toContainText('Mehrzahl');
 
   await page.locator('.pack-row').getByRole('button', { name: 'Löschen' }).click();
   await page.locator('.pack-row').getByRole('button', { name: 'Ja, löschen' }).click();
