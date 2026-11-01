@@ -1,18 +1,20 @@
 import { solutionSegments } from '../logic/pluralPattern';
-import { createQuiz, currentWordId, nextTask, submitAnswer } from '../logic/quiz';
-import type { AnswerResult, QuizState, RandomFn, Settings, Word, WordList } from '../types';
+import type { AnswerResult, QuizState, Word } from '../types';
+import { element } from './dom';
 import { createSpecialCharBar } from './specialCharBar';
 import { texts } from './texts';
 
-function element<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  className: string,
-  text?: string,
-): HTMLElementTagNameMap[K] {
-  const el = document.createElement(tag);
-  el.className = className;
-  if (text !== undefined) el.textContent = text;
-  return el;
+export interface TaskPanelCallbacks {
+  onSubmit: (input: string) => void;
+  onContinue: () => void;
+}
+
+export interface TaskPanel {
+  element: HTMLElement;
+  render: (quiz: QuizState, word: Word) => void;
+  /** Leert das Eingabefeld und setzt den Fokus hinein (neue Aufgabe). */
+  startNewTask: () => void;
+  focusForPhase: (quiz: QuizState) => void;
 }
 
 function renderFeedback(container: HTMLElement, result: AnswerResult | null, word: Word): void {
@@ -51,16 +53,9 @@ function renderFeedback(container: HTMLElement, result: AnswerResult | null, wor
   }
 }
 
-export function mountQuiz(
-  root: HTMLElement,
-  list: WordList,
-  settings: Settings,
-  random: RandomFn,
-): void {
-  const wordsById = new Map(list.words.map((word) => [word.id, word]));
-  let state: QuizState = createQuiz([...wordsById.keys()], random);
-
-  const view = element('main', 'quiz');
+/** Aufgabe im Tastatur-Modus. Hält keinen eigenen Spielzustand. */
+export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
+  const panel = element('section', 'task-panel');
   const prompt = element('h1', 'task-prompt', texts.taskPrompt);
 
   const card = element('div', 'word-card');
@@ -90,51 +85,46 @@ export function mountQuiz(
   actionButton.type = 'submit';
 
   form.append(answerRow, charBar.element, feedback, actionButton);
-  view.append(prompt, card, form);
-  root.replaceChildren(view);
+  panel.append(prompt, card, form);
 
-  const currentWord = (): Word => {
-    const word = wordsById.get(currentWordId(state));
-    if (word === undefined) throw new Error('Wort nicht in der Liste');
-    return word;
-  };
-
-  const render = (): void => {
-    const word = currentWord();
-    const answering = state.phase === 'answering';
-
-    image.textContent = word.singular.charAt(0);
-    image.setAttribute('aria-label', texts.imageFallbackLabel(word.singular));
-    singular.replaceChildren(element('span', 'article', word.article), ' ', word.singular);
-
-    input.readOnly = !answering;
-    charBar.setEnabled(answering);
-    renderFeedback(feedback, state.lastResult, word);
-    actionButton.textContent = answering ? texts.check : texts.next;
-    actionButton.disabled = answering && input.value.trim() === '';
-    view.dataset['phase'] = state.phase;
-  };
+  let answering = true;
 
   input.addEventListener('input', () => {
-    if (state.phase === 'answering') actionButton.disabled = input.value.trim() === '';
+    if (answering) actionButton.disabled = input.value.trim() === '';
   });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    if (state.phase === 'answering') {
-      if (input.value.trim() === '') return;
-      state = submitAnswer(state, currentWord(), input.value, settings);
-      render();
-      if (state.phase === 'feedback') actionButton.focus();
-      else input.focus();
-    } else {
-      state = nextTask(state, random);
-      input.value = '';
-      render();
-      input.focus();
+    if (!answering) {
+      callbacks.onContinue();
+    } else if (input.value.trim() !== '') {
+      callbacks.onSubmit(input.value);
     }
   });
 
-  render();
-  input.focus();
+  return {
+    element: panel,
+    render: (quiz, word) => {
+      answering = quiz.phase === 'answering';
+      image.textContent = word.singular.charAt(0);
+      image.setAttribute('aria-label', texts.imageFallbackLabel(word.singular));
+      singular.replaceChildren(element('span', 'article', word.article), ' ', word.singular);
+
+      input.readOnly = !answering;
+      charBar.setEnabled(answering);
+      renderFeedback(feedback, quiz.lastResult, word);
+      actionButton.textContent = answering ? texts.check : texts.next;
+      actionButton.disabled = answering && input.value.trim() === '';
+      panel.dataset['phase'] = quiz.phase;
+    },
+    startNewTask: () => {
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+    },
+    focusForPhase: (quiz) => {
+      if (quiz.phase === 'feedback') actionButton.focus();
+      else input.focus();
+    },
+  };
 }

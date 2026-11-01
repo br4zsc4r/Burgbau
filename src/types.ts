@@ -59,3 +59,33 @@ export interface QuizState {
   phase: QuizPhase;
   lastResult: AnswerResult | null;
 }
+
+/** Bisher gibt es nur einen Platzhalter-Block; der Katalog folgt in Phase 3. */
+export type PieceId = 'block';
+
+/** Rasterzelle; row 0 ist die unterste Reihe (auf dem Boden). */
+export interface Cell {
+  col: number;
+  row: number;
+}
+
+export interface GridSize {
+  cols: number;
+  rows: number;
+}
+
+export interface GridState extends GridSize {
+  /** Zeilenweise von unten nach oben: Index = row * cols + col. */
+  cells: (PieceId | null)[];
+}
+
+/** task = Aufgabe läuft, placing = Teil wartet aufs Setzen, placed = gesetzt, Rückgängig möglich. */
+export type GameStep = 'task' | 'placing' | 'placed';
+
+export interface GameState {
+  quiz: QuizState;
+  grid: GridState;
+  step: GameStep;
+  /** Zuletzt gesetztes Teil, solange es noch rückgängig gemacht werden darf. */
+  lastPlacement: Cell | null;
+}

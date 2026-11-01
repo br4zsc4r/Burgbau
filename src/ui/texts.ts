@@ -15,4 +15,7 @@ export const texts = {
   insertChar: (char: string): string => `${char} einfügen`,
   imageFallbackLabel: (singular: string): string => `Bild: ${singular}`,
   loadError: 'Die Wörter konnten nicht geladen werden.',
+  placeHint: 'Setz deinen Block auf ein leuchtendes Feld!',
+  undo: 'Rückgängig',
+  nextTask: 'Nächstes Wort',
 } as const;

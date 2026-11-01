@@ -13,15 +13,14 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
 });
 
-test('richtige Antwort führt zur nächsten Aufgabe', async ({ page }) => {
-  const first = await page.locator('.singular').textContent();
+test('richtige Antwort führt zum Bauen', async ({ page }) => {
   await page.getByLabel('Mehrzahl eintippen').fill(await currentPlural(page));
   await page.getByRole('button', { name: 'Fertig' }).click();
   await expect(page.getByText('Richtig!')).toBeVisible();
 
   await page.getByRole('button', { name: 'Weiter' }).click();
-  await expect(page.getByLabel('Mehrzahl eintippen')).toHaveValue('');
-  await expect(page.locator('.singular')).not.toHaveText(first ?? '');
+  await expect(page.getByText('Setz deinen Block auf ein leuchtendes Feld!')).toBeVisible();
+  await expect(page.getByLabel('Mehrzahl eintippen')).toBeHidden();
 });
 
 test('Kleinschreibung zählt mit Hinweis', async ({ page }) => {
@@ -70,8 +69,8 @@ test('Sonderzeichen-Leiste fügt an der Cursorposition ein', async ({ page }) =>
   await expect(input).toHaveValue('Äöpfelß');
 });
 
-test('Sonderzeichen-Tasten sind mindestens 64 × 64 px groß', async ({ page }) => {
-  for (const button of await page.locator('.special-char, .primary-button').all()) {
+test('Tasten der Aufgabe sind mindestens 64 × 64 px groß', async ({ page }) => {
+  for (const button of await page.locator('.task-panel button').all()) {
     const box = await button.boundingBox();
     expect(box?.width).toBeGreaterThanOrEqual(64);
     expect(box?.height).toBeGreaterThanOrEqual(64);

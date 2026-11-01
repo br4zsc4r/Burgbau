@@ -312,3 +312,10 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Lösungsanzeige:** Hervorgehoben werden Umlaut und Endung der ersten Pluralform. Formen außerhalb der fünf Muster (z. B. Museen) erscheinen ohne Hervorhebung.
 - Bis Phase 6 laufen auch Listen mit `inputMode: "tiles"` im Tastatur-Modus.
 - In Phase 1 läuft das Quiz endlos: Nach dem letzten Wort wird neu gemischt. Das Wiederholen falscher Wörter kommt mit der Partie (Phase 3).
+
+### Phase 2 (2026-11-01)
+- **Ablauf:** Nach dem Feedback („Weiter“) liegt ein Block in der **Ablage** oben links. Das Kind tippt eine leuchtende Zelle an oder zieht den Block dorthin. Danach erscheinen „Rückgängig“ und „Nächstes Wort“. Erst „Nächstes Wort“ macht den Block endgültig. Bis Phase 3 gibt es nur einen Platzhalter-Block, unabhängig von der Antwort.
+- **Gültig/ungültig:** Alle gültigen Zellen leuchten gelb. Rot wird nur die Zelle unter dem Finger bzw. der Maus, wenn sie ungültig ist, oder kurz nach dem Antippen bzw. Loslassen auf einer ungültigen Zelle. Das Raster wird nie großflächig rot.
+- **Rasterdaten:** Reihe 0 ist die unterste Reihe (auf der Wiese). Der Hügel ist nur Hintergrund, die Schwerkraft gilt allein im Raster.
+- **Raster voll:** Gibt es keine gültige Zelle mehr, wird das Setzen übersprungen.
+- **Welt:** Zellmaß 96 Weltpixel, darüber 144 px Himmel (Ablage), darunter 72 px Wiese (`src/data/grid.ts`). Phaser skaliert die Welt passend auf den Bildschirm. Rechnerisch sind die Zellen damit auf 1366 × 680 (Chromebook) und auf dem iPad im Hoch- und Querformat mindestens 64 px groß. Für 1280 × 800 prüft das ein E2E-Test.
