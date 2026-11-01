@@ -27,6 +27,8 @@ import {
   possessive,
   setProfileCode,
 } from '../logic/profiles';
+import { freeExercises } from '../logic/exercises/freePlay';
+import { multiplicationTasks } from '../logic/exercises/multiplication';
 import { pluralTasks } from '../logic/exercises/plural';
 import { activePool, mergeLists, validActiveIds } from '../logic/wordlists';
 import { createBuildGame } from '../scene/createBuildGame';
@@ -34,6 +36,8 @@ import { DEFAULT_LIST_ID } from '../state/settings';
 import type { Repository } from '../state/repository';
 import type {
   Castle,
+  ExerciseId,
+  GameSelection,
   GameState,
   GridState,
   Profile,
@@ -48,6 +52,7 @@ import { createCastleViewBar } from './castleViewBar';
 import { createCelebration } from './celebration';
 import { createCollectionScreen, type CollectionScope } from './collectionScreen';
 import { element } from './dom';
+import { createExerciseSelect } from './exerciseSelect';
 import { createNamingPanel } from './namingPanel';
 import { createNewProfile } from './newProfile';
 import { createOffersPanel } from './offersPanel';
@@ -70,6 +75,7 @@ type Screen =
   | { kind: 'teacher' }
   | { kind: 'newProfile' }
   | { kind: 'home' }
+  | { kind: 'chooseExercise' }
   | { kind: 'game' }
   | { kind: 'collection'; scope: CollectionScope }
   | { kind: 'castle'; castle: Castle; scope: CollectionScope };
@@ -103,8 +109,18 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const lists = mergeLists(deps.builtinLists, deps.customLists).map((entry) => entry.list);
   const pool = activePool(lists, validActiveIds(settings.activeListIds, lists, DEFAULT_LIST_ID));
   if (pool.words.length === 0) throw new Error('Keine Wörter in den aktiven Listen');
-  const tasksById = new Map<string, Task>(pluralTasks(pool, settings).map((task) => [task.id, task]));
-  const taskIds = [...tasksById.keys()];
+  // Aufgaben je Spielart (freies Spiel: freigegebener Inhalt der Lehrkraft).
+  const tasksByExercise: Record<ExerciseId, readonly Task[]> = {
+    plural: pluralTasks(pool, settings),
+    multiplication: multiplicationTasks(settings.multiplicationRows),
+  };
+  const tasksById = new Map<string, Task>(
+    Object.values(tasksByExercise).flatMap((tasks) => tasks.map((task) => [task.id, task] as const)),
+  );
+  /** Aufgaben-IDs, aus denen eine Burg mit dieser Auswahl zieht. */
+  const taskIdsFor = (selection: GameSelection): string[] =>
+    tasksByExercise[selection.exercise].map((task) => task.id);
+  const gameTaskIds = (): string[] => (game === null ? [] : taskIdsFor(game.selection));
   const emptyGrid = createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]);
 
   let profiles: Profile[] = await repository.loadProfiles();
@@ -136,7 +152,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       if (game !== null && task !== null) updateGame(answerTask(game, task, input, settings, random));
     },
     onContinue: () => {
-      if (game !== null) updateGame(finishTask(game, taskIds, random));
+      if (game !== null) updateGame(finishTask(game, gameTaskIds(), random));
     },
     speaker: settings.readAloud ? speaker : null,
   });
@@ -154,7 +170,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       if (game !== null) updateGame(undoPlacement(game));
     },
     onNextTask: () => {
-      if (game !== null) updateGame(continueAfterPlacement(game, taskIds, random));
+      if (game !== null) updateGame(continueAfterPlacement(game, gameTaskIds(), random));
     },
     onStash: () => {
       if (game !== null) updateGame(stashPending(game));
@@ -207,11 +223,14 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const profileHome = createProfileHome({
     onContinue: () => {
       if (game === null) return;
-      game = { ...withKnownTasks(game, taskIds, random), boxes };
+      game = { ...withKnownTasks(game, taskIdsFor(game.selection), random), boxes };
       show({ kind: 'game' });
     },
     onNewCastle: () => {
-      startNewGame();
+      // Mehrere Spielarten: erst wählen lassen; sonst gleich los.
+      const exercises = freeExercises(settings);
+      if (exercises.length > 1) show({ kind: 'chooseExercise' });
+      else startNewGame({ kind: 'free', exercise: exercises[0] ?? 'plural' });
     },
     onCollection: () => {
       void openCollection('mine').catch(report);
@@ -262,6 +281,15 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   });
   profileSelect.element.append(gate.gear, gate.dialog);
 
+  const exerciseSelect = createExerciseSelect({
+    onChoose: (exercise) => {
+      startNewGame({ kind: 'free', exercise });
+    },
+    onBack: () => {
+      show({ kind: 'home' });
+    },
+  });
+
   const collectionScreen = createCollectionScreen({
     onScope: (scope) => {
       void openCollection(scope).catch(report);
@@ -288,6 +316,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     teacherScreen.element,
     newProfile.element,
     profileHome.element,
+    exerciseSelect.element,
     collectionScreen.element,
   );
   root.replaceChildren(
@@ -326,6 +355,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     if (next.kind === 'code') pictureCode.render(next.profile, next.mode, next.wrong);
     if (next.kind === 'newProfile') newProfile.render(availableSymbols(profiles));
     if (next.kind === 'home' && profile !== null) profileHome.render(profile, game !== null);
+    if (next.kind === 'chooseExercise') exerciseSelect.render(freeExercises(settings));
     if (next.kind === 'castle') castleViewBar.render(next.castle.name);
     render();
     if (next.kind === 'game' && previous.kind !== 'game') focusGame(true);
@@ -347,9 +377,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     else await openProfile(created);
   }
 
-  function startNewGame(): void {
+  function startNewGame(selection: GameSelection): void {
     if (profile === null) return;
-    game = createGame(taskIds, settings, random, boxes);
+    game = createGame(taskIdsFor(selection), settings, random, boxes, selection);
     persistGame();
     show({ kind: 'game' });
   }
@@ -445,6 +475,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     teacherScreen.element.hidden = screen.kind !== 'teacher';
     newProfile.element.hidden = screen.kind !== 'newProfile';
     profileHome.element.hidden = screen.kind !== 'home';
+    exerciseSelect.element.hidden = screen.kind !== 'chooseExercise';
     collectionScreen.element.hidden = screen.kind !== 'collection';
     screens.hidden = inGame || screen.kind === 'castle';
     castleViewBar.element.hidden = screen.kind !== 'castle';

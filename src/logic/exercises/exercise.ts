@@ -1,4 +1,5 @@
 import type { AnswerResult, ExerciseId, Settings, Task } from '../../types';
+import { multiplicationExercise } from './multiplication';
 import { pluralExercise } from './plural';
 
 /**
@@ -14,11 +15,12 @@ type TaskOf<E extends ExerciseId> = Extract<Task, { exercise: E }>;
 
 const EXERCISES: { readonly [E in ExerciseId]: ExerciseLogic<TaskOf<E>> } = {
   plural: pluralExercise,
+  multiplication: multiplicationExercise,
 };
 
 /** Antwort mit der Prüfung der passenden Spielart auswerten. */
 export function checkTask(task: Task, input: string, settings: Settings, attempt: 1 | 2): AnswerResult {
   // Die Tabelle ordnet jeder Spielart ihre Aufgaben zu; task.exercise wählt also die passende Prüfung.
-  const logic = EXERCISES[task.exercise];
+  const logic = EXERCISES[task.exercise] as ExerciseLogic<Task>;
   return logic.check(task, input, settings, attempt);
 }

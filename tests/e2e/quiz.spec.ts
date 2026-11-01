@@ -45,7 +45,7 @@ test('falsche Antwort zeigt die Lösung freundlich', async ({ page }) => {
   await page.getByLabel('Mehrzahl eintippen').fill('Xyzxyz');
   await page.keyboard.press('Enter');
   await expect(page.getByText('Gut versucht! So heißt es richtig:')).toBeVisible();
-  await expect(page.locator('.solution')).toHaveText(`die ${plural}`);
+  await expect(page.locator('.solution:visible')).toHaveText(`die ${plural}`);
   await expect(page.getByRole('button', { name: 'Weiter' })).toBeFocused();
 });
 
@@ -67,7 +67,7 @@ test('Sonderzeichen-Leiste fügt an der Cursorposition ein', async ({ page }) =>
 });
 
 test('Tasten der Aufgabe sind mindestens 64 × 64 px groß', async ({ page }) => {
-  for (const button of await page.locator('.task-panel button:visible').all()) {
+  for (const button of await page.locator('.task-panel:visible button:visible').all()) {
     const box = await button.boundingBox();
     expect(box?.width).toBeGreaterThanOrEqual(64);
     expect(box?.height).toBeGreaterThanOrEqual(64);

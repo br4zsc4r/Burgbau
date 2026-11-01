@@ -80,7 +80,13 @@ export async function startGame(page: Page, nickname = 'Lena', list?: string): P
   else await setSettings(page, { activeListIds: [list] });
   await createProfile(page, nickname);
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
-  await expect(page.locator('.task-panel')).toBeVisible();
+  await chooseExercise(page);
+  await expect(page.locator('.task-panel:visible')).toBeVisible();
+}
+
+/** Auf „Was möchtest du üben?“ eine Spielart wählen (standardmäßig sind alle frei). */
+export async function chooseExercise(page: Page, name = 'Mehrzahl'): Promise<void> {
+  await page.locator('.exercise-card', { hasText: name }).click();
 }
 
 export const undoButton = (page: Page): Locator => page.getByRole('button', { name: 'Rückgängig' });
@@ -95,7 +101,7 @@ export async function buildWithTiles(page: Page, umlautIndex: number | null, end
 export async function answer(page: Page, correct: boolean): Promise<void> {
   const word = await currentWord(page);
   const plural = word.plural[0] ?? '';
-  const mode = await page.locator('.task-panel').getAttribute('data-mode');
+  const mode = await page.locator('.task-panel:visible').getAttribute('data-mode');
   const submit = page.getByRole('button', { name: 'Fertig' });
 
   if (mode === 'tiles') {
@@ -108,7 +114,7 @@ export async function answer(page: Page, correct: boolean): Promise<void> {
       // Falsche Endung; ist das nur „fast“ falsch, zählt der zweite Versuch.
       await buildWithTiles(page, null, word.pattern === 'er' ? 's' : 'er');
       await submit.click();
-      if ((await page.locator('.feedback').getAttribute('data-status')) === 'almost') await submit.click();
+      if ((await page.locator('.feedback:visible').getAttribute('data-status')) === 'almost') await submit.click();
     }
   } else {
     await page.getByLabel('Mehrzahl eintippen').fill(correct ? plural : 'Xyzxyz');
@@ -161,7 +167,7 @@ export async function buildWholeCastle(page: Page): Promise<void> {
     await chooseOffer(page, (piece) => piece.kind === 'block');
     if (n < 14) {
       await placeAnywhere(page);
-      await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+      await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
     } else {
       await placeInEditing(page);
     }

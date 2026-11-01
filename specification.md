@@ -552,6 +552,15 @@ Umbau ohne sichtbare Änderung: Die Mehrzahl ist jetzt die erste Spielart.
 - **Speicherformat:** Laufende Burg Version 4 mit `selection` (bisher nur `{ kind: 'free', exercise: 'plural' }`), Aufgaben-IDs mit Präfix in Quiz, Auswahl und Lernfächern. Lernfortschritt Version 2 (`{ boxes }` statt Stände je Liste, Schlüssel mit Präfix). Beide mit Migration; ein E2E-Test setzt eine Burg im alten Format fort.
 - **Exklusive Bauteile:** Feld `exercises` im Bauteil-Katalog; `finishTask` gibt die Spielart der gelösten Aufgabe an die Angebote, die exklusive Teile danach filtern. Es gibt noch keine exklusiven Teile.
 
+### Phase 9b (2026-11-01)
+- **Spielart „Kleines 1×1“** (ID `multiplication`): Aufgaben `factor · row` der eingeschalteten Reihen, ID z. B. `multiplication:3x7`. Prüfung als Zahlvergleich; ein Zahlendreher gibt beim ersten Versuch „Fast! Schau noch mal genau auf die Ziffern.“ (`almost` mit Grund `digits`).
+- **Aufgaben-Panel:** Gleichung „7 · 8 = ?“ mit Antwortfeld auf der Karte, daneben bzw. darunter ein Ziffernfeld wie beim Telefon (1–9, darunter 0 und Löschen), höchstens drei Ziffern. Am PC gehen Ziffern, Rücktaste und Enter. Nach der Antwort verschwindet das Ziffernfeld, damit die Lösung Platz hat. Vorlesen und Sternenregen wie bei der Mehrzahl (gemeinsame Bausteine in `ui/exercises/shared.ts`).
+- **„Neue Burg bauen“:** Sind mehrere Spielarten frei, erscheint „Was möchtest du üben?“ mit großen Karten (Beispiel und Name) und „Zurück“. Bei nur einer geht es direkt los. Die Burg merkt sich die Spielart (`selection`), „Weiterbauen“ zieht weiter aus deren Aufgaben.
+- **Lehrkraft, Abschnitt „Spielarten“:** pro Spielart „im freien Spiel“ an/aus und die Reihen 1–10 als große Schalter; jeweils mindestens eines bleibt an.
+- **Einstellungen:** `freeExercises` (alle) und `multiplicationRows` (1–10). Fehlende Felder in älteren Einstellungen bekommen den Standard, daher keine neue Speicherversion.
+- **Allgemeine Texte:** „Nächste Aufgabe“ statt „Nächstes Wort“ und „… von … Aufgaben geschafft“ – passt zu allen Spielarten und später zu gemischten Paketen.
+- Wiederholung falscher Aufgaben und Lernfächer gelten ohne Änderung auch fürs 1×1. Exklusive Bauteile fürs 1×1 gibt es noch nicht.
+
 ## 14. Spielarten und Übungspakete (ab Phase 9)
 
 Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur die Aufgabe wechselt. Erste weitere Spielart ist das **kleine 1×1**, später kommen weitere dazu.
@@ -590,7 +599,7 @@ Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur di
 ### Technik
 - **Schnittstelle Spielart:** Logik in `src/logic/exercises/` (rein, mit Unit-Tests): Aufgaben-IDs aus einem Inhalt, Antwort prüfen (Ergebnis richtig / fast / falsch wie bisher), Lösung als hervorgehobene Textstücke, Vorlesetext. Oberfläche in `src/ui/exercises/`: ein Aufgaben-Panel je Spielart. Eine Liste der Spielarten verbindet beides. Eine neue Spielart = Logik-Modul + Panel + Inhalts-Einstellung + Texte in `texts.ts`.
 - **Exklusive Bauteile:** Im Bauteil-Katalog bindet das Feld `exercises` ein Teil an Spielarten (fehlt = überall). Die Angebote bekommen die Spielart der gerade gelösten Aufgabe mit und filtern danach. Der Mechanismus kommt mit Phase 9a, die ersten exklusiven Teile mit den jeweiligen Spielarten.
-- **Aufgaben-IDs** sind über alle Spielarten eindeutig, mit Präfix: `plural:hund`, `1x1:7x8`. Wortauswahl (gemischter Topf, Wiederholungen) und Lernfächer arbeiten unverändert mit diesen IDs.
+- **Aufgaben-IDs** sind über alle Spielarten eindeutig, mit Präfix der Spielart: `plural:hund`, `multiplication:7x8`. Wortauswahl (gemischter Topf, Wiederholungen) und Lernfächer arbeiten unverändert mit diesen IDs.
 - **Speicherformat:**
   - Laufende Burg: Auswahl (Paket-ID oder Spielart) und `quiz.taskId` statt `wordId`. Migration: Alt = freies Spiel Mehrzahl, IDs bekommen das Präfix `plural:`.
   - Lernfortschritt: Schlüssel mit Präfix (Migration).

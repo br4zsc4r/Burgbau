@@ -12,7 +12,7 @@ import {
 } from './helpers';
 
 const placeHint = (page: Page) => page.getByText('Setz dein Bauteil auf ein leuchtendes Feld!');
-const nextButton = (page: Page) => page.getByRole('button', { name: 'Nächstes Wort' });
+const nextButton = (page: Page) => page.getByRole('button', { name: 'Nächste Aufgabe' });
 
 /** Falsch antworten (Serie 0: nur kleine Teile) und einen 1 × 1-Block wählen. */
 async function getSmallBlock(page: Page): Promise<void> {
@@ -47,10 +47,10 @@ test('Rückgängig legt den Block zurück in die Ablage', async ({ page }) => {
   await expect(undoButton(page)).toBeVisible();
 });
 
-test('nach „Nächstes Wort“ kommt die nächste Aufgabe', async ({ page }) => {
+test('nach „Nächste Aufgabe“ kommt die nächste Aufgabe', async ({ page }) => {
   await tapCell(page, { col: 2, row: 0 });
   await nextButton(page).click();
-  await expect(page.locator('.task-panel')).toBeVisible();
+  await expect(page.locator('.task-panel:visible')).toBeVisible();
   await expect(page.locator('.ending-slot')).toHaveText('');
   await expect(page.getByRole('button', { name: 'Fertig' })).toBeDisabled();
   await expect(undoButton(page)).toBeHidden();

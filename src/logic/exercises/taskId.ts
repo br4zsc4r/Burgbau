@@ -1,6 +1,7 @@
 import type { ExerciseId } from '../../types';
 
-const EXERCISE_IDS: readonly ExerciseId[] = ['plural'];
+/** Alle Spielarten in der Reihenfolge, in der sie angeboten werden. */
+export const EXERCISE_IDS: readonly ExerciseId[] = ['plural', 'multiplication'];
 
 /** Aufgaben-ID mit Präfix der Spielart: „plural:hund“. So sind IDs über alle Spielarten eindeutig. */
 export function taskId(exercise: ExerciseId, localId: string): string {

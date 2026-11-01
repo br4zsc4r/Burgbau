@@ -1,3 +1,5 @@
+import { MULTIPLICATION_ROWS } from '../logic/exercises/multiplication';
+import { EXERCISE_IDS, isExerciseId } from '../logic/exercises/taskId';
 import type { InputModeSetting, Settings, TasksPerCastle } from '../types';
 import { isRecord } from './validate';
 
@@ -10,6 +12,8 @@ export const defaultSettings: Settings = {
   requireCapitalization: false,
   readAloud: true,
   sound: true,
+  freeExercises: [...EXERCISE_IDS],
+  multiplicationRows: [...MULTIPLICATION_ROWS],
   tasksPerCastle: 15,
   allowSelfRegistration: true,
   pictureCode: false,
@@ -18,6 +22,12 @@ export const defaultSettings: Settings = {
 
 const TASK_COUNTS: readonly TasksPerCastle[] = [10, 15, 20];
 const INPUT_MODES: readonly InputModeSetting[] = ['list', 'tiles', 'keyboard'];
+
+/** Nicht leere Liste, in der jeder Eintrag gültig ist (doppelte entfallen); sonst null. */
+function nonEmpty<T>(value: unknown, valid: (item: unknown) => item is T): T[] | null {
+  if (!Array.isArray(value) || value.length === 0 || !value.every(valid)) return null;
+  return [...new Set(value)];
+}
 
 /** Gespeicherte Einstellungen lesen; Unbekanntes oder Kaputtes fällt auf den Standard zurück. */
 export function parseSettings(value: unknown): Settings {
@@ -37,6 +47,10 @@ export function parseSettings(value: unknown): Settings {
     requireCapitalization: bool('requireCapitalization'),
     readAloud: bool('readAloud'),
     sound: bool('sound'),
+    freeExercises: nonEmpty(value['freeExercises'], isExerciseId) ?? defaultSettings.freeExercises,
+    multiplicationRows:
+      nonEmpty(value['multiplicationRows'], (row): row is number => MULTIPLICATION_ROWS.includes(row as number)) ??
+      defaultSettings.multiplicationRows,
     tasksPerCastle: TASK_COUNTS.includes(value['tasksPerCastle'] as TasksPerCastle)
       ? (value['tasksPerCastle'] as TasksPerCastle)
       : defaultSettings.tasksPerCastle,

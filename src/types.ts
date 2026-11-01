@@ -48,6 +48,10 @@ export interface Settings {
   readAloud: boolean;
   /** Leise Töne bei Erfolgen (nie bei Fehlern). */
   sound: boolean;
+  /** Spielarten, die Kinder im freien Spiel wählen können (mindestens eine). */
+  freeExercises: ExerciseId[];
+  /** Eingeschaltete Reihen des kleinen 1×1 (1–10, mindestens eine). */
+  multiplicationRows: number[];
   tasksPerCastle: TasksPerCastle;
   /** Kinder dürfen über „Ich bin neu“ selbst Profile anlegen. */
   allowSelfRegistration: boolean;
@@ -63,8 +67,8 @@ export type RandomFn = () => number;
 export type AnswerResult =
   /** capitalizationHint: Antwort zählt, war aber nicht korrekt groß geschrieben. */
   | { status: 'correct'; capitalizationHint: boolean }
-  /** Zweiter Versuch erlaubt. reason sagt, welcher Hinweis gezeigt wird. */
-  | { status: 'almost'; reason: 'typo' | 'capitalization' }
+  /** Zweiter Versuch erlaubt. reason sagt, welcher Hinweis gezeigt wird (digits = Zahlendreher). */
+  | { status: 'almost'; reason: 'typo' | 'capitalization' | 'digits' }
   | { status: 'wrong'; solution: string };
 
 /** Ein Textstück der Lösung; highlight = Umlaut oder Endung, farbig hervorgehoben. */
@@ -76,7 +80,7 @@ export interface SolutionSegment {
 export type QuizPhase = 'answering' | 'feedback';
 
 /** Spielart: welche Art von Aufgabe (Spezifikation Abschnitt 14). */
-export type ExerciseId = 'plural';
+export type ExerciseId = 'plural' | 'multiplication';
 
 /** Aufgabe der Spielart Mehrzahl: ein Wort und wie es eingegeben wird. */
 export interface PluralTask {
@@ -87,8 +91,17 @@ export interface PluralTask {
   inputMode: InputMode;
 }
 
+/** Aufgabe des kleinen 1×1: factor · row, die Reihe ist der zweite Faktor (7er-Reihe: 1 · 7 … 10 · 7). */
+export interface MultiplicationTask {
+  exercise: 'multiplication';
+  /** Aufgaben-ID mit Präfix, z. B. „multiplication:3x7“. */
+  id: string;
+  factor: number;
+  row: number;
+}
+
 /** Eine Aufgabe irgendeiner Spielart. */
-export type Task = PluralTask;
+export type Task = PluralTask | MultiplicationTask;
 
 /** Woraus die Aufgaben einer Burg kommen: freies Spiel einer Spielart (Pakete ab Phase 9c). */
 export interface GameSelection {

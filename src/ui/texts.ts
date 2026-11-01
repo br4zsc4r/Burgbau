@@ -1,4 +1,4 @@
-import type { Animal, PieceId, PluralPattern, SymbolColor } from '../types';
+import type { Animal, ExerciseId, PieceId, PluralPattern, SymbolColor } from '../types';
 
 const pieceNames: Readonly<Record<PieceId, string>> = {
   wall: 'Mauerblock',
@@ -152,15 +152,31 @@ export const texts = {
   placeHintDecoration: 'Häng die Verzierung an ein leuchtendes Bauteil!',
   undo: 'Rückgängig',
   mirrorPiece: 'Spiegeln',
-  nextTask: 'Nächstes Wort',
+  nextTask: 'Nächste Aufgabe',
   offersTitle: 'Such dir ein Bauteil aus!',
   offersDamagedHint: 'Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!',
   streakLabel: (lit: number): string =>
     lit === 1 ? '1 Fackel leuchtet' : `${lit} Fackeln leuchten`,
   progressLabel: (done: number, total: number): string =>
-    `${String(done)} von ${String(total)} Wörtern geschafft`,
+    `${String(done)} von ${String(total)} Aufgaben geschafft`,
   finishedTitle: 'Deine Burg ist fertig!',
   castleCelebration: 'Burg fertig!',
+  // Spielarten
+  exerciseNames: { plural: 'Mehrzahl', multiplication: 'Kleines 1×1' } satisfies Record<ExerciseId, string>,
+  exerciseSamples: {
+    plural: 'der Hund → die Hunde',
+    multiplication: '7 · 8 = 56',
+  } satisfies Record<ExerciseId, string>,
+  chooseExerciseTitle: 'Was möchtest du üben?',
+  multiplicationPrompt: 'Wie viel ist das?',
+  multiplicationLabel: (factor: number, row: number): string => `${String(factor)} mal ${String(row)}`,
+  multiplicationQuestion: (factor: number, row: number): string =>
+    `Wie viel ist ${String(factor)} mal ${String(row)}?`,
+  multiplicationSolution: (factor: number, row: number, result: number): string =>
+    `${String(factor)} mal ${String(row)} ist ${String(result)}.`,
+  answerBoxLabel: 'Deine Antwort',
+  numpadErase: 'Löschen',
+  almostDigits: 'Fast! Schau noch mal genau auf die Ziffern.',
   castleNameLabel: 'Wie soll deine Burg heißen?',
   saveCastle: 'In die Sammlung',
   newCastle: 'Neue Burg bauen',
@@ -232,6 +248,11 @@ export const texts = {
   settingCapitalization: 'Großschreibung ist Pflicht',
   settingReadAloud: 'Vorlesen anbieten',
   settingSound: 'Leise Töne bei Erfolgen',
+  sectionExercises: 'Spielarten',
+  exercisesHint: 'Diese Spielarten können Kinder bei „Neue Burg bauen“ wählen. Mindestens eine bleibt an.',
+  rowsTitle: 'Reihen des kleinen 1×1',
+  rowsHint: 'Die 7er-Reihe ist 1 · 7 bis 10 · 7. Mindestens eine Reihe bleibt an.',
+  rowLabel: (row: number): string => `${String(row)}er-Reihe`,
   sectionCredits: 'Bildnachweis',
   creditsOpenMoji:
     'Wort-Bilder: OpenMoji – the open-source emoji and icon project (openmoji.org), Lizenz CC BY-SA 4.0.',

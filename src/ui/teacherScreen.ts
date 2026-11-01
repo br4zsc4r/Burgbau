@@ -1,4 +1,7 @@
 import { parseCsvWordList, wordFromInput } from '../logic/csvImport';
+import { toggleKeepingOne } from '../logic/exercises/freePlay';
+import { MULTIPLICATION_ROWS } from '../logic/exercises/multiplication';
+import { EXERCISE_IDS } from '../logic/exercises/taskId';
 import { hashPin, isValidPin } from '../logic/pin';
 import { addClass, removeProfile, renameProfile, setProfileCode } from '../logic/profiles';
 import { mergeLists, toggleList, validActiveIds, type ListEntry } from '../logic/wordlists';
@@ -126,7 +129,17 @@ export function createTeacherScreen(deps: TeacherDeps): {
     element('p', 'setting-note', texts.creditsOpenMoji),
     element('p', 'setting-note', texts.creditsGame),
   );
-  screen.append(header, general, listsSection, profilesSection, pinSection, resetSection, creditsSection);
+  const exercisesSection = element('section', 'teacher-section');
+  screen.append(
+    header,
+    general,
+    exercisesSection,
+    listsSection,
+    profilesSection,
+    pinSection,
+    resetSection,
+    creditsSection,
+  );
 
   let settings: Settings = defaultSettings;
   let profiles: Profile[] = [];
@@ -196,6 +209,42 @@ export function createTeacherScreen(deps: TeacherDeps): {
       checkbox(texts.settingShowAll, settings.showAllCastles, (showAllCastles) => {
         save({ showAllCastles });
       }),
+    );
+  }
+
+  // ---------- Spielarten ----------
+
+  function renderExercises(): void {
+    const save = (change: Partial<Settings>): void => {
+      void saveSettings(change)
+        .then(renderExercises)
+        .catch(report);
+    };
+    const exerciseChecks = EXERCISE_IDS.map((exercise) =>
+      checkbox(texts.exerciseNames[exercise], settings.freeExercises.includes(exercise), (on) => {
+        save({ freeExercises: toggleKeepingOne(settings.freeExercises, exercise, on) });
+      }),
+    );
+    const rows = element('div', 'row-toggles');
+    for (const row of MULTIPLICATION_ROWS) {
+      const on = settings.multiplicationRows.includes(row);
+      const toggle = element('button', `row-toggle${on ? ' on' : ''}`, String(row));
+      toggle.type = 'button';
+      toggle.setAttribute('aria-pressed', String(on));
+      toggle.setAttribute('aria-label', texts.rowLabel(row));
+      toggle.addEventListener('click', () => {
+        const next = toggleKeepingOne(settings.multiplicationRows, row, !on);
+        save({ multiplicationRows: [...next].sort((a, b) => a - b) });
+      });
+      rows.append(toggle);
+    }
+    exercisesSection.replaceChildren(
+      element('h2', 'section-title', texts.sectionExercises),
+      element('p', 'setting-note', texts.exercisesHint),
+      ...exerciseChecks,
+      element('h3', 'subsection-title', texts.rowsTitle),
+      element('p', 'setting-note', texts.rowsHint),
+      rows,
     );
   }
 
@@ -608,6 +657,7 @@ export function createTeacherScreen(deps: TeacherDeps): {
         repository.loadCustomLists(),
       ]);
       renderGeneral();
+      renderExercises();
       renderLists();
       renderPin();
       renderReset();

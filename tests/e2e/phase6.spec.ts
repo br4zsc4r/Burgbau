@@ -23,7 +23,7 @@ async function offerIds(page: Page): Promise<PieceId[]> {
 test.describe('Bausteine-Modus (Klasse 1/2)', () => {
   test.beforeEach(async ({ page }) => {
     await startGame(page);
-    await expect(page.locator('.task-panel')).toHaveAttribute('data-mode', 'tiles');
+    await expect(page.locator('.task-panel:visible')).toHaveAttribute('data-mode', 'tiles');
   });
 
   test('Endung und Pünktchen ergeben das richtige Wort', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('Bausteine-Modus (Klasse 1/2)', () => {
   });
 
   test('alle Bausteine und Vokale sind mindestens 64 × 64 px groß', async ({ page }) => {
-    for (const button of await page.locator('.task-panel button:visible').all()) {
+    for (const button of await page.locator('.task-panel:visible button:visible').all()) {
       const box = await button.boundingBox();
       expect(box?.width).toBeGreaterThanOrEqual(64);
       expect(box?.height).toBeGreaterThanOrEqual(64);
@@ -62,7 +62,7 @@ test('ohne nötige Pünktchen heißt es „Fast!“ (Klasse 3, viele Umlaute)', 
     await answer(page, true);
     await chooseOffer(page, (piece) => piece.kind === 'block');
     await placeAnywhere(page);
-    await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+    await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
   }
   const word = await currentWord(page);
   expect(word.umlaut).toBe(true);
@@ -76,7 +76,7 @@ test('ohne Stimmen gibt es keinen Vorlese-Knopf', async ({ page }) => {
     window.speechSynthesis.getVoices = () => [];
   });
   await startGame(page);
-  await expect(page.locator('.word-card')).toBeVisible();
+  await expect(page.locator('.word-card:visible')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Vorlesen' })).toBeHidden();
 });
 
@@ -116,7 +116,7 @@ test('Zwischenspeicher: ablegen, rückgängig, tauschen', async ({ page }) => {
   await undoButton(page).click();
   await expect(page.locator('.stash-item')).toHaveCount(0);
   await page.getByRole('button', { name: 'In den Speicher' }).click();
-  await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+  await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
 
   await answer(page, false);
   const second = await chooseOffer(page, (piece) => piece.id !== first.id);
@@ -141,7 +141,7 @@ test('letzte Aufgaben: Dach im Angebot, danach Bearbeitungsmodus', async ({ page
       await placeInEditing(page);
       continue;
     }
-    await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+    await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
   }
 
   // Nach dem letzten Teil automatisch im Bearbeitungsmodus; fertig erst, wenn alles gesetzt ist.

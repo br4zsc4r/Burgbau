@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   answer,
+  chooseExercise,
   buildWholeCastle,
   chooseOffer,
   createProfile,
@@ -35,14 +36,14 @@ test('die laufende Burg wird gespeichert und lässt sich nach dem Neuladen weite
   await answer(page, true);
   await chooseOffer(page, (piece) => piece.kind === 'block');
   await placeAnywhere(page);
-  await page.getByRole('button', { name: 'Nächstes Wort' }).click();
+  await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
   await answer(page, false);
 
   await page.reload();
   await page.getByRole('button', { name: /Lena/ }).click();
   await page.getByRole('button', { name: 'Weiterbauen' }).click();
   await expect(page.locator('.offer-card')).toHaveCount(3);
-  await expect(page.getByRole('img', { name: '2 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '2 von 15 Aufgaben geschafft' })).toBeVisible();
   await expect(page.getByRole('img', { name: '0 Fackeln leuchten' })).toBeAttached();
 });
 
@@ -71,7 +72,8 @@ test('neue Burg bei laufender Burg fragt nach', async ({ page }) => {
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
   await page.getByRole('button', { name: 'Ja, neue Burg' }).click();
-  await expect(page.getByRole('img', { name: '0 von 15 Wörtern geschafft' })).toBeAttached();
+  await chooseExercise(page);
+  await expect(page.getByRole('img', { name: '0 von 15 Aufgaben geschafft' })).toBeAttached();
 });
 
 test('Sammlung: eigene Burgen, alle Burgen und Ansicht in voller Größe', async ({ page }) => {

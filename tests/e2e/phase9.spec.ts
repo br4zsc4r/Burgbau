@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { createProfile } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { chooseExercise, createProfile, openTeacher, setSettings } from './helpers';
 
 test('eine laufende Burg aus der Zeit vor den Spielarten lässt sich weiterbauen', async ({ page }) => {
   await page.goto('/');
@@ -49,5 +49,81 @@ test('eine laufende Burg aus der Zeit vor den Spielarten lässt sich weiterbauen
   await page.locator('.profile-tile').first().click();
   await page.getByRole('button', { name: 'Weiterbauen' }).click();
   await expect(page.locator('.singular')).toHaveText('der Hund');
-  await expect(page.getByRole('img', { name: '1 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '1 von 15 Aufgaben geschafft' })).toBeVisible();
+});
+
+/** Die aktuelle 1×1-Aufgabe aus der Anzeige lesen. */
+async function currentProduct(page: Page): Promise<{ factor: number; row: number }> {
+  const label = (await page.locator('.equation').getAttribute('aria-label')) ?? '';
+  const match = /^(\d+) mal (\d+)$/.exec(label);
+  if (match === null) throw new Error(`Unbekannte Aufgabe: ${label}`);
+  return { factor: Number(match[1]), row: Number(match[2]) };
+}
+
+async function tapNumber(page: Page, value: number): Promise<void> {
+  for (const digit of String(value)) {
+    await page.locator('.numpad').getByRole('button', { name: digit, exact: true }).click();
+  }
+}
+
+test('Neue Burg: Kind wählt das kleine 1×1 und rechnet mit dem Ziffernfeld', async ({ page }) => {
+  await page.goto('/');
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await expect(page.getByRole('heading', { name: 'Was möchtest du üben?' })).toBeVisible();
+  await chooseExercise(page, 'Kleines 1×1');
+
+  const { factor, row } = await currentProduct(page);
+  await expect(page.locator('.equation-answer')).toHaveText('?');
+  await tapNumber(page, 9);
+  await page.getByRole('button', { name: 'Löschen' }).click();
+  await tapNumber(page, factor * row);
+  await expect(page.locator('.equation-answer')).toHaveText(String(factor * row));
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  await expect(page.getByText('Richtig!')).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter' }).click();
+  await expect(page.locator('.offer-card')).toHaveCount(3);
+});
+
+test('falsche 1×1-Antwort zeigt die Lösung, am PC geht auch die Tastatur', async ({ page }) => {
+  await setSettings(page, { freeExercises: ['multiplication'] });
+  await createProfile(page, 'Lena');
+  // Nur eine Spielart frei: keine Auswahl, es geht direkt los.
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  const { factor, row } = await currentProduct(page);
+  const wrong = factor * row === 1 ? 2 : 1;
+  await page.keyboard.type(String(wrong));
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.solution')).toHaveText(`${String(factor)} · ${String(row)} = ${String(factor * row)}`);
+});
+
+test('Lehrkraft schaltet Reihen aus: es kommt nur noch die 7er-Reihe', async ({ page }) => {
+  await setSettings(page, { freeExercises: ['multiplication'], multiplicationRows: [7] });
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  expect((await currentProduct(page)).row).toBe(7);
+});
+
+test('Lehrkraft: Spielarten und Reihen ein- und ausschalten', async ({ page }) => {
+  await page.goto('/');
+  await openTeacher(page);
+  await page.getByRole('checkbox', { name: 'Mehrzahl' }).uncheck();
+  await page.getByRole('button', { name: '3er-Reihe' }).click();
+  await expect(page.getByRole('button', { name: '3er-Reihe' })).toHaveAttribute('aria-pressed', 'false');
+  // Die letzte Spielart bleibt an.
+  await page.getByRole('checkbox', { name: 'Kleines 1×1' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Kleines 1×1' })).toBeChecked();
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await expect(page.locator('.equation')).toBeVisible();
+});
+
+test('Tablet 1024 × 690: 1×1 mit Ziffernfeld passt ohne Scrollen', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 690 });
+  await setSettings(page, { freeExercises: ['multiplication'] });
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await expect(page.locator('.task-panel:visible .primary-button')).toBeInViewport({ ratio: 1 });
+  expect(await page.locator('.overlay').evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(false);
 });

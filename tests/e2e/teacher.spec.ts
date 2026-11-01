@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PIN, createProfile, openTeacher, setSettings, startGame } from './helpers';
+import { PIN, chooseExercise, createProfile, openTeacher, setSettings, startGame } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -57,7 +57,8 @@ test('Einstellungen wirken: Tastatur statt Bausteine, „Ich bin neu“ aus, „
   await expect(page.getByRole('button', { name: 'Alle Burgen' })).toBeHidden();
   await page.getByRole('button', { name: 'Zurück' }).click();
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
-  await expect(page.locator('.task-panel')).toHaveAttribute('data-mode', 'keyboard');
+  await chooseExercise(page);
+  await expect(page.locator('.task-panel:visible')).toHaveAttribute('data-mode', 'keyboard');
 });
 
 test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinder', async ({ page }) => {
@@ -75,6 +76,7 @@ test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinde
 
   await page.getByRole('button', { name: /Lena/ }).click();
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await chooseExercise(page);
   await expect(page.locator('.singular')).toHaveText(/^der (Igel|Wal)$/);
 });
 
@@ -132,7 +134,8 @@ test('neue Liste anlegen und mehrere Listen gemeinsam nutzen', async ({ page }) 
   // Klasse 1/2 bleibt an, „Meer“ kommt dazu: beide Listen zusammen im Topf.
   await createProfile(page, 'Lena');
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
-  await expect(page.locator('.task-panel')).toBeVisible();
+  await chooseExercise(page);
+  await expect(page.locator('.task-panel:visible')).toBeVisible();
 });
 
 test('Bild-Code: Kind wählt zwei Bilder und braucht sie beim nächsten Mal', async ({ page }) => {
@@ -162,6 +165,7 @@ test('20 Aufgaben: größeres Raster (14 × 9) und 20 Fortschrittspunkte', async
   await setSettings(page, { tasksPerCastle: 20 });
   await createProfile(page, 'Lena');
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await chooseExercise(page);
   await expect(page.locator('.progress-dot')).toHaveCount(20);
   const box = await page.locator('canvas').boundingBox();
   // Welt 14 × 96 + 48 = 1392 breit, 144 + 9 × 96 + 72 = 1080 hoch.
@@ -195,6 +199,7 @@ test('offline: nach dem ersten Laden startet die App ohne Netz', async ({ page, 
   await expect(page.getByRole('heading', { name: 'Wer spielt?' })).toBeVisible();
   await createProfile(page, 'Lena');
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await chooseExercise(page);
   await expect(page.locator('canvas')).toBeVisible();
   await context.setOffline(false);
 });

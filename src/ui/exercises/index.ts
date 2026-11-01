@@ -1,6 +1,7 @@
 import type { Task } from '../../types';
 import { element } from '../dom';
 import type { ExercisePanel, ExercisePanelCallbacks } from './panel';
+import { createMultiplicationPanel } from './multiplicationPanel';
 import { createPluralPanel } from './pluralPanel';
 
 export type { ExercisePanelCallbacks } from './panel';
@@ -10,7 +11,10 @@ export type { ExercisePanelCallbacks } from './panel';
  * aktuellen Aufgabe – bei gemischten Übungspaketen wechselt es von Aufgabe zu Aufgabe.
  */
 export function createTaskArea(callbacks: ExercisePanelCallbacks): ExercisePanel<Task> {
-  const panels = { plural: createPluralPanel(callbacks) } as const;
+  const panels = {
+    plural: createPluralPanel(callbacks),
+    multiplication: createMultiplicationPanel(callbacks),
+  } as const;
   const area = element('div', 'task-area');
   area.append(...Object.values(panels).map((panel) => panel.element));
   // Ohne render: Panels verschiedener Spielarten nehmen verschiedene Aufgaben entgegen.
@@ -20,7 +24,7 @@ export function createTaskArea(callbacks: ExercisePanelCallbacks): ExercisePanel
     element: area,
     render: (quiz, task) => {
       // Jedes Panel gehört zu genau einer Spielart; task.exercise wählt also das passende.
-      const panel = panels[task.exercise];
+      const panel = panels[task.exercise] as ExercisePanel<Task>;
       panel.render(quiz, task);
       active = panel;
       for (const other of Object.values(panels)) other.element.hidden = other !== panel;

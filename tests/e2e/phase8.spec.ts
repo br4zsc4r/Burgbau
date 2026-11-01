@@ -8,7 +8,7 @@ test('die Aufgabe zeigt das Bild zum Wort, sonst den Anfangsbuchstaben', async (
   const picture = page.locator('.word-picture');
   if (word.image === undefined) {
     await expect(picture).toHaveCount(0);
-    await expect(page.locator('.word-image')).toHaveText(word.singular.charAt(0));
+    await expect(page.locator('.word-image:visible')).toHaveText(word.singular.charAt(0));
   } else {
     await expect(picture).toHaveAttribute('src', wordImageUrl(word.image));
     // Das Bild ist wirklich geladen (liegt lokal vor).
@@ -21,7 +21,7 @@ test('richtige Antwort: kleiner Sternenregen um das Wort', async ({ page }) => {
   const word = await currentWord(page);
   await page.getByLabel('Mehrzahl eintippen').fill(word.plural[0] ?? '');
   await page.keyboard.press('Enter');
-  await expect(page.locator('.word-card.cheer')).toBeVisible();
+  await expect(page.locator('.word-card.cheer:visible')).toBeVisible();
   await expect(page.locator('.burst-star').first()).toBeAttached();
 });
 
@@ -117,7 +117,7 @@ for (const [width, height, list] of [
   test(`Tablet ${String(width)} × ${String(height)} (${list}): „Fertig“ ohne Scrollen sichtbar`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await startGame(page, 'Lena', list);
-    const button = page.locator('.task-panel .primary-button');
+    const button = page.locator('.task-panel:visible .primary-button');
     await expect(button).toBeInViewport({ ratio: 1 });
     const scrolls = await page.locator('.overlay').evaluate((el) => el.scrollHeight > el.clientHeight);
     expect(scrolls).toBe(false);

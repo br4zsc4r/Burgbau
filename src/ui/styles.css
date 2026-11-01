@@ -1711,3 +1711,143 @@ button:focus-visible {
     order: 3;
   }
 }
+
+/* ---------- Spielart wählen ---------- */
+.exercise-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.exercise-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 18rem;
+  min-height: 10rem;
+  padding: 1.5rem 1rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.5rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.exercise-card:hover,
+.exercise-card:focus-visible {
+  outline: 4px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.exercise-sample {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+.exercise-name {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+/* ---------- Kleines 1×1 ---------- */
+.equation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.equation-answer {
+  display: inline-grid;
+  place-items: center;
+  min-width: 5.5rem;
+  min-height: 4.5rem;
+  padding: 0 0.5rem;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+}
+
+.equation-answer.empty {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, var(--touch));
+  gap: 0.6rem;
+}
+
+.numpad-key {
+  min-width: var(--touch);
+  min-height: var(--touch);
+  font: inherit;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.numpad-key:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+/* Nach der Antwort braucht es keine Ziffern mehr: Platz für die Lösung. */
+.task-panel[data-exercise='multiplication'][data-phase='feedback'] .numpad {
+  display: none;
+}
+
+/* Lehrkraft: Reihen als große Schalter */
+.row-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.row-toggle {
+  min-width: var(--touch);
+  min-height: var(--touch);
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--card);
+  border: 4px dashed var(--muted);
+  border-radius: 1rem;
+  cursor: pointer;
+}
+
+.row-toggle.on {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 4px solid var(--border);
+}
+
+@media (max-height: 560px) {
+  .equation {
+    font-size: 2.25rem;
+  }
+
+  .equation-answer {
+    min-height: 3.5rem;
+  }
+
+  .numpad {
+    gap: 0.4rem;
+  }
+}

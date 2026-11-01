@@ -8,7 +8,7 @@ import {
   startGame,
 } from './helpers';
 
-const finishButton = (page: Page) => page.getByRole('button', { name: /Nächstes Wort|Burg fertig!/ });
+const finishButton = (page: Page) => page.getByRole('button', { name: /Nächste Aufgabe|Burg fertig!/ });
 
 /** Einen Block wählen, irgendwo setzen und weiter zur nächsten Aufgabe. */
 async function buildBlock(page: Page): Promise<void> {
@@ -37,12 +37,12 @@ test('richtige Antwort: Grundbauteile, eine Fackel leuchtet', async ({ page }) =
 });
 
 test('Fortschritt: nach jeder Aufgabe füllt sich ein Punkt', async ({ page }) => {
-  await expect(page.getByRole('img', { name: '0 von 15 Wörtern geschafft' })).toBeAttached();
+  await expect(page.getByRole('img', { name: '0 von 15 Aufgaben geschafft' })).toBeAttached();
   await answer(page, false);
-  await expect(page.getByRole('img', { name: '1 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '1 von 15 Aufgaben geschafft' })).toBeVisible();
   await buildBlock(page);
   await answer(page, true);
-  await expect(page.getByRole('img', { name: '2 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '2 von 15 Aufgaben geschafft' })).toBeVisible();
 });
 
 test('Serie 3 bringt eine Dekoration, die an einem Bauteil andockt', async ({ page }) => {
@@ -55,8 +55,10 @@ test('Serie 3 bringt eine Dekoration, die an einem Bauteil andockt', async ({ pa
   expect(categories).toContain('decoration');
   expect(categories).toContain('basic');
 
-  await chooseOffer(page, (piece) => piece.category === 'decoration');
-  await expect(page.getByText('Häng die Verzierung an ein leuchtendes Bauteil!')).toBeVisible();
+  const decoration = await chooseOffer(page, (piece) => piece.category === 'decoration');
+  // Die meisten Dekorationen docken an; die Holztreppe wird wie ein Teil gesetzt.
+  const hint = decoration.kind === 'attachment' ? 'Häng die Verzierung an ein leuchtendes Bauteil!' : 'Setz dein Bauteil auf ein leuchtendes Feld!';
+  await expect(page.getByText(hint)).toBeVisible();
   await placeAnywhere(page);
   await finishButton(page).click();
 
@@ -70,7 +72,7 @@ test('nach 15 Aufgaben ist die Burg fertig und bekommt einen Namen', async ({ pa
   await page.getByRole('button', { name: 'Burg ist fertig' }).click();
   await expect(page.locator('.celebration-banner')).toHaveText('Burg fertig!');
   await expect(page.getByText('Deine Burg ist fertig!')).toBeVisible();
-  await expect(page.getByRole('img', { name: '15 von 15 Wörtern geschafft' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '15 von 15 Aufgaben geschafft' })).toBeVisible();
   await expect(page.getByLabel('Wie soll deine Burg heißen?')).toBeFocused();
   await expect(page.getByLabel('Wie soll deine Burg heißen?')).toHaveAttribute('placeholder', 'Lenas Fuchsburg');
 

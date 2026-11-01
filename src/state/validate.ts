@@ -63,7 +63,7 @@ function isAnswerResult(v: unknown): v is AnswerResult {
     case 'correct':
       return typeof v['capitalizationHint'] === 'boolean';
     case 'almost':
-      return v['reason'] === 'typo' || v['reason'] === 'capitalization';
+      return v['reason'] === 'typo' || v['reason'] === 'capitalization' || v['reason'] === 'digits';
     case 'wrong':
       return isString(v['solution']);
     default:
