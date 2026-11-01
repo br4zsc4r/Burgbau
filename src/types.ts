@@ -34,15 +34,25 @@ export interface WordList {
 
 export type TasksPerCastle = 10 | 15 | 20;
 
+/** Eingabemodus aus der Wortliste übernehmen oder für alle Listen festlegen. */
+export type InputModeSetting = 'list' | InputMode;
+
+/** Lehrkraft-Einstellungen des Geräts (Spezifikation Abschnitt 8). */
 export interface Settings {
   /** Aktive Wortliste (= Klassenstufe) des Geräts. */
   wordListId: string;
-  /** Großschreibung verpflichtend (Lehrkraft-Einstellung). */
+  inputMode: InputModeSetting;
+  /** Großschreibung verpflichtend. */
   requireCapitalization: boolean;
   /** Vorlese-Knopf anzeigen (Web Speech API). */
   readAloud: boolean;
-  /** Aufgaben pro Burg (Lehrkraft-Einstellung). */
   tasksPerCastle: TasksPerCastle;
+  /** Kinder dürfen über „Ich bin neu“ selbst Profile anlegen. */
+  allowSelfRegistration: boolean;
+  /** Profile mit Bild-Code aus zwei Bildern schützen. */
+  pictureCode: boolean;
+  /** Button „Alle Burgen“ in der Sammlung zeigen. */
+  showAllCastles: boolean;
 }
 
 /** Zufallsfunktion im Stil von Math.random: liefert [0, 1). */
@@ -276,11 +286,18 @@ export interface ProfileSymbol {
   color: SymbolColor;
 }
 
+/** Bild-Code: zwei Bilder in fester Reihenfolge. */
+export type PictureCode = [PieceId, PieceId];
+
 export interface Profile {
   id: string;
   /** Nur Spitzname oder Vorname. */
   nickname: string;
   symbol: ProfileSymbol;
+  /** Eigene Wortliste für dieses Kind (mehr Förderung oder Herausforderung). */
+  wordListId?: string;
+  /** Bild-Code, sobald das Kind einen gewählt hat (nur wenn Bild-Codes eingeschaltet sind). */
+  code?: PictureCode;
   /** ISO-Datum. */
   createdAt: string;
 }

@@ -1,5 +1,5 @@
 import { ALL_SYMBOLS, sameSymbol } from '../data/profileSymbols';
-import type { Profile, ProfileSymbol } from '../types';
+import type { PictureCode, Profile, ProfileSymbol } from '../types';
 
 /** Eine Klasse pro Gerät. */
 export const MAX_PROFILES = 30;
@@ -40,4 +40,73 @@ export function addProfile(
 /** Deutscher Genitiv für Namensvorschläge: „Lenas“, aber „Max’“ und „Fritz’“. */
 export function possessive(nickname: string): string {
   return /[sßxz]$/i.test(nickname) ? `${nickname}’` : `${nickname}s`;
+}
+
+/**
+ * Ganze Klasse anlegen: ein Profil je Name, Symbole der Reihe nach aus den freien.
+ * Leere Zeilen werden übersprungen. Wirft, wenn nicht genug Plätze frei sind.
+ */
+export function addClass(
+  profiles: readonly Profile[],
+  names: readonly string[],
+  newId: () => string,
+  now: Date,
+): Profile[] {
+  const nicknames = names.map(normalizeNickname).filter((name) => name !== '');
+  if (profiles.length + nicknames.length > MAX_PROFILES) {
+    throw new Error(`Höchstens ${String(MAX_PROFILES)} Profile pro Gerät`);
+  }
+  return nicknames.reduce<Profile[]>((list, nickname) => {
+    const symbol = availableSymbols(list)[0];
+    if (symbol === undefined) throw new Error('Keine Symbole mehr frei');
+    return addProfile(list, nickname, symbol, newId(), now);
+  }, [...profiles]);
+}
+
+function updateProfile(
+  profiles: readonly Profile[],
+  id: string,
+  change: (profile: Profile) => Profile,
+): Profile[] {
+  return profiles.map((profile) => (profile.id === id ? change(profile) : profile));
+}
+
+export function renameProfile(profiles: readonly Profile[], id: string, nickname: string): Profile[] {
+  const name = normalizeNickname(nickname);
+  if (name === '') throw new Error('Spitzname fehlt');
+  return updateProfile(profiles, id, (p) => ({ ...p, nickname: name }));
+}
+
+export function removeProfile(profiles: readonly Profile[], id: string): Profile[] {
+  return profiles.filter((profile) => profile.id !== id);
+}
+
+/** Eigene Wortliste für ein Kind; undefined = die des Geräts. */
+export function setProfileWordList(
+  profiles: readonly Profile[],
+  id: string,
+  wordListId: string | undefined,
+): Profile[] {
+  return updateProfile(profiles, id, (profile) => {
+    const next = { ...profile };
+    delete next.wordListId;
+    return wordListId === undefined ? next : { ...next, wordListId };
+  });
+}
+
+/** Bild-Code setzen oder (undefined) zurücksetzen – dann wählt das Kind beim nächsten Mal neu. */
+export function setProfileCode(
+  profiles: readonly Profile[],
+  id: string,
+  code: PictureCode | undefined,
+): Profile[] {
+  return updateProfile(profiles, id, (profile) => {
+    const next = { ...profile };
+    delete next.code;
+    return code === undefined ? next : { ...next, code };
+  });
+}
+
+export function codeMatches(profile: Profile, entered: readonly string[]): boolean {
+  return profile.code !== undefined && profile.code[0] === entered[0] && profile.code[1] === entered[1];
 }

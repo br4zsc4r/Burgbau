@@ -12,7 +12,12 @@ export function createCollectionScreen(callbacks: {
   onBack: () => void;
 }): {
   element: HTMLElement;
-  render: (scope: CollectionScope, castles: readonly Castle[], profiles: readonly Profile[]) => void;
+  render: (
+    scope: CollectionScope,
+    castles: readonly Castle[],
+    profiles: readonly Profile[],
+    showAllToggle: boolean,
+  ) => void;
   setThumbnail: (castleId: string, url: string) => void;
 } {
   const screen = element('section', 'screen collection');
@@ -37,8 +42,10 @@ export function createCollectionScreen(callbacks: {
 
   return {
     element: screen,
-    render: (nextScope, castles, profiles) => {
+    render: (nextScope, castles, profiles, showAllToggle) => {
       scope = nextScope;
+      // Die Lehrkraft kann „Alle Burgen“ ausblenden.
+      toggle.hidden = !showAllToggle;
       title.textContent = scope === 'mine' ? texts.myCastles : texts.allCastles;
       toggle.textContent = scope === 'mine' ? texts.allCastles : texts.myCastles;
       empty.textContent = scope === 'mine' ? texts.noCastlesMine : texts.noCastlesAll;

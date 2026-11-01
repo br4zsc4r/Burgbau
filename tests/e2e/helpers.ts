@@ -2,7 +2,8 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { GRID_SIZE_BY_TASKS } from '../../src/data/grid';
 import { getPiece } from '../../src/data/pieces';
 import { cellCenter, worldLayout } from '../../src/logic/gridLayout';
-import type { Cell, PieceCategory, PieceDef, PieceId } from '../../src/types';
+import { defaultSettings } from '../../src/state/settings';
+import type { Cell, PieceCategory, PieceDef, PieceId, Settings } from '../../src/types';
 import klasse12 from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
 import klasse3 from '../../src/data/wordlists/klasse-3.json' with { type: 'json' };
 import klasse4 from '../../src/data/wordlists/klasse-4.json' with { type: 'json' };
@@ -43,9 +44,39 @@ export async function createProfile(page: Page, nickname: string): Promise<void>
   await expect(page.getByRole('heading', { name: `Hallo ${nickname}!` })).toBeVisible();
 }
 
-/** Seite öffnen (optional mit Wortliste), Profil anlegen und eine neue Burg beginnen. */
+/**
+ * Lehrkraft-Einstellungen direkt in IndexedDB setzen (schneller als über die Oberfläche)
+ * und die Seite neu laden.
+ */
+export async function setSettings(page: Page, change: Partial<Settings>): Promise<void> {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Wer spielt?' })).toBeVisible();
+  const settings = { ...defaultSettings, ...change };
+  await page.evaluate(async (value) => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('burgbau');
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+      request.onerror = () => {
+        reject(new Error('IndexedDB'));
+      };
+    });
+    await new Promise<void>((resolve) => {
+      const tx = db.transaction('data', 'readwrite');
+      tx.objectStore('data').put({ version: 1, settings: value }, 'settings');
+      tx.oncomplete = () => {
+        resolve();
+      };
+    });
+  }, settings);
+  await page.reload();
+}
+
+/** Seite öffnen (optional mit anderer Wortliste), Profil anlegen und eine neue Burg beginnen. */
 export async function startGame(page: Page, nickname = 'Lena', list?: string): Promise<void> {
-  await page.goto(list === undefined ? '/' : `/?liste=${list}`);
+  if (list === undefined) await page.goto('/');
+  else await setSettings(page, { wordListId: list });
   await createProfile(page, nickname);
   await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
   await expect(page.locator('.task-panel')).toBeVisible();

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { checkAnswer, normalizeAnswer } from '../src/logic/plural';
 import type { Settings } from '../src/types';
-import { makeWord } from './helpers';
+import { makeWord, testSettings } from './helpers';
 
-const lenient: Settings = { wordListId: 'test', requireCapitalization: false, readAloud: false, tasksPerCastle: 15 };
-const strict: Settings = { wordListId: 'test', requireCapitalization: true, readAloud: false, tasksPerCastle: 15 };
+const lenient: Settings = testSettings;
+const strict: Settings = { ...testSettings, requireCapitalization: true };
 
 const hund = makeWord({ singular: 'Hund', plural: ['Hunde'] });
 const hand = makeWord({ singular: 'Hand', plural: ['Hände'], umlaut: true });

@@ -1018,3 +1018,300 @@ button:focus-visible {
     animation: none;
   }
 }
+
+/* ---------- Lehrkraft-Zugang ---------- */
+.profile-select {
+  position: relative;
+}
+
+.gear-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: var(--touch);
+  height: var(--touch);
+  padding: 0;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.gear-button svg {
+  width: 2rem;
+  height: 2rem;
+  fill: var(--muted);
+}
+
+@property --hold {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Füllt sich beim Gedrückthalten (3 Sekunden). */
+.gear-button.holding {
+  background: conic-gradient(var(--highlight-bg) var(--hold), var(--card) var(--hold));
+  animation: gear-hold 3s linear forwards;
+}
+
+@keyframes gear-hold {
+  to {
+    --hold: 360deg;
+  }
+}
+
+.teacher-gate {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(24rem, calc(100% - 2rem));
+  padding: 1.5rem;
+  transform: translate(-50%, -50%);
+  background: var(--sky);
+  border: 4px solid var(--border);
+  border-radius: 1.5rem;
+  box-shadow: 0 0 0 100vmax rgb(46 42 36 / 40%);
+}
+
+.gate-task {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.gate-input,
+.setting-input,
+.setting-select {
+  min-height: 3rem;
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+  font-size: 1.25rem;
+  color: var(--ink);
+  background: var(--card);
+  border: 3px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.gate-input {
+  width: 8rem;
+  font-size: 1.75rem;
+  text-align: center;
+}
+
+.gate-message {
+  margin: 0;
+  min-height: 1.5em;
+}
+
+/* ---------- Lehrkraft-Einstellungen ---------- */
+.teacher-screen {
+  align-items: stretch;
+  max-width: 48rem;
+  font-size: 1.1rem;
+}
+
+.teacher-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.teacher-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--card);
+  border: 3px solid var(--border);
+  border-radius: 1rem;
+}
+
+.section-title,
+.subsection-title {
+  margin: 0;
+}
+
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.setting-label {
+  min-width: 12rem;
+  font-weight: 700;
+}
+
+.setting-check {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+}
+
+.setting-check input {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.setting-note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.teacher-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  border-top: 2px solid #e2dccf;
+}
+
+.teacher-profile-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.teacher-profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 3rem;
+}
+
+.teacher-code {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.teacher-code .piece-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.castle-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.confirm-inline,
+.confirm-ask {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confirm-question {
+  font-weight: 700;
+}
+
+.danger-button {
+  min-height: var(--touch);
+  padding: 0.5rem 1.25rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--ink);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: pointer;
+}
+
+.teacher-screen .secondary-button,
+.teacher-screen .primary-button {
+  min-height: 3rem;
+  font-size: 1.1rem;
+}
+
+.class-names {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem;
+  border: 3px solid var(--border);
+  border-radius: 0.75rem;
+}
+
+.csv-error {
+  margin: 0;
+  color: var(--almost);
+}
+
+/* ---------- Bild-Code ---------- */
+.code-slots {
+  display: flex;
+  gap: 1rem;
+}
+
+.code-slot {
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  background: rgb(255 255 255 / 60%);
+  border: 4px dashed var(--muted);
+  border-radius: 1rem;
+}
+
+.code-slot .piece-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.code-message {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 1.3rem;
+  text-align: center;
+}
+
+.code-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 6rem);
+  gap: 0.75rem;
+}
+
+.code-picture {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  padding: 0.25rem;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.code-picture .piece-icon {
+  width: 100%;
+  height: 100%;
+}
+
+.code-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.castle-thumb {
+  object-fit: contain;
+}

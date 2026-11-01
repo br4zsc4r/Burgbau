@@ -9,6 +9,8 @@ export const CURRENT_VERSION = {
   game: 2,
   castles: 1,
   progress: 1,
+  settings: 1,
+  wordlists: 1,
 } as const;
 
 export type RecordKind = keyof typeof CURRENT_VERSION;
@@ -27,6 +29,8 @@ const MIGRATIONS: Record<RecordKind, Partial<Record<number, Migration>>> = {
   },
   castles: {},
   progress: {},
+  settings: {},
+  wordlists: {},
 };
 
 /**

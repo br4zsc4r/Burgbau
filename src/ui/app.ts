@@ -17,7 +17,14 @@ import {
   withKnownWords,
 } from '../logic/game';
 import { coveredCells, createGrid, resolvePlacement, validPlacements } from '../logic/grid';
-import { addProfile, availableSymbols, canCreateProfile, possessive } from '../logic/profiles';
+import {
+  addProfile,
+  availableSymbols,
+  canCreateProfile,
+  codeMatches,
+  possessive,
+  setProfileCode,
+} from '../logic/profiles';
 import { canUseTiles } from '../logic/tiles';
 import { createBuildGame } from '../scene/createBuildGame';
 import type { Repository } from '../state/repository';
@@ -40,6 +47,7 @@ import { element } from './dom';
 import { createNamingPanel } from './namingPanel';
 import { createNewProfile } from './newProfile';
 import { createOffersPanel } from './offersPanel';
+import { createPictureCodeScreen } from './pictureCode';
 import { createProfileHome } from './profileHome';
 import { createProfileSelect } from './profileSelect';
 import { createProgressDots } from './progressDots';
@@ -47,10 +55,14 @@ import { createSpeaker } from './speech';
 import { createStashBar } from './stashBar';
 import { createStreakTorches } from './streakTorches';
 import { createTaskPanel } from './taskPanel';
+import { createTeacherGate } from './teacherGate';
+import { createTeacherScreen } from './teacherScreen';
 import { texts } from './texts';
 
 type Screen =
   | { kind: 'profiles' }
+  | { kind: 'code'; profile: Profile; mode: 'choose' | 'enter'; wrong: boolean }
+  | { kind: 'teacher' }
   | { kind: 'newProfile' }
   | { kind: 'home' }
   | { kind: 'game' }
@@ -58,7 +70,12 @@ type Screen =
   | { kind: 'castle'; castle: Castle; scope: CollectionScope };
 
 export interface AppDeps {
-  list: WordList;
+  /** Mitgelieferte Wortlisten. */
+  builtinLists: readonly WordList[];
+  /** Per CSV importierte Wortlisten der Lehrkraft. */
+  customLists: readonly WordList[];
+  /** Neu laden, damit geänderte Lehrkraft-Einstellungen überall wirken. */
+  reload: () => void;
   settings: Settings;
   random: RandomFn;
   repository: Repository;
@@ -76,9 +93,23 @@ const PAUSE_ICON =
  * Die laufende Burg wird nach jedem Schritt gespeichert.
  */
 export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> {
-  const { list, settings, random, repository } = deps;
-  const wordsById = new Map(list.words.map((word) => [word.id, word]));
-  const wordIds = [...wordsById.keys()];
+  const { settings, random, repository } = deps;
+  const lists = [...deps.builtinLists, ...deps.customLists];
+  const findList = (id: string | undefined): WordList | undefined => lists.find((l) => l.id === id);
+  const foundList = findList(settings.wordListId) ?? lists[0];
+  if (foundList === undefined) throw new Error('Keine Wortliste vorhanden');
+  const deviceList: WordList = foundList;
+
+  // Wortliste des aktuellen Kindes (eigene Liste oder die des Geräts).
+  let list: WordList = deviceList;
+  let wordsById = new Map<string, Word>();
+  let wordIds: string[] = [];
+  const useList = (next: WordList): void => {
+    list = next;
+    wordsById = new Map(next.words.map((word) => [word.id, word]));
+    wordIds = [...wordsById.keys()];
+  };
+  useList(deviceList);
   const emptyGrid = createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]);
 
   let profiles: Profile[] = await repository.loadProfiles();
@@ -98,7 +129,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   /** Bausteine nur, wenn die Liste sie vorsieht und sich das Wort damit bauen lässt. */
   const inputModeFor = (word: Word): InputMode =>
-    list.inputMode === 'tiles' && canUseTiles(word) ? 'tiles' : 'keyboard';
+    (settings.inputMode === 'list' ? list.inputMode : settings.inputMode) === 'tiles' && canUseTiles(word)
+      ? 'tiles'
+      : 'keyboard';
 
   // ---------- Bausteine ----------
 
@@ -157,7 +190,11 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   const profileSelect = createProfileSelect({
     onSelect: (selected) => {
-      void openProfile(selected).catch(report);
+      if (settings.pictureCode) {
+        show({ kind: 'code', profile: selected, mode: selected.code === undefined ? 'choose' : 'enter', wrong: false });
+      } else {
+        void openProfile(selected).catch(report);
+      }
     },
     onNew: () => {
       show({ kind: 'newProfile' });
@@ -192,6 +229,45 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     },
   });
 
+  const pictureCode = createPictureCodeScreen({
+    onChosen: (code) => {
+      if (screen.kind !== 'code') return;
+      const { profile: chosenFor } = screen;
+      profiles = setProfileCode(profiles, chosenFor.id, code);
+      const updated = profiles.find((p) => p.id === chosenFor.id) ?? chosenFor;
+      void repository
+        .saveProfiles(profiles)
+        .then(() => openProfile(updated))
+        .catch(report);
+    },
+    onEntered: (code) => {
+      if (screen.kind !== 'code') return;
+      if (codeMatches(screen.profile, code)) void openProfile(screen.profile).catch(report);
+      else show({ ...screen, wrong: true });
+    },
+    onBack: () => {
+      show({ kind: 'profiles' });
+    },
+  });
+
+  const teacherScreen = createTeacherScreen({
+    repository,
+    builtinLists: deps.builtinLists,
+    newId: deps.newId,
+    now: deps.now,
+    onDone: deps.reload,
+  });
+
+  const gate = createTeacherGate(random, () => {
+    void teacherScreen
+      .open()
+      .then(() => {
+        show({ kind: 'teacher' });
+      })
+      .catch(report);
+  });
+  profileSelect.element.append(gate.gear, gate.dialog);
+
   const collectionScreen = createCollectionScreen({
     onScope: (scope) => {
       void openCollection(scope).catch(report);
@@ -214,6 +290,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   gameOverlay.append(taskPanel.element, offersPanel.element, namingPanel.element);
   screens.append(
     profileSelect.element,
+    pictureCode.element,
+    teacherScreen.element,
     newProfile.element,
     profileHome.element,
     collectionScreen.element,
@@ -245,7 +323,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   function show(next: Screen): void {
     const previous = screen;
     screen = next;
-    if (next.kind === 'profiles') profileSelect.render(profiles, canCreateProfile(profiles));
+    if (next.kind === 'profiles') {
+      profileSelect.render(profiles, settings.allowSelfRegistration && canCreateProfile(profiles));
+    }
+    if (next.kind === 'code') pictureCode.render(next.profile, next.mode, next.wrong);
     if (next.kind === 'newProfile') newProfile.render(availableSymbols(profiles));
     if (next.kind === 'home' && profile !== null) profileHome.render(profile, game !== null);
     if (next.kind === 'castle') castleViewBar.render(next.castle.name);
@@ -255,6 +336,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   async function openProfile(selected: Profile): Promise<void> {
     profile = selected;
+    useList(findList(selected.wordListId) ?? deviceList);
     [game, boxes] = await Promise.all([
       repository.loadGame(selected.id),
       repository.loadBoxes(selected.id, list.id),
@@ -266,7 +348,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     profiles = addProfile(profiles, nickname, symbol, deps.newId(), deps.now());
     await repository.saveProfiles(profiles);
     const created = profiles[profiles.length - 1];
-    if (created !== undefined) await openProfile(created);
+    if (created === undefined) return;
+    // Mit Bild-Code sucht sich das neue Kind gleich seine zwei Bilder aus.
+    if (settings.pictureCode) show({ kind: 'code', profile: created, mode: 'choose', wrong: false });
+    else await openProfile(created);
   }
 
   function startNewGame(): void {
@@ -320,13 +405,14 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     await openCollection('mine');
   }
 
-  async function openCollection(scope: CollectionScope): Promise<void> {
+  async function openCollection(requested: CollectionScope): Promise<void> {
     if (profile === null) return;
+    const scope = settings.showAllCastles ? requested : 'mine';
     const castles =
       scope === 'mine'
         ? await repository.loadCastles(profile.id)
         : await repository.loadAllCastles(profiles);
-    collectionScreen.render(scope, castles, profiles);
+    collectionScreen.render(scope, castles, profiles, settings.showAllCastles);
     show({ kind: 'collection', scope });
     // Vorschauen mit derselben Render-Funktion wie beim Bauen, nacheinander und zwischengespeichert.
     for (const castle of castles) {
@@ -357,6 +443,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     const step = inGame && game !== null ? game.step : null;
 
     profileSelect.element.hidden = screen.kind !== 'profiles';
+    pictureCode.element.hidden = screen.kind !== 'code';
+    teacherScreen.element.hidden = screen.kind !== 'teacher';
     newProfile.element.hidden = screen.kind !== 'newProfile';
     profileHome.element.hidden = screen.kind !== 'home';
     collectionScreen.element.hidden = screen.kind !== 'collection';

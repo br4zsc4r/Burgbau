@@ -1,11 +1,9 @@
 import './ui/styles.css';
 import { parseWordList } from './logic/wordlist';
 import { createRepository } from './state/repository';
-import { defaultSettings } from './state/settings';
 import { createIdbStore, createMemoryStore, type KeyValueStore } from './state/storage';
 import { mountApp } from './ui/app';
 import { texts } from './ui/texts';
-import type { WordList } from './types';
 
 /** IndexedDB, wenn verfügbar; sonst (z. B. privates Fenster) nur im Speicher. */
 async function openStore(): Promise<{ store: KeyValueStore; persistent: boolean }> {
@@ -25,34 +23,29 @@ function newId(): string {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
-const WORD_LISTS = Object.values(
+const BUILTIN_LISTS = Object.values(
   import.meta.glob<unknown>('./data/wordlists/*.json', { eager: true, import: 'default' }),
 ).map(parseWordList);
 
-/**
- * Aktive Wortliste. Bis zu den Lehrkraft-Einstellungen (Phase 7) lässt sie sich zum
- * Ausprobieren über die Adresse wählen, z. B. ?liste=klasse-3.
- */
-function activeWordList(): WordList {
-  const requested = new URLSearchParams(window.location.search).get('liste') ?? defaultSettings.wordListId;
-  const list =
-    WORD_LISTS.find((l) => l.id === requested) ??
-    WORD_LISTS.find((l) => l.id === defaultSettings.wordListId);
-  if (list === undefined) throw new Error('Keine Wortliste gefunden');
-  return list;
-}
-
 async function start(root: HTMLElement): Promise<void> {
-  const list = activeWordList();
   const { store, persistent } = await openStore();
+  const repository = createRepository(store);
+  const [settings, customLists] = await Promise.all([
+    repository.loadSettings(),
+    repository.loadCustomLists(),
+  ]);
   await mountApp(root, {
-    list,
-    settings: { ...defaultSettings, wordListId: list.id },
+    builtinLists: BUILTIN_LISTS,
+    customLists,
+    settings,
     random: Math.random,
-    repository: createRepository(store),
+    repository,
     newId,
     now: () => new Date(),
     persistent,
+    reload: () => {
+      window.location.reload();
+    },
   });
 }
 

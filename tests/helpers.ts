@@ -1,6 +1,15 @@
 import type { RandomFn, Settings, Word } from '../src/types';
 
-export const testSettings: Settings = { wordListId: 'test', requireCapitalization: false, readAloud: false, tasksPerCastle: 15 };
+export const testSettings: Settings = {
+  wordListId: 'test',
+  inputMode: 'list',
+  requireCapitalization: false,
+  readAloud: false,
+  tasksPerCastle: 15,
+  allowSelfRegistration: true,
+  pictureCode: false,
+  showAllCastles: true,
+};
 
 export function makeWord(overrides: Partial<Word> & Pick<Word, 'singular' | 'plural'>): Word {
   return {

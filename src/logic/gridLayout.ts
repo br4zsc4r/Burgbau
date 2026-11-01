@@ -3,6 +3,9 @@ import type { Cell, GridSize } from '../types';
 import { isInside } from './grid';
 
 export interface WorldLayout {
+  /** Rastergröße, für die das Layout berechnet ist. */
+  cols: number;
+  rows: number;
   width: number;
   height: number;
   cellSize: number;
@@ -18,6 +21,8 @@ export function worldLayout(size: GridSize): WorldLayout {
   const gridTop = SKY_HEIGHT;
   const groundTop = gridTop + size.rows * CELL_SIZE;
   return {
+    cols: size.cols,
+    rows: size.rows,
     width: size.cols * CELL_SIZE + 2 * SIDE_MARGIN,
     height: groundTop + GROUND_HEIGHT,
     cellSize: CELL_SIZE,

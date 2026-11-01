@@ -3,7 +3,7 @@ import { ART_CELL, topMountOffset } from '../data/pieceArt';
 import { getPiece } from '../data/pieces';
 import { blockTiles, standaloneTiles, type BlockTile } from '../logic/autotile';
 import { pieceAt } from '../logic/grid';
-import { cellAt, cellCenter, cellOrigin, type WorldLayout } from '../logic/gridLayout';
+import { cellAt, cellCenter, cellOrigin, worldLayout, type WorldLayout } from '../logic/gridLayout';
 import type { Cell, GridState, PieceId, Placement } from '../types';
 import { drawPiece, preloadPieceArt, type PieceLayers, type TileView } from './pieceRenderer';
 
@@ -68,6 +68,7 @@ export class BuildScene extends Phaser.Scene {
   private hover!: Phaser.GameObjects.Graphics;
   private trayPiece!: Phaser.GameObjects.Container;
   private traySlot!: Phaser.GameObjects.Graphics;
+  private background!: Phaser.GameObjects.Graphics;
   private hoverCell: Cell | null = null;
   private hoverAnchor: Cell | null = null;
   private gridLines!: Phaser.GameObjects.Graphics;
@@ -82,7 +83,7 @@ export class BuildScene extends Phaser.Scene {
   });
 
   constructor(
-    private readonly layout: WorldLayout,
+    private layout: WorldLayout,
     private readonly callbacks: BuildSceneCallbacks,
   ) {
     super('build');
@@ -90,6 +91,10 @@ export class BuildScene extends Phaser.Scene {
 
   setView(view: BuildView): void {
     this.view = view;
+    // Andere Rastergröße (z. B. 20 Aufgaben = 14 × 9): Welt und Hintergrund neu aufbauen.
+    if (this.ready && (view.grid.cols !== this.layout.cols || view.grid.rows !== this.layout.rows)) {
+      this.applyLayout(worldLayout(view.grid));
+    }
     // Vor create() wird nur gemerkt; create() zeichnet dann.
     if (this.ready) this.redraw();
   }
@@ -99,7 +104,8 @@ export class BuildScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.drawBackground(this.add.graphics());
+    this.background = this.add.graphics();
+    this.drawBackground(this.background, this.layout);
     this.gridLines = this.add.graphics();
     this.drawGridLines(this.gridLines);
     // Ebenen: Texturen und Bilder, darüber alle Kanten, dann Zinnen, zuletzt Dekorationen.
@@ -130,8 +136,23 @@ export class BuildScene extends Phaser.Scene {
     });
 
     this.ready = true;
+    if (this.view !== null && (this.view.grid.cols !== this.layout.cols || this.view.grid.rows !== this.layout.rows)) {
+      this.applyLayout(worldLayout(this.view.grid));
+    }
     this.redraw();
     this.resolveReady();
+  }
+
+  /** Neue Weltgröße: Spielfläche anpassen, Hintergrund, Raster und Ablage neu zeichnen. */
+  private applyLayout(layout: WorldLayout): void {
+    this.layout = layout;
+    this.scale.setGameSize(layout.width, layout.height);
+    this.background.clear();
+    this.drawBackground(this.background, layout);
+    this.gridLines.clear();
+    this.drawGridLines(this.gridLines);
+    this.drawTraySlot();
+    this.trayPiece.setPosition(layout.tray.x, layout.tray.y);
   }
 
   /**
@@ -140,8 +161,10 @@ export class BuildScene extends Phaser.Scene {
    */
   async snapshot(grid: GridState, scale: number): Promise<string> {
     await this.whenReady;
-    const width = Math.round(this.layout.width * scale);
-    const height = Math.round(this.layout.height * scale);
+    // Layout der Burg selbst – sie kann eine andere Rastergröße haben als die laufende Szene.
+    const layout = worldLayout(grid);
+    const width = Math.round(layout.width * scale);
+    const height = Math.round(layout.height * scale);
     const key = 'castle-snapshot';
     const existing = this.textures.exists(key) ? this.textures.get(key) : null;
     const texture =
@@ -151,14 +174,14 @@ export class BuildScene extends Phaser.Scene {
     if (texture === null) throw new Error('Vorschau konnte nicht angelegt werden');
 
     const background = this.make.graphics({}, false);
-    this.drawBackground(background);
+    this.drawBackground(background, layout);
     const layers: PieceLayers = {
       base: new Phaser.GameObjects.Container(this),
       edges: this.make.graphics({}, false),
       top: new Phaser.GameObjects.Container(this),
     };
     const attachments = new Phaser.GameObjects.Container(this);
-    this.drawCastle(grid, layers, attachments);
+    this.drawCastle(grid, layers, attachments, false, layout);
     const root = new Phaser.GameObjects.Container(this, 0, 0, [
       background,
       layers.base,
@@ -211,14 +234,20 @@ export class BuildScene extends Phaser.Scene {
     }
   }
 
-  private createTray(): void {
+  private drawTraySlot(): void {
     const { tray, cellSize } = this.layout;
-    this.traySlot = this.add.graphics();
+    this.traySlot.clear();
     this.traySlot.fillStyle(COLORS.tray, 0.6);
     this.traySlot.lineStyle(OUTLINE, COLORS.outline, 0.6);
     const slot = cellSize + 16;
     this.traySlot.fillRoundedRect(tray.x - slot / 2, tray.y - slot / 2, slot, slot, 16);
     this.traySlot.strokeRoundedRect(tray.x - slot / 2, tray.y - slot / 2, slot, slot, 16);
+  }
+
+  private createTray(): void {
+    const { tray, cellSize } = this.layout;
+    this.traySlot = this.add.graphics();
+    this.drawTraySlot();
 
     this.trayPiece = this.add.container(tray.x, tray.y);
     this.trayPiece.setSize(cellSize, cellSize);
@@ -380,8 +409,9 @@ export class BuildScene extends Phaser.Scene {
     layers: PieceLayers,
     attachmentLayer: Phaser.GameObjects.Container,
     animated = false,
+    layout: WorldLayout = this.layout,
   ): Phaser.GameObjects.Image[] {
-    const size = this.layout.cellSize;
+    const size = layout.cellSize;
     const moving: Phaser.GameObjects.Image[] = [];
 
     const tilesByPiece = new Map<string, TileView[]>();
@@ -393,7 +423,7 @@ export class BuildScene extends Phaser.Scene {
     for (const placed of grid.pieces) {
       const { height } = getPiece(placed.piece);
       // Linke obere Ecke = Oberkante der obersten Reihe des Teils.
-      const { x, y } = cellOrigin(this.layout, { col: placed.col, row: placed.row + height - 1 });
+      const { x, y } = cellOrigin(layout, { col: placed.col, row: placed.row + height - 1 });
       const tiles = tilesByPiece.get(`${String(placed.col)}/${String(placed.row)}`) ?? [];
       // Textur in Weltkoordinaten: Nachbarblöcke setzen das Fugenmuster fort.
       moving.push(...drawPiece(this, layers, placed.piece, x, y, size, tiles, { x, y }, animated));
@@ -403,7 +433,7 @@ export class BuildScene extends Phaser.Scene {
     const slotOf = (id: PieceId): number => SLOT_ORDER[getPiece(id).slot ?? 'front'];
     const attachments = [...grid.attachments].sort((a, b) => slotOf(a.piece) - slotOf(b.piece));
     for (const attachment of attachments) {
-      const { x, y } = cellOrigin(this.layout, attachment);
+      const { x, y } = cellOrigin(layout, attachment);
       let offsetY = 0;
       if (getPiece(attachment.piece).slot === 'top') {
         // Steckt auf der Spitze des Teils darunter und ragt eine Zelle nach oben.
@@ -455,8 +485,8 @@ export class BuildScene extends Phaser.Scene {
     }
   }
 
-  private drawBackground(g: Phaser.GameObjects.Graphics): void {
-    const { width, groundTop, height } = this.layout;
+  private drawBackground(g: Phaser.GameObjects.Graphics, layout: WorldLayout): void {
+    const { width, groundTop, height } = layout;
 
     g.fillGradientStyle(COLORS.skyTop, COLORS.skyTop, COLORS.skyBottom, COLORS.skyBottom, 1);
     g.fillRect(0, 0, width, groundTop);

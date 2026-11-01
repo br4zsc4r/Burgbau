@@ -1,10 +1,14 @@
 import { addCastle, newestFirst } from '../logic/collection';
-import type { Castle, GameState, Profile, WordBoxes } from '../types';
+import type { Castle, GameState, Profile, Settings, WordBoxes, WordList } from '../types';
+import { validateWordList } from '../logic/wordlist';
+import { parseSettings } from './settings';
 import { migrate, withVersion } from './migrations';
 import type { KeyValueStore } from './storage';
 import { isRecord, parseCastle, parseGameState, parseProfile, sanitizeBoxes } from './validate';
 
 const PROFILES_KEY = 'profiles';
+const SETTINGS_KEY = 'settings';
+const WORDLISTS_KEY = 'wordlists';
 const gameKey = (profileId: string): string => `game:${profileId}`;
 const castlesKey = (profileId: string): string => `castles:${profileId}`;
 const progressKey = (profileId: string): string => `progress:${profileId}`;
@@ -22,7 +26,30 @@ export function createRepository(store: KeyValueStore) {
     return newestFirst(listOf(record, 'castles', parseCastle));
   }
 
+  async function saveCastles(profileId: string, castles: readonly Castle[]): Promise<void> {
+    await store.set(castlesKey(profileId), withVersion('castles', { castles }));
+  }
+
   return {
+    async loadSettings(): Promise<Settings> {
+      const record = migrate('settings', await store.get(SETTINGS_KEY));
+      return parseSettings(record?.['settings']);
+    },
+
+    saveSettings(settings: Settings): Promise<void> {
+      return store.set(SETTINGS_KEY, withVersion('settings', { settings }));
+    },
+
+    /** Eigene (per CSV importierte) Wortlisten; ungültige werden übersprungen. */
+    async loadCustomLists(): Promise<WordList[]> {
+      const record = migrate('wordlists', await store.get(WORDLISTS_KEY));
+      return listOf(record, 'lists', (raw) => (validateWordList(raw).length === 0 ? (raw as WordList) : null));
+    },
+
+    saveCustomLists(lists: readonly WordList[]): Promise<void> {
+      return store.set(WORDLISTS_KEY, withVersion('wordlists', { lists }));
+    },
+
     async loadProfiles(): Promise<Profile[]> {
       return listOf(migrate('profiles', await store.get(PROFILES_KEY)), 'profiles', parseProfile);
     },
@@ -50,8 +77,31 @@ export function createRepository(store: KeyValueStore) {
     /** Fertige Burg in die Sammlung; bei voller Sammlung fällt die älteste heraus. */
     async addCastle(castle: Castle): Promise<Castle[]> {
       const castles = addCastle(await loadCastles(castle.profileId), castle);
-      await store.set(castlesKey(castle.profileId), withVersion('castles', { castles }));
+      await saveCastles(castle.profileId, castles);
       return castles;
+    },
+
+    async deleteCastle(profileId: string, castleId: string): Promise<void> {
+      const castles = await loadCastles(profileId);
+      await saveCastles(profileId, castles.filter((c) => c.id !== castleId));
+    },
+
+    clearCastles(profileId: string): Promise<void> {
+      return store.del(castlesKey(profileId));
+    },
+
+    /** Alles, was zu einem Profil gehört: laufende Burg, Sammlung, Lernfortschritt. */
+    async deleteProfileData(profileId: string): Promise<void> {
+      await Promise.all([
+        store.del(gameKey(profileId)),
+        store.del(castlesKey(profileId)),
+        store.del(progressKey(profileId)),
+      ]);
+    },
+
+    /** Alles auf dem Gerät löschen (Schuljahresende). */
+    resetAll(): Promise<void> {
+      return store.clear();
     },
 
     /** Lernfortschritt eines Profils für eine Wortliste (Fach je Wort). */

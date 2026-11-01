@@ -139,12 +139,19 @@ export function parseProfile(value: unknown): Profile | null {
   ) {
     return null;
   }
-  return {
+  const profile: Profile = {
     id: value['id'],
     nickname: value['nickname'],
     symbol: symbol as unknown as Profile['symbol'],
     createdAt: value['createdAt'],
   };
+  const wordListId = value['wordListId'];
+  if (isNonEmptyString(wordListId)) profile.wordListId = wordListId;
+  const code = value['code'];
+  if (Array.isArray(code) && code.length === 2 && code.every(isPieceId)) {
+    profile.code = [code[0], code[1]] as Profile['code'] & [PieceId, PieceId];
+  }
+  return profile;
 }
 
 export function parseCastle(value: unknown): Castle | null {

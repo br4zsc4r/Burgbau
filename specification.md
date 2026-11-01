@@ -421,3 +421,40 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Mehr 2 × 2-Teile:** Neu sind Großer Turm, Große Fenstermauer (vier Fenster; Blumenkästen passen), Großes Dach (ohne Fahne, die Spitze liegt zwischen zwei Zellen) und die Turmruine (beschädigt). Die Chance auf ein großes Teil im Angebot steigt von ⅓ auf 40 %.
 - **Windmühle 2 × 2.**
 - **Riesenfahne:** Sie weht nur über die Breite (scaleX). Mit zusätzlicher Drehung zeichnete Phaser 4 das Tuch fehlerhaft.
+
+### Phase 7 (2026-11-01)
+**Zugang und Wirkung**
+- **Gesicherter Zugang:** Das Zahnrad oben rechts auf „Wer spielt?“ muss 3 Sekunden gedrückt gehalten werden, ein Ring füllt sich dabei. Danach kommt eine Malaufgabe (6–9 × 6–9). Eine falsche Antwort bringt eine neue Aufgabe.
+- **Wirkung:** Einstellungen werden sofort gespeichert und gelten nach „Fertig“; die App lädt dafür neu. Laufende Burgen behalten ihre Aufgabenzahl, neue Burgen nutzen die neue.
+- Die vorübergehende Listenwahl über die Adresse (`?liste=`) entfällt.
+
+**Einstellungen** (Standard in Klammern)
+- Wortliste des Geräts (Klasse 1/2) und Eingabemodus (wie in der Liste / Bausteine / Tastatur).
+- Aufgaben pro Burg 10/15/20 (15), Großschreibung Pflicht (aus), Vorlesen (an).
+- „Ich bin neu“ erlaubt (an), Bild-Code (aus), „Alle Burgen“ zeigen (an).
+- Die Einstellung „Sound an/aus“ kommt mit den Sounds in Phase 8.
+
+**Profile verwalten**
+- **Klasse anlegen:** ein Spitzname pro Zeile, die Symbole werden der Reihe nach vergeben (höchstens 30).
+- **Pro Profil:** umbenennen, eigene Wortliste (sonst die des Geräts), Bild-Code ansehen und zurücksetzen, Burgen anzeigen und einzeln löschen, Sammlung leeren, Profil löschen. Beim Löschen fallen laufende Burg, Sammlung und Lernstand mit weg.
+
+**Bild-Code**
+- 9 Bilder (bekannte Bauteile), zwei davon in fester Reihenfolge. Dasselbe Bild zweimal ist erlaubt (81 Codes).
+- Das Kind wählt den Code selbst beim ersten Anmelden, auch direkt nach „Ich bin neu“. Danach tippt es ihn beim Anmelden an. Ein falscher Code gibt einen freundlichen Hinweis und beliebig viele weitere Versuche.
+
+**CSV-Import**
+- Format `Artikel;Singular;Plural`, mehrere Plurale mit `|`, Datei in UTF-8. Kopfzeile und BOM werden übersprungen.
+- Fehlerhafte Zeilen werden mit Zeilennummer und Grund gemeldet, der Rest wird importiert.
+- Muster und Umlaut werden automatisch abgeleitet. Sonderfälle (Museum → Museen) bekommen einen Pluralstamm und laufen nur im Tastatur-Modus.
+- Importierte Wörter gelten als geprüft (`verified: true`), weil die Lehrkraft sie verantwortet. Die Liste startet im Tastatur-Modus, die Einstellung „Eingabemodus“ kann das ändern.
+- Wird eine Liste gelöscht, fallen Gerät und Profile auf ihre Standardliste zurück.
+
+**20 Aufgaben (14 × 9)**
+- Die Bauszene passt Welt und Hintergrund an die Rastergröße der gezeigten Burg an. Vorschaubilder nutzen das Layout der jeweiligen Burg, Burgen verschiedener Größe stehen also nebeneinander in der Galerie.
+- Auf kleinen Bildschirmen (z. B. Chromebook 1366 × 680) sind die Zellen dann etwas kleiner als 64 px. Das ist der Preis für das größere Raster.
+
+**PWA**
+- `vite-plugin-pwa` im Modus generateSW mit automatischem Update. Alle Dateien der App werden vorab gespeichert (keine Laufzeitanfragen an fremde Server).
+- Manifest mit App-Symbolen (192, 512, maskable). Ein E2E-Test prüft den Start ohne Netz.
+
+**Nicht umgesetzt** (in Abschnitt 8 als Ausbaustufe markiert): Übersicht der oft falschen Wörter und Backup als Datei.
