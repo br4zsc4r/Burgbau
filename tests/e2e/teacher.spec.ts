@@ -203,3 +203,16 @@ test('offline: nach dem ersten Laden startet die App ohne Netz', async ({ page, 
   await expect(page.locator('canvas')).toBeVisible();
   await context.setOffline(false);
 });
+
+test('PIN festlegen klappt auch ohne sichere Verbindung (http im Schulnetz)', async ({ page }) => {
+  // Über http://192.168… gibt es crypto.subtle nicht – so wie hier nachgestellt.
+  await page.addInitScript(() => {
+    Object.defineProperty(window.crypto, 'subtle', { value: undefined, configurable: true });
+  });
+  await page.goto('/');
+  expect(await page.evaluate(() => window.crypto.subtle as unknown)).toBeUndefined();
+  await openTeacher(page);
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  // Beim zweiten Mal: dieselbe PIN öffnet den Bereich wieder.
+  await openTeacher(page);
+});

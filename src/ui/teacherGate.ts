@@ -101,6 +101,7 @@ export function createTeacherGate(pins: PinStore, onUnlock: () => void): {
     event.preventDefault();
     submit().catch((error: unknown) => {
       console.error(error);
+      message.textContent = texts.pinFailed;
     });
   });
   cancel.addEventListener('click', () => {

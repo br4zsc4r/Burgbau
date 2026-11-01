@@ -228,6 +228,7 @@ export const texts = {
   pinRepeat: 'PIN wiederholen',
   pinInvalid: 'Die PIN muss aus 4 bis 8 Ziffern bestehen.',
   pinMismatch: 'Die beiden Eingaben stimmen nicht überein.',
+  pinFailed: 'Das hat leider nicht geklappt. Bitte noch einmal versuchen.',
   pinWrong: 'Falsche PIN.',
   pinSaved: 'PIN geändert.',
   pinChange: 'PIN ändern',
