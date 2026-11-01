@@ -1,0 +1,212 @@
+/* Nur Systemschriften: keine externen Schriften laden. */
+:root {
+  --sky: #cfe8fb;
+  --grass: #9fd38a;
+  --card: #fffdf7;
+  --ink: #2e2a24;
+  --muted: #6b6257;
+  --accent: #3a78c2;
+  --accent-ink: #ffffff;
+  --correct: #2f8a4a;
+  --almost: #b06d00;
+  --highlight-bg: #ffd54a;
+  --highlight-ink: #6a2c91;
+  --border: #4a3f33;
+  --touch: 64px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: linear-gradient(var(--sky) 0 70%, var(--grass) 70% 100%);
+}
+
+.quiz {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.task-prompt {
+  margin: 0;
+  font-size: 1.75rem;
+  text-align: center;
+}
+
+.word-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1.5rem;
+}
+
+/* Platzhalter, bis es Wort-Bilder gibt. */
+.word-image {
+  display: grid;
+  place-items: center;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 1rem;
+  background: #e9dfcc;
+  border: 3px dashed var(--muted);
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.singular {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.article {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.answer-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.answer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2.5rem;
+}
+
+.answer-input {
+  width: min(16rem, 60vw);
+  min-height: var(--touch);
+  padding: 0.25rem 0.75rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+}
+
+.answer-input:focus {
+  outline: 4px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.special-char-bar {
+  display: flex;
+  gap: 1rem;
+}
+
+.special-char,
+.primary-button {
+  min-width: var(--touch);
+  min-height: var(--touch);
+  font: inherit;
+  font-weight: 700;
+  border: 4px solid var(--border);
+  border-radius: 1rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.special-char {
+  font-size: 2rem;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.primary-button {
+  min-width: 12rem;
+  padding: 0.5rem 2rem;
+  font-size: 1.75rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button:focus-visible {
+  outline: 4px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.feedback {
+  min-height: 4rem;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.feedback p {
+  margin: 0.25rem 0;
+}
+
+.feedback-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.feedback[data-status='correct'] .feedback-title {
+  color: var(--correct);
+  animation: pop 400ms ease-out;
+}
+
+.feedback[data-status='almost'] .feedback-title {
+  color: var(--almost);
+}
+
+.solution {
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.solution-part {
+  padding: 0 0.1em;
+  border-radius: 0.25em;
+  background: var(--highlight-bg);
+  color: var(--highlight-ink);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback[data-status='correct'] .feedback-title {
+    animation: none;
+  }
+}

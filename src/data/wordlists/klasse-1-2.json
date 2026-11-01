@@ -1,0 +1,337 @@
+{
+  "id": "klasse-1-2",
+  "name": "Klasse 1/2 – Grundwortschatz",
+  "inputMode": "tiles",
+  "words": [
+    {
+      "id": "hund",
+      "singular": "Hund",
+      "article": "der",
+      "plural": [
+        "Hunde"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "katze",
+      "singular": "Katze",
+      "article": "die",
+      "plural": [
+        "Katzen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "auto",
+      "singular": "Auto",
+      "article": "das",
+      "plural": [
+        "Autos"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ball",
+      "singular": "Ball",
+      "article": "der",
+      "plural": [
+        "Bälle"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "maus",
+      "singular": "Maus",
+      "article": "die",
+      "plural": [
+        "Mäuse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "haus",
+      "singular": "Haus",
+      "article": "das",
+      "plural": [
+        "Häuser"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "baum",
+      "singular": "Baum",
+      "article": "der",
+      "plural": [
+        "Bäume"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "blume",
+      "singular": "Blume",
+      "article": "die",
+      "plural": [
+        "Blumen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "kind",
+      "singular": "Kind",
+      "article": "das",
+      "plural": [
+        "Kinder"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "tisch",
+      "singular": "Tisch",
+      "article": "der",
+      "plural": [
+        "Tische"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "tuer",
+      "singular": "Tür",
+      "article": "die",
+      "plural": [
+        "Türen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "buch",
+      "singular": "Buch",
+      "article": "das",
+      "plural": [
+        "Bücher"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "stuhl",
+      "singular": "Stuhl",
+      "article": "der",
+      "plural": [
+        "Stühle"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schule",
+      "singular": "Schule",
+      "article": "die",
+      "plural": [
+        "Schulen"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bett",
+      "singular": "Bett",
+      "article": "das",
+      "plural": [
+        "Betten"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "apfel",
+      "singular": "Apfel",
+      "article": "der",
+      "plural": [
+        "Äpfel"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "frau",
+      "singular": "Frau",
+      "article": "die",
+      "plural": [
+        "Frauen"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "bild",
+      "singular": "Bild",
+      "article": "das",
+      "plural": [
+        "Bilder"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "vogel",
+      "singular": "Vogel",
+      "article": "der",
+      "plural": [
+        "Vögel"
+      ],
+      "pattern": "none",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "hand",
+      "singular": "Hand",
+      "article": "die",
+      "plural": [
+        "Hände"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "ei",
+      "singular": "Ei",
+      "article": "das",
+      "plural": [
+        "Eier"
+      ],
+      "pattern": "er",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "zug",
+      "singular": "Zug",
+      "article": "der",
+      "plural": [
+        "Züge"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "uhr",
+      "singular": "Uhr",
+      "article": "die",
+      "plural": [
+        "Uhren"
+      ],
+      "pattern": "en",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "fenster",
+      "singular": "Fenster",
+      "article": "das",
+      "plural": [
+        "Fenster"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "opa",
+      "singular": "Opa",
+      "article": "der",
+      "plural": [
+        "Opas"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "oma",
+      "singular": "Oma",
+      "article": "die",
+      "plural": [
+        "Omas"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "sofa",
+      "singular": "Sofa",
+      "article": "das",
+      "plural": [
+        "Sofas"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "pferd",
+      "singular": "Pferd",
+      "article": "das",
+      "plural": [
+        "Pferde"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "ente",
+      "singular": "Ente",
+      "article": "die",
+      "plural": [
+        "Enten"
+      ],
+      "pattern": "n",
+      "umlaut": false,
+      "verified": false
+    },
+    {
+      "id": "schaf",
+      "singular": "Schaf",
+      "article": "das",
+      "plural": [
+        "Schafe"
+      ],
+      "pattern": "e",
+      "umlaut": false,
+      "verified": false
+    }
+  ]
+}
