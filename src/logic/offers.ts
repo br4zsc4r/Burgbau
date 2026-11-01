@@ -1,5 +1,5 @@
 import { isLarge, isOffered, isStackable, piecesOf, rarityOf } from '../data/pieces';
-import type { PieceCategory, PieceDef, PieceId, RandomFn, Rarity } from '../types';
+import type { ExerciseId, PieceCategory, PieceDef, PieceId, RandomFn, Rarity } from '../types';
 import { randomInt, shuffle } from './random';
 
 /** Wie oft ein Teil im Angebot durch eine große Variante ersetzt wird (Startwert). */
@@ -28,6 +28,14 @@ const RARITIES: readonly Rarity[] = ['common', 'rare', 'epic', 'legendary'];
 export interface OfferOptions {
   /** Letzte Aufgaben: Ein Dach muss dabei sein, damit die Burg noch abgeschlossen werden kann. */
   needsRoof?: boolean;
+  /** Spielart der gerade gelösten Aufgabe: Nur ihre exklusiven Teile kommen in Frage. */
+  exercise?: ExerciseId | null;
+}
+
+/** Was gerade im Topf ist: Serie (Größe, Seltenheit) und Spielart (exklusive Teile). */
+interface PoolContext {
+  streak: number;
+  exercise: ExerciseId | null;
 }
 
 /** Welche Kategorien die drei Angebote haben (Spezifikation Abschnitt 4). */
@@ -45,17 +53,24 @@ export function unlockStreak(piece: PieceDef): number {
   return Math.max(piece.minStreak ?? 0, RARITY_MIN_STREAK[rarityOf(piece)]);
 }
 
-/** Teile einer Kategorie, die bei dieser Serie im Topf sind. */
-function unlockedOf(category: PieceCategory, streak: number): PieceDef[] {
-  return piecesOf(category).filter((piece) => isOffered(piece) && unlockStreak(piece) <= streak);
+/** Exklusive Teile nur bei ihrer Spielart; alle anderen überall. */
+export function fitsExercise(piece: PieceDef, exercise: ExerciseId | null): boolean {
+  return piece.exercises === undefined || (exercise !== null && piece.exercises.includes(exercise));
 }
 
-function smallOf(category: PieceCategory, streak: number): PieceDef[] {
-  return unlockedOf(category, streak).filter((piece) => !isLarge(piece));
+/** Teile einer Kategorie, die gerade im Topf sind. */
+function unlockedOf(category: PieceCategory, ctx: PoolContext): PieceDef[] {
+  return piecesOf(category).filter(
+    (piece) => isOffered(piece) && unlockStreak(piece) <= ctx.streak && fitsExercise(piece, ctx.exercise),
+  );
 }
 
-function largeOf(category: PieceCategory, streak: number): PieceDef[] {
-  return unlockedOf(category, streak).filter(isLarge);
+function smallOf(category: PieceCategory, ctx: PoolContext): PieceDef[] {
+  return unlockedOf(category, ctx).filter((piece) => !isLarge(piece));
+}
+
+function largeOf(category: PieceCategory, ctx: PoolContext): PieceDef[] {
+  return unlockedOf(category, ctx).filter(isLarge);
 }
 
 /** Erst eine Seltenheitsstufe nach Gewicht, dann ein Teil daraus. */
@@ -87,19 +102,20 @@ export function offerPieces(
   placeable: (id: PieceId) => boolean = () => true,
   options: OfferOptions = {},
 ): PieceId[] {
+  const ctx: PoolContext = { streak, exercise: options.exercise ?? null };
   const categories = offerCategories(correct, streak, random);
-  const pools = categories.map((category) => smallOf(category, streak));
+  const pools = categories.map((category) => smallOf(category, ctx));
 
-  const largeSlots = categories.flatMap((c, i) => (largeOf(c, streak).length > 0 ? [i] : []));
+  const largeSlots = categories.flatMap((c, i) => (largeOf(c, ctx).length > 0 ? [i] : []));
   let largeSlot = -1;
   if (largeSlots.length > 0 && random() < LARGE_CHANCE) {
     largeSlot = largeSlots[randomInt(largeSlots.length, random)] ?? -1;
-    pools[largeSlot] = largeOf(categories[largeSlot] ?? 'basic', streak);
+    pools[largeSlot] = largeOf(categories[largeSlot] ?? 'basic', ctx);
   }
 
   const basicSlots = categories.flatMap((c, i) => (c === 'basic' && i !== largeSlot ? [i] : []));
   if (correct && basicSlots.length > 0 && random() < ENVIRONMENT_CHANCE) {
-    pools[basicSlots[randomInt(basicSlots.length, random)] ?? 0] = unlockedOf('environment', streak);
+    pools[basicSlots[randomInt(basicSlots.length, random)] ?? 0] = unlockedOf('environment', ctx);
   }
 
   const chosen: PieceDef[] = [];
@@ -111,13 +127,13 @@ export function offerPieces(
   pools.forEach((pool, i) => {
     const piece =
       pick(pool) ??
-      pick(smallOf(categories[i] ?? 'basic', streak)) ??
-      pick(fallbackCategories(correct).flatMap((category) => smallOf(category, streak)));
+      pick(smallOf(categories[i] ?? 'basic', ctx)) ??
+      pick(fallbackCategories(correct).flatMap((category) => smallOf(category, ctx)));
     if (piece !== undefined) chosen.push(piece);
   });
 
   if (chosen.length > 0 && !chosen.some(isStackable)) {
-    const stackable = pick(smallOf(correct ? 'basic' : 'damaged', streak).filter(isStackable));
+    const stackable = pick(smallOf(correct ? 'basic' : 'damaged', ctx).filter(isStackable));
     if (stackable !== undefined) {
       const replace = chosen.findIndex((piece) => piece.category !== 'premium');
       chosen[replace === -1 ? chosen.length - 1 : replace] = stackable;
@@ -126,8 +142,8 @@ export function offerPieces(
 
   if (options.needsRoof === true && !chosen.some((piece) => piece.roof === true)) {
     const roofs = correct
-      ? [...smallOf('finish', streak), ...largeOf('finish', streak)].filter((piece) => piece.roof === true)
-      : smallOf('damaged', streak).filter((piece) => piece.roof === true);
+      ? [...smallOf('finish', ctx), ...largeOf('finish', ctx)].filter((piece) => piece.roof === true)
+      : smallOf('damaged', ctx).filter((piece) => piece.roof === true);
     const roof = pick(roofs);
     if (roof !== undefined) {
       if (chosen.length < 3) {

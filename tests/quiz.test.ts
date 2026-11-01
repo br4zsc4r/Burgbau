@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { startTask, submitAnswer } from '../src/logic/quiz';
-import { makeWord, testSettings } from './helpers';
+import { makeWord, pluralTask, testSettings } from './helpers';
 
-const hund = makeWord({ id: 'hund', singular: 'Hund', plural: ['Hunde'] });
+const hund = pluralTask(makeWord({ id: 'hund', singular: 'Hund', plural: ['Hunde'] }));
 
 describe('quiz', () => {
   it('startet im ersten Versuch', () => {
-    expect(startTask('hund')).toEqual({
-      wordId: 'hund',
+    expect(startTask('plural:hund')).toEqual({
+      taskId: 'plural:hund',
       attempt: 1,
       phase: 'answering',
       lastResult: null,
@@ -15,13 +15,13 @@ describe('quiz', () => {
   });
 
   it('wechselt nach richtiger Antwort ins Feedback', () => {
-    const state = submitAnswer(startTask('hund'), hund, 'Hunde', testSettings);
+    const state = submitAnswer(startTask('plural:hund'), hund, 'Hunde', testSettings);
     expect(state.phase).toBe('feedback');
     expect(state.lastResult?.status).toBe('correct');
   });
 
   it('erlaubt nach „fast“ genau einen zweiten Versuch', () => {
-    let state = submitAnswer(startTask('hund'), hund, 'Hunte', testSettings);
+    let state = submitAnswer(startTask('plural:hund'), hund, 'Hunte', testSettings);
     expect(state).toMatchObject({ phase: 'answering', attempt: 2 });
     expect(state.lastResult).toEqual({ status: 'almost', reason: 'typo' });
 
@@ -31,7 +31,7 @@ describe('quiz', () => {
   });
 
   it('ignoriert Antworten während des Feedbacks', () => {
-    const done = submitAnswer(startTask('hund'), hund, 'Hunde', testSettings);
+    const done = submitAnswer(startTask('plural:hund'), hund, 'Hunde', testSettings);
     expect(submitAnswer(done, hund, 'Katzen', testSettings)).toBe(done);
   });
 });

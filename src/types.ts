@@ -75,20 +75,42 @@ export interface SolutionSegment {
 
 export type QuizPhase = 'answering' | 'feedback';
 
+/** Spielart: welche Art von Aufgabe (Spezifikation Abschnitt 14). */
+export type ExerciseId = 'plural';
+
+/** Aufgabe der Spielart Mehrzahl: ein Wort und wie es eingegeben wird. */
+export interface PluralTask {
+  exercise: 'plural';
+  /** Aufgaben-ID mit Präfix, z. B. „plural:hund“. */
+  id: string;
+  word: Word;
+  inputMode: InputMode;
+}
+
+/** Eine Aufgabe irgendeiner Spielart. */
+export type Task = PluralTask;
+
+/** Woraus die Aufgaben einer Burg kommen: freies Spiel einer Spielart (Pakete ab Phase 9c). */
+export interface GameSelection {
+  kind: 'free';
+  exercise: ExerciseId;
+}
+
 /** Zustand der laufenden Aufgabe. */
 export interface QuizState {
-  wordId: string;
+  /** Aufgaben-ID mit Präfix der Spielart. */
+  taskId: string;
   /** 1 = erster Versuch, 2 = zweiter Versuch nach „Fast!“. */
   attempt: 1 | 2;
   phase: QuizPhase;
   lastResult: AnswerResult | null;
 }
 
-export interface WordPickerState {
-  /** Wörter, die in dieser Partie schon gestellt wurden. */
+export interface TaskPickerState {
+  /** Aufgaben, die in dieser Partie schon gestellt wurden. */
   used: string[];
-  /** Falsch beantwortete Wörter, die ab Aufgabe dueTask wiederkommen. */
-  retries: { wordId: string; dueTask: number }[];
+  /** Falsch beantwortete Aufgaben, die ab Aufgabe dueTask wiederkommen. */
+  retries: { taskId: string; dueTask: number }[];
 }
 
 export type PieceCategory =
@@ -209,6 +231,8 @@ export interface PieceDef {
   mountDx?: number;
   /** Nicht symmetrisch: lässt sich vor dem Setzen spiegeln. */
   mirror?: boolean;
+  /** Exklusiv: nur nach Aufgaben dieser Spielarten im Angebot. Fehlt = überall. */
+  exercises?: ExerciseId[];
   /** Dekorationen: wo sie andocken. */
   slot?: AttachSlot;
   /** Front-Dekorationen: an welche Vorderseite sie passen. */
@@ -267,15 +291,17 @@ export interface Placement {
  */
 export type GameStep = 'task' | 'choosing' | 'placing' | 'placed' | 'editing' | 'finished';
 
-/** Lernfortschritt einer Wortliste: Fach 0–4 je Wort-ID (leichtes Leitner-System). */
-export type WordBoxes = Record<string, number>;
+/** Lernfortschritt eines Profils: Fach 0–4 je Aufgaben-ID (leichtes Leitner-System). */
+export type TaskBoxes = Record<string, number>;
 
 export interface GameState {
   tasksTotal: number;
   /** Nummer der aktuellen Aufgabe, ab 1. */
   taskNumber: number;
+  /** Woraus die Aufgaben dieser Burg kommen. */
+  selection: GameSelection;
   quiz: QuizState;
-  picker: WordPickerState;
+  picker: TaskPickerState;
   /** Richtige Antworten in Folge; eine falsche halbiert sie. */
   streak: number;
   /** Die angebotenen Teile (nur im Schritt choosing). */
@@ -293,8 +319,8 @@ export interface GameState {
   lastPlacement: { piece: PieceId; anchor: Cell | null } | null;
   /** Zwischenspeicher: Teile, die später gesetzt werden sollen. */
   stash: PieceId[];
-  /** Lernfortschritt des Profils für die aktive Wortliste (steuert die Wortauswahl). */
-  boxes: WordBoxes;
+  /** Lernfortschritt des Profils (steuert die Aufgabenauswahl). */
+  boxes: TaskBoxes;
 }
 
 export type Animal =

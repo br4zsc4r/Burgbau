@@ -2,23 +2,26 @@ import { describe, expect, it } from 'vitest';
 import { answerTask, choosePiece, createGame, finishEditing, finishTask, placeAt } from '../src/logic/game';
 import { gameEvents } from '../src/logic/gameEvents';
 import { validPlacements } from '../src/logic/grid';
-import type { GameState, Word } from '../src/types';
-import { makeWord, seededRandom, testSettings } from './helpers';
+import type { GameState, PluralTask, Word } from '../src/types';
+import { makeWord, pluralTask, seededRandom, testSettings } from './helpers';
 
 const words: Word[] = ['Hund', 'Tisch', 'Fisch'].map((singular) =>
   makeWord({ id: singular.toLowerCase(), singular, plural: [`${singular}e`] }),
 );
-const ids = words.map((word) => word.id);
+const tasks = words.map((word) => pluralTask(word));
+const ids = tasks.map((task) => task.id);
 const random = seededRandom(3);
 
-function wordOf(state: GameState): Word {
-  const word = words.find((w) => w.id === state.quiz.wordId);
-  if (word === undefined) throw new Error('unbekanntes Wort');
-  return word;
+function taskOf(state: GameState): PluralTask {
+  const task = tasks.find((t) => t.id === state.quiz.taskId);
+  if (task === undefined) throw new Error('unbekannte Aufgabe');
+  return task;
 }
 
+const wordOf = (state: GameState): Word => taskOf(state).word;
+
 const answer = (state: GameState, input: string): GameState =>
-  answerTask(state, wordOf(state), input, testSettings, random);
+  answerTask(state, taskOf(state), input, testSettings, random);
 
 describe('gameEvents', () => {
   const start = createGame(ids, testSettings, random, {});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, withKnownWords } from '../src/logic/game';
+import { createGame, withKnownTasks } from '../src/logic/game';
 import { createGrid, placeOnGrid } from '../src/logic/grid';
 import { CURRENT_VERSION, migrate, withVersion } from '../src/state/migrations';
 import { createRepository } from '../src/state/repository';
@@ -66,15 +66,15 @@ describe('Validierung', () => {
   });
 });
 
-describe('withKnownWords', () => {
-  it('ersetzt ein Wort, das es in der Liste nicht mehr gibt, und behält die Burg', () => {
-    const game = { ...createGame(['alt'], testSettings, seededRandom(1)), grid };
-    const repaired = withKnownWords(
-      { ...game, picker: { used: ['alt'], retries: [{ wordId: 'alt', dueTask: 4 }] } },
-      ['hund', 'katze'],
+describe('withKnownTasks', () => {
+  it('ersetzt eine Aufgabe, die es nicht mehr gibt, und behält die Burg', () => {
+    const game = { ...createGame(['plural:alt'], testSettings, seededRandom(1)), grid };
+    const repaired = withKnownTasks(
+      { ...game, picker: { used: ['plural:alt'], retries: [{ taskId: 'plural:alt', dueTask: 4 }] } },
+      ['plural:hund', 'plural:katze'],
       seededRandom(1),
     );
-    expect(['hund', 'katze']).toContain(repaired.quiz.wordId);
+    expect(['plural:hund', 'plural:katze']).toContain(repaired.quiz.taskId);
     expect(repaired.picker.retries).toEqual([]);
     expect(repaired.grid).toEqual(grid);
   });
@@ -124,12 +124,23 @@ describe('Repository', () => {
   });
 });
 
+/** Laufende Burg im Format vor Phase 9a (Wort-IDs ohne Präfix, ohne Auswahl). */
+function legacyGame(): Record<string, unknown> {
+  const game: Record<string, unknown> = { ...createGame(['plural:hund'], testSettings, seededRandom(1)), grid };
+  delete game['selection'];
+  return {
+    ...game,
+    quiz: { wordId: 'hund', attempt: 1, phase: 'answering', lastResult: null },
+    picker: { used: ['hund'], retries: [{ wordId: 'katze', dueTask: 4 }] },
+    boxes: { hund: 2 },
+  };
+}
+
 describe('Phase 6: Speicherformat', () => {
   it('migriert eine laufende Burg aus Version 1 (ohne Speicher und Lernfächer)', async () => {
     const store = createMemoryStore();
-    const game = createGame(['hund'], testSettings, seededRandom(1));
     const v1 = Object.fromEntries(
-      Object.entries({ ...game, grid }).filter(([key]) => key !== 'stash' && key !== 'boxes'),
+      Object.entries(legacyGame()).filter(([key]) => key !== 'stash' && key !== 'boxes' && key !== 'pendingFlipped'),
     );
     await store.set('game:p1', { version: 1, game: v1 });
     const loaded = await createRepository(store).loadGame('p1');
@@ -146,7 +157,7 @@ describe('Phase 6: Speicherformat', () => {
   it('führt ältere Lernstände je Liste zu einem Stand pro Wort zusammen', async () => {
     const store = createMemoryStore();
     await store.set('progress:p1', { version: 1, lists: { 'klasse-3': { baum: 2 }, 'klasse-4': { museum: 0 } } });
-    expect(await createRepository(store).loadBoxes('p1')).toEqual({ baum: 2, museum: 0 });
+    expect(await createRepository(store).loadBoxes('p1')).toEqual({ 'plural:baum': 2, 'plural:museum': 0 });
   });
 
   it('speichert Lernfächer je Profil', async () => {
@@ -161,8 +172,7 @@ describe('Phase 6: Speicherformat', () => {
 describe('Nachtrag Phase 8: gespiegelte Teile', () => {
   it('migriert eine laufende Burg aus Version 2 (ohne Spiegeln)', async () => {
     const store = createMemoryStore();
-    const game = createGame(['hund'], testSettings, seededRandom(1));
-    const v2 = Object.fromEntries(Object.entries({ ...game, grid }).filter(([key]) => key !== 'pendingFlipped'));
+    const v2 = Object.fromEntries(Object.entries(legacyGame()).filter(([key]) => key !== 'pendingFlipped'));
     await store.set('game:p1', { version: 2, game: v2 });
     expect(await createRepository(store).loadGame('p1')).toMatchObject({ pendingFlipped: false });
   });
@@ -174,5 +184,35 @@ describe('Nachtrag Phase 8: gespiegelte Teile', () => {
     };
     const game = { ...createGame(['hund'], testSettings, seededRandom(1)), grid: flippedGrid, pendingFlipped: true };
     expect(parseGameState(JSON.parse(JSON.stringify(game)))).toEqual(game);
+  });
+});
+
+describe('Phase 9a: Aufgaben statt Wörter', () => {
+  it('migriert eine laufende Burg aus Version 3: Präfix plural:, freies Spiel Mehrzahl', async () => {
+    const store = createMemoryStore();
+    await store.set('game:p1', { version: 3, game: legacyGame() });
+    const loaded = await createRepository(store).loadGame('p1');
+    expect(loaded).toMatchObject({
+      selection: { kind: 'free', exercise: 'plural' },
+      quiz: { taskId: 'plural:hund', attempt: 1, phase: 'answering' },
+      picker: { used: ['plural:hund'], retries: [{ taskId: 'plural:katze', dueTask: 4 }] },
+      boxes: { 'plural:hund': 2 },
+    });
+    expect(loaded?.grid).toEqual(grid);
+  });
+
+  it('migriert den Lernfortschritt: ein Stand pro Aufgabe mit Präfix', async () => {
+    const store = createMemoryStore();
+    await store.set('progress:p1', { version: 1, lists: { alle: { hund: 3, katze: 0 } } });
+    const repo = createRepository(store);
+    expect(await repo.loadBoxes('p1')).toEqual({ 'plural:hund': 3, 'plural:katze': 0 });
+    await repo.saveBoxes('p1', { 'plural:hund': 4 });
+    expect(await store.get('progress:p1')).toEqual({ version: CURRENT_VERSION.progress, boxes: { 'plural:hund': 4 } });
+  });
+
+  it('eine Partie ohne gültige Auswahl ist unbrauchbar', () => {
+    const game = { ...createGame(['plural:hund'], testSettings, seededRandom(1)), grid };
+    expect(parseGameState(JSON.parse(JSON.stringify(game)))).toEqual(game);
+    expect(parseGameState({ ...game, selection: { kind: 'free', exercise: 'zaubern' } })).toBeNull();
   });
 });

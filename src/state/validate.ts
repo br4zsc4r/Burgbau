@@ -11,9 +11,10 @@ import type {
   PlacedPiece,
   Profile,
   QuizState,
-  WordBoxes,
-  WordPickerState,
+  TaskBoxes,
+  TaskPickerState,
 } from '../types';
+import { isExerciseId } from '../logic/exercises/taskId';
 
 // Prüfungen für Daten aus dem Speicher: Sie können von älteren Versionen stammen oder beschädigt sein.
 
@@ -73,31 +74,31 @@ function isAnswerResult(v: unknown): v is AnswerResult {
 function isQuiz(v: unknown): v is QuizState {
   return (
     isRecord(v) &&
-    isString(v['wordId']) &&
+    isString(v['taskId']) &&
     (v['attempt'] === 1 || v['attempt'] === 2) &&
     (v['phase'] === 'answering' || v['phase'] === 'feedback') &&
     (v['lastResult'] === null || isAnswerResult(v['lastResult']))
   );
 }
 
-function isPicker(v: unknown): v is WordPickerState {
+function isPicker(v: unknown): v is TaskPickerState {
   return (
     isRecord(v) &&
     Array.isArray(v['used']) &&
     v['used'].every(isString) &&
     Array.isArray(v['retries']) &&
-    v['retries'].every((r) => isRecord(r) && isString(r['wordId']) && isInt(r['dueTask']))
+    v['retries'].every((r) => isRecord(r) && isString(r['taskId']) && isInt(r['dueTask']))
   );
 }
 
 const STEPS: readonly GameStep[] = ['task', 'choosing', 'placing', 'placed', 'editing', 'finished'];
 
 /** Lernfächer: nur ganze Zahlen 0–4 bleiben. */
-export function sanitizeBoxes(value: unknown): WordBoxes {
+export function sanitizeBoxes(value: unknown): TaskBoxes {
   if (!isRecord(value)) return {};
   return Object.fromEntries(
     Object.entries(value).filter(([, box]) => isInt(box) && box >= 0 && box <= 4),
-  ) as WordBoxes;
+  ) as TaskBoxes;
 }
 
 /** Laufende Partie prüfen; null, wenn sie nicht mehr verwendbar ist. */
@@ -106,8 +107,12 @@ export function parseGameState(value: unknown): GameState | null {
   const grid = sanitizeGrid(value['grid']);
   const lastPlacement = value['lastPlacement'];
   const pending = value['pendingPiece'];
+  const selection = value['selection'];
   const valid =
     grid !== null &&
+    isRecord(selection) &&
+    selection['kind'] === 'free' &&
+    isExerciseId(selection['exercise']) &&
     isInt(value['tasksTotal']) &&
     isInt(value['taskNumber']) &&
     isInt(value['streak']) &&

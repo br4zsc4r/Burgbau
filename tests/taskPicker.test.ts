@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { createPicker, pickWord, scheduleRetry } from '../src/logic/wordPicker';
+import { createPicker, pickTask, scheduleRetry } from '../src/logic/taskPicker';
 import { seededRandom } from './helpers';
 
 const ids = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-describe('wordPicker', () => {
+describe('taskPicker', () => {
   it('stellt kein Wort doppelt, solange die Liste reicht', () => {
     const random = seededRandom(4);
     let picker = createPicker();
     const picked: string[] = [];
     for (let task = 1; task <= ids.length; task++) {
-      const result = pickWord(picker, ids, task, random);
-      picked.push(result.wordId);
+      const result = pickTask(picker, ids, task, random);
+      picked.push(result.taskId);
       picker = result.picker;
     }
     expect([...picked].sort()).toEqual(ids);
@@ -27,13 +27,13 @@ describe('wordPicker', () => {
   });
 
   it('stellt ein fälliges Wort vor neuen Wörtern', () => {
-    let picker = { used: ['a'], retries: [{ wordId: 'a', dueTask: 5 }] };
-    const early = pickWord(picker, ids, 4, seededRandom(1));
-    expect(early.wordId).not.toBe('a');
+    let picker = { used: ['a'], retries: [{ taskId: 'a', dueTask: 5 }] };
+    const early = pickTask(picker, ids, 4, seededRandom(1));
+    expect(early.taskId).not.toBe('a');
 
     picker = early.picker;
-    const due = pickWord(picker, ids, 5, seededRandom(1));
-    expect(due.wordId).toBe('a');
+    const due = pickTask(picker, ids, 5, seededRandom(1));
+    expect(due.taskId).toBe('a');
     expect(due.picker.retries).toEqual([]);
   });
 
@@ -41,23 +41,23 @@ describe('wordPicker', () => {
     const picker = {
       used: ['a', 'b'],
       retries: [
-        { wordId: 'b', dueTask: 6 },
-        { wordId: 'a', dueTask: 5 },
+        { taskId: 'b', dueTask: 6 },
+        { taskId: 'a', dueTask: 5 },
       ],
     };
-    expect(pickWord(picker, ids, 6, seededRandom(1)).wordId).toBe('a');
+    expect(pickTask(picker, ids, 6, seededRandom(1)).taskId).toBe('a');
   });
 
   it('wiederholt erst, wenn alle Wörter gestellt sind, und nie direkt hintereinander', () => {
     const picker = { used: ['a', 'b'], retries: [] };
     for (let seed = 0; seed < 50; seed++) {
-      const result = pickWord(picker, ['a', 'b'], 3, seededRandom(seed), 'b');
-      expect(result.wordId).toBe('a');
+      const result = pickTask(picker, ['a', 'b'], 3, seededRandom(seed), 'b');
+      expect(result.taskId).toBe('a');
     }
   });
 
   it('kommt mit einer Liste aus einem einzigen Wort zurecht', () => {
     const picker = { used: ['a'], retries: [] };
-    expect(pickWord(picker, ['a'], 2, seededRandom(1), 'a').wordId).toBe('a');
+    expect(pickTask(picker, ['a'], 2, seededRandom(1), 'a').taskId).toBe('a');
   });
 });

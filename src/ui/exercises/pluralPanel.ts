@@ -1,28 +1,11 @@
-import { wordImageUrl } from '../data/wordImages';
-import { solutionSegments } from '../logic/pluralPattern';
-import type { AnswerResult, InputMode, QuizState, Word } from '../types';
-import { element, reducedMotion } from './dom';
-import { createSpecialCharBar } from './specialCharBar';
-import type { Speaker } from './speech';
-import { createTilesInput } from './tilesInput';
-import { texts } from './texts';
-
-export interface TaskPanelCallbacks {
-  onSubmit: (input: string) => void;
-  onContinue: () => void;
-  /** Vorlesen; null = ausgeschaltet. */
-  speaker: Speaker | null;
-}
-
-export interface TaskPanel {
-  element: HTMLElement;
-  render: (quiz: QuizState, word: Word, mode: InputMode) => void;
-  /** Leert die Eingabe und setzt den Fokus hinein (neue Aufgabe). */
-  startNewTask: () => void;
-  focusForPhase: (quiz: QuizState) => void;
-  /** Kleiner Sternenregen um das Wort (richtige Antwort). */
-  celebrate: () => void;
-}
+import { wordImageUrl } from '../../data/wordImages';
+import { solutionSegments } from '../../logic/pluralPattern';
+import type { AnswerResult, InputMode, PluralTask, QuizState, Word } from '../../types';
+import { element, reducedMotion } from '../dom';
+import { createSpecialCharBar } from '../specialCharBar';
+import { createTilesInput } from '../tilesInput';
+import { texts } from '../texts';
+import type { ExercisePanel, ExercisePanelCallbacks } from './panel';
 
 const SPEAKER_ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke-width="2" stroke-linecap="round"/></svg>';
@@ -63,8 +46,8 @@ function renderFeedback(container: HTMLElement, result: AnswerResult | null, wor
   }
 }
 
-/** Aufgabe im Tastatur- oder Bausteine-Modus. Hält keinen eigenen Spielzustand. */
-export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
+/** Spielart Mehrzahl: Aufgabe im Tastatur- oder Bausteine-Modus. Hält keinen eigenen Spielzustand. */
+export function createPluralPanel(callbacks: ExercisePanelCallbacks): ExercisePanel<PluralTask> {
   const panel = element('section', 'task-panel');
   const prompt = element('h1', 'task-prompt', texts.taskPrompt);
 
@@ -163,12 +146,13 @@ export function createTaskPanel(callbacks: TaskPanelCallbacks): TaskPanel {
 
   return {
     element: panel,
-    render: (quiz, word, nextMode) => {
+    render: (quiz, task) => {
+      const { word } = task;
       current = { quiz, word };
       // Nur zeigen, wenn wirklich eine Stimme da ist.
       speakButton.hidden = callbacks.speaker?.ready() !== true;
       answering = quiz.phase === 'answering';
-      mode = nextMode;
+      mode = task.inputMode;
       showImage(word);
       singular.replaceChildren(element('span', 'article', word.article), ' ', word.singular);
 

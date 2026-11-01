@@ -18,25 +18,26 @@ import {
 } from '../src/logic/game';
 import { getPiece } from '../src/data/pieces';
 import { pieceAt, validPlacements } from '../src/logic/grid';
-import type { GameState, PieceId, Settings, Word } from '../src/types';
-import { makeWord, seededRandom, testSettings } from './helpers';
+import type { GameState, PieceId, PluralTask, Settings, Word } from '../src/types';
+import { makeWord, pluralTask, seededRandom, testSettings } from './helpers';
 
 const words: Word[] = ['Hund', 'Tisch', 'Fisch', 'Schaf', 'Pferd', 'Zelt'].map((singular) =>
   makeWord({ id: singular.toLowerCase(), singular, plural: [`${singular}e`] }),
 );
-const ids = words.map((word) => word.id);
+const tasks = words.map((word) => pluralTask(word));
+const ids = tasks.map((task) => task.id);
 const random = seededRandom(7);
 
-function wordOf(state: GameState): Word {
-  const word = words.find((w) => w.id === state.quiz.wordId);
-  if (word === undefined) throw new Error('unbekanntes Wort');
-  return word;
+function taskOf(state: GameState): PluralTask {
+  const task = tasks.find((t) => t.id === state.quiz.taskId);
+  if (task === undefined) throw new Error('unbekannte Aufgabe');
+  return task;
 }
 
 function answer(state: GameState, correct: boolean, settings: Settings = testSettings): GameState {
-  const word = wordOf(state);
-  const input = correct ? (word.plural[0] ?? '') : 'Xyzxyz';
-  return answerTask(state, word, input, settings, random);
+  const task = taskOf(state);
+  const input = correct ? (task.word.plural[0] ?? '') : 'Xyzxyz';
+  return answerTask(state, task, input, settings, random);
 }
 
 /** Erstes Angebot an die erste gültige Stelle setzen. */
@@ -79,15 +80,15 @@ describe('game', () => {
   it('halbiert die Serie bei falscher Antwort und plant das Wort neu ein', () => {
     let state = createGame(ids, testSettings, random);
     state = { ...state, streak: 6 };
-    const wordId = state.quiz.wordId;
+    const taskId = state.quiz.taskId;
     state = answer(state, false);
     expect(state.streak).toBe(3);
-    expect(state.picker.retries.map((retry) => retry.wordId)).toEqual([wordId]);
+    expect(state.picker.retries.map((retry) => retry.taskId)).toEqual([taskId]);
   });
 
   it('ändert die Serie bei „fast“ noch nicht', () => {
     let state = createGame(ids, testSettings, random);
-    state = answerTask(state, wordOf(state), `${wordOf(state).plural[0] ?? ''}x`, testSettings, random);
+    state = answerTask(state, taskOf(state), `${taskOf(state).word.plural[0] ?? ''}x`, testSettings, random);
     expect(state.quiz.phase).toBe('answering');
     expect(state.streak).toBe(0);
   });
@@ -149,7 +150,7 @@ describe('game', () => {
     const next = continueAfterPlacement(placed, ids, random);
     expect(next).toMatchObject({ step: 'task', taskNumber: 2, lastPlacement: null, offers: [] });
     expect(next.quiz).toMatchObject({ phase: 'answering', attempt: 1 });
-    expect(next.quiz.wordId).not.toBe(placed.quiz.wordId);
+    expect(next.quiz.taskId).not.toBe(placed.quiz.taskId);
     expect(undoPlacement(next)).toBe(next);
   });
 
@@ -169,11 +170,11 @@ describe('game', () => {
 
   it('stellt ein falsch beantwortetes Wort 3–5 Aufgaben später erneut', () => {
     let state = createGame(ids, testSettings, random);
-    const missed = state.quiz.wordId;
+    const missed = state.quiz.taskId;
     state = continueAfterPlacement(playTask(state, false), ids, random);
     const askedAt: number[] = [];
     while (state.step === 'task' && state.taskNumber <= 7) {
-      if (state.quiz.wordId === missed) askedAt.push(state.taskNumber);
+      if (state.quiz.taskId === missed) askedAt.push(state.taskNumber);
       state = continueAfterPlacement(playTask(state, true), ids, random);
     }
     expect(askedAt).toHaveLength(1);
@@ -327,12 +328,12 @@ describe('game', () => {
 
   it('schreibt das Lernfach bei jeder Antwort fort', () => {
     let state = createGame(ids, testSettings, random, { [ids[0] ?? '']: 3 });
-    const wordId = state.quiz.wordId;
-    const before = state.boxes[wordId] ?? 0;
+    const taskId = state.quiz.taskId;
+    const before = state.boxes[taskId] ?? 0;
     state = answer(state, true);
-    expect(state.boxes[wordId]).toBe(Math.min(before + 1, 4));
+    expect(state.boxes[taskId]).toBe(Math.min(before + 1, 4));
     state = continueAfterPlacement(playPlacement(finishTask(state, ids, random)), ids, random);
-    const second = state.quiz.wordId;
+    const second = state.quiz.taskId;
     expect(answer(state, false).boxes[second]).toBe(0);
   });
 });

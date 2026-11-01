@@ -1,10 +1,10 @@
 import { addCastle, newestFirst } from '../logic/collection';
-import type { Castle, GameState, Profile, Settings, WordBoxes, WordList } from '../types';
+import type { Castle, GameState, Profile, Settings, TaskBoxes, WordList } from '../types';
 import { validateWordList } from '../logic/wordlist';
 import { parseSettings } from './settings';
 import { migrate, withVersion } from './migrations';
 import type { KeyValueStore } from './storage';
-import { isRecord, parseCastle, parseGameState, parseProfile, sanitizeBoxes } from './validate';
+import { parseCastle, parseGameState, parseProfile, sanitizeBoxes } from './validate';
 
 const PROFILES_KEY = 'profiles';
 const SETTINGS_KEY = 'settings';
@@ -13,8 +13,6 @@ const gameKey = (profileId: string): string => `game:${profileId}`;
 const castlesKey = (profileId: string): string => `castles:${profileId}`;
 const progressKey = (profileId: string): string => `progress:${profileId}`;
 const PIN_KEY = 'teacherPin';
-/** Lernfortschritt gilt pro Wort, egal aus welcher Liste es kommt. */
-const ALL_WORDS = 'alle';
 
 function listOf<T>(record: Record<string, unknown> | null, field: string, parse: (v: unknown) => T | null): T[] {
   const raw = record?.[field];
@@ -107,20 +105,14 @@ export function createRepository(store: KeyValueStore) {
       return store.clear();
     },
 
-    /**
-     * Lernfortschritt eines Profils (Fach je Wort). Ältere Stände wurden je Liste geführt;
-     * sie werden beim ersten Laden zusammengeführt.
-     */
-    async loadBoxes(profileId: string): Promise<WordBoxes> {
+    /** Lernfortschritt eines Profils: Fach je Aufgabe, über alle Spielarten. */
+    async loadBoxes(profileId: string): Promise<TaskBoxes> {
       const record = migrate('progress', await store.get(progressKey(profileId)));
-      const lists = record?.['lists'];
-      if (!isRecord(lists)) return {};
-      if (lists[ALL_WORDS] !== undefined) return sanitizeBoxes(lists[ALL_WORDS]);
-      return Object.values(lists).reduce<WordBoxes>((all, boxes) => ({ ...all, ...sanitizeBoxes(boxes) }), {});
+      return sanitizeBoxes(record?.['boxes']);
     },
 
-    async saveBoxes(profileId: string, boxes: WordBoxes): Promise<void> {
-      await store.set(progressKey(profileId), withVersion('progress', { lists: { [ALL_WORDS]: boxes } }));
+    async saveBoxes(profileId: string, boxes: TaskBoxes): Promise<void> {
+      await store.set(progressKey(profileId), withVersion('progress', { boxes }));
     },
 
     /** Hash der Lehrkraft-PIN; null, solange keine festgelegt ist. */

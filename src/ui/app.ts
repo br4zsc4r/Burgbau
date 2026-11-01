@@ -15,7 +15,7 @@ import {
   stashPending,
   takeFromStash,
   undoPlacement,
-  withKnownWords,
+  withKnownTasks,
 } from '../logic/game';
 import { gameEvents } from '../logic/gameEvents';
 import { coveredCells, createGrid, resolvePlacement, validPlacements } from '../logic/grid';
@@ -27,7 +27,7 @@ import {
   possessive,
   setProfileCode,
 } from '../logic/profiles';
-import { canUseTiles } from '../logic/tiles';
+import { pluralTasks } from '../logic/exercises/plural';
 import { activePool, mergeLists, validActiveIds } from '../logic/wordlists';
 import { createBuildGame } from '../scene/createBuildGame';
 import { DEFAULT_LIST_ID } from '../state/settings';
@@ -36,12 +36,11 @@ import type {
   Castle,
   GameState,
   GridState,
-  InputMode,
   Profile,
   RandomFn,
   Settings,
-  Word,
-  WordBoxes,
+  Task,
+  TaskBoxes,
   WordList,
 } from '../types';
 import { createBuildControls } from './buildControls';
@@ -60,7 +59,7 @@ import { createSound } from './sound';
 import { createSpeaker } from './speech';
 import { createStashBar } from './stashBar';
 import { createStreakTorches } from './streakTorches';
-import { createTaskPanel } from './taskPanel';
+import { createTaskArea } from './exercises';
 import { createTeacherGate } from './teacherGate';
 import { createTeacherScreen } from './teacherScreen';
 import { texts } from './texts';
@@ -100,18 +99,18 @@ const PAUSE_ICON =
  */
 export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> {
   const { settings, random, repository } = deps;
-  // Wörter aller eingeschalteten Listen – gleich für alle Kinder.
+  // Aufgaben: Wörter aller eingeschalteten Listen – gleich für alle Kinder.
   const lists = mergeLists(deps.builtinLists, deps.customLists).map((entry) => entry.list);
   const pool = activePool(lists, validActiveIds(settings.activeListIds, lists, DEFAULT_LIST_ID));
   if (pool.words.length === 0) throw new Error('Keine Wörter in den aktiven Listen');
-  const wordsById = new Map(pool.words.map((word) => [word.id, word]));
-  const wordIds = [...wordsById.keys()];
+  const tasksById = new Map<string, Task>(pluralTasks(pool, settings).map((task) => [task.id, task]));
+  const taskIds = [...tasksById.keys()];
   const emptyGrid = createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]);
 
   let profiles: Profile[] = await repository.loadProfiles();
   let profile: Profile | null = null;
   let game: GameState | null = null;
-  let boxes: WordBoxes = {};
+  let boxes: TaskBoxes = {};
   let screen: Screen = { kind: 'profiles' };
   const speaker = createSpeaker();
   const sound = createSound(settings.sound);
@@ -122,15 +121,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     console.error(error);
   };
 
-  const currentWord = (): Word | null =>
-    game === null ? null : (wordsById.get(game.quiz.wordId) ?? null);
-
-  /** Bausteine nur, wenn die Liste sie vorsieht und sich das Wort damit bauen lässt. */
-  const inputModeFor = (word: Word): InputMode =>
-    (settings.inputMode === 'list' ? pool.inputModes[word.id] : settings.inputMode) === 'tiles' &&
-    canUseTiles(word)
-      ? 'tiles'
-      : 'keyboard';
+  const currentTask = (): Task | null =>
+    game === null ? null : (tasksById.get(game.quiz.taskId) ?? null);
 
   // ---------- Bausteine ----------
 
@@ -138,13 +130,13 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const gameOverlay = element('div', 'overlay');
   const screens = element('div', 'screens');
 
-  const taskPanel = createTaskPanel({
+  const taskPanel = createTaskArea({
     onSubmit: (input) => {
-      const word = currentWord();
-      if (game !== null && word !== null) updateGame(answerTask(game, word, input, settings, random));
+      const task = currentTask();
+      if (game !== null && task !== null) updateGame(answerTask(game, task, input, settings, random));
     },
     onContinue: () => {
-      if (game !== null) updateGame(finishTask(game, wordIds, random));
+      if (game !== null) updateGame(finishTask(game, taskIds, random));
     },
     speaker: settings.readAloud ? speaker : null,
   });
@@ -162,7 +154,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       if (game !== null) updateGame(undoPlacement(game));
     },
     onNextTask: () => {
-      if (game !== null) updateGame(continueAfterPlacement(game, wordIds, random));
+      if (game !== null) updateGame(continueAfterPlacement(game, taskIds, random));
     },
     onStash: () => {
       if (game !== null) updateGame(stashPending(game));
@@ -215,7 +207,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   const profileHome = createProfileHome({
     onContinue: () => {
       if (game === null) return;
-      game = { ...withKnownWords(game, wordIds, random), boxes };
+      game = { ...withKnownTasks(game, taskIds, random), boxes };
       show({ kind: 'game' });
     },
     onNewCastle: () => {
@@ -357,7 +349,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
 
   function startNewGame(): void {
     if (profile === null) return;
-    game = createGame(wordIds, settings, random, boxes);
+    game = createGame(taskIds, settings, random, boxes);
     persistGame();
     show({ kind: 'game' });
   }
@@ -486,8 +478,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   }
 
   function renderGame(state: GameState): void {
-    const word = currentWord();
-    if (word !== null) taskPanel.render(state.quiz, word, inputModeFor(word));
+    const task = currentTask();
+    if (task !== null) taskPanel.render(state.quiz, task);
     offersPanel.render(state.offers);
     if (state.step === 'finished') namingPanel.render(castleSuggestion());
     const canPlace = state.step === 'placing' || state.step === 'editing';

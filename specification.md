@@ -308,6 +308,9 @@ Grundsatz: **Spiellogik strikt von Darstellung trennen.** Alles in `logic/` ist 
 | 6 | Drag-&-Drop-Endungsmodus, Vorlesen, Wortlisten Klasse 1/2, 3, 4, Lernfortschritt pro Profil | didaktisch komplett |
 | 7 | Lehrkraft-Einstellungen (inkl. Profilverwaltung), CSV-Import, PWA | einsatzbereit im Unterricht |
 | 8 | Echte Grafiken, Sounds, Animationen | schön |
+| 9a | Umbau: Schnittstelle „Spielart“, die Mehrzahl wird die erste Spielart; allgemeine Aufgaben-IDs, Migrationen, Mechanismus für exklusive Bauteile (siehe Abschnitt 14) | alles wie vorher, bereit für weitere Spielarten |
+| 9b | Kleines 1×1 (Malaufgaben, Ziffernfeld, Vorlesen), Spielart-Wahl bei „Neue Burg bauen“, Lehrkraft: Reihen und Spielarten fürs freie Spiel | zweite Spielart spielbar |
+| 9c | Übungspakete der Lehrkraft (auch gemischt), Einstellung „Kinder dürfen frei spielen“ | Lehrkraft steuert, was drankommt |
 
 Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 
@@ -315,7 +318,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Reparieren:** Bei einer Serie von z. B. 5 darf ein beschädigtes Teil statt eines neuen Teils repariert werden.
 - **Wettereffekte** in der fertigen Burg-Ansicht (Regen, Sonnenuntergang).
 - **Klassen-Galerie:** Burgen aller Geräte auf der interaktiven Tafel zeigen (bräuchte Export/Import oder einen Server).
-- Weitere Grammatik-Module mit gleichem Bausystem (Artikel der/die/das, Verben konjugieren).
+- Weitere Spielarten mit gleichem Bausystem, z. B. Artikel der/die/das, Verben konjugieren, Uhrzeit, Geteilt-Aufgaben (Rahmen siehe Abschnitt 14).
 - Burgbewohner, die in der fertigen Burg herumlaufen.
 - Burg als Bild exportieren/ausdrucken („Urkunde“).
 
@@ -536,3 +539,61 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
   - Das Aufgaben-Overlay liegt über den Fackeln (vorher verdeckten sie „Fertig“).
   - Im Querformat bekommt die Bauszene links Platz für den Speicher, damit er kein Feld verdeckt. Die Knopfleiste ist kompakter, damit die Ablage oben links frei bleibt; im Bearbeitungsmodus steht der Hinweis in einer zweiten Zeile. Der Hinweis lässt Antippen durch.
   - E2E-Tests prüfen 1024 × 690 (beide Modi) und 1280 × 400 (Tastatur offen): „Fertig“ ist ohne Scrollen sichtbar.
+
+
+### Phase 9 – Planung (2026-11-01)
+Entscheidungen der Rückmeldung: Kinder wählen frei; die Lehrkraft kann zusätzlich Übungspakete anlegen, die vorgeben, was drankommt, und mit „Kinder dürfen frei spielen“ das freie Spiel abschalten. Pakete dürfen Spielarten mischen und gelten für alle Kinder. Im freien Spiel kommt der von der Lehrkraft freigegebene Inhalt dran. Alle Burgen in einer Sammlung. 1×1: nur Malaufgaben, Reihen einzeln ein- und ausschaltbar. Weitere Spielarten folgen später. Von Claude Code ergänzt (bei Bedarf ändern): Reihe = zweiter Faktor, Zahlendreher als „Fast!“, Spielarten im freien Spiel einzeln abschaltbar, Auswahl entfällt bei nur einer Möglichkeit. Nachtrag: Spielarten sollen künftig exklusive Bauteile bringen; angeboten werden sie nach Aufgaben ihrer Spielart.
+
+### Phase 9a (2026-11-01)
+Umbau ohne sichtbare Änderung: Die Mehrzahl ist jetzt die erste Spielart.
+- **Logik** (`src/logic/exercises/`): `exercise.ts` (Schnittstelle `ExerciseLogic` mit `check`, Tabelle aller Spielarten, `checkTask`), `plural.ts` (`pluralTasks` baut aus dem Wort-Topf Aufgaben samt Eingabemodus, Prüfung wie bisher), `taskId.ts` (Präfix `plural:`, `exerciseOf`).
+- **Oberfläche** (`src/ui/exercises/`): `panel.ts` (Schnittstelle `ExercisePanel`), `pluralPanel.ts` (vorher `ui/taskPanel.ts`), `index.ts` (`createTaskArea` zeigt je Aufgabe das Panel ihrer Spielart, für gemischte Pakete ab 9c).
+- **Begriffe im Code:** `Task`, `TaskPickerState` und `taskPicker.ts` (vorher Wort-Auswahl), `TaskBoxes`, `withKnownTasks`, `quiz.taskId`.
+- **Speicherformat:** Laufende Burg Version 4 mit `selection` (bisher nur `{ kind: 'free', exercise: 'plural' }`), Aufgaben-IDs mit Präfix in Quiz, Auswahl und Lernfächern. Lernfortschritt Version 2 (`{ boxes }` statt Stände je Liste, Schlüssel mit Präfix). Beide mit Migration; ein E2E-Test setzt eine Burg im alten Format fort.
+- **Exklusive Bauteile:** Feld `exercises` im Bauteil-Katalog; `finishTask` gibt die Spielart der gelösten Aufgabe an die Angebote, die exklusive Teile danach filtern. Es gibt noch keine exklusiven Teile.
+
+## 14. Spielarten und Übungspakete (ab Phase 9)
+
+Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur die Aufgabe wechselt. Erste weitere Spielart ist das **kleine 1×1**, später kommen weitere dazu.
+
+### Begriffe
+- **Spielart:** eine Art von Aufgabe mit eigener Prüfung und eigener Aufgaben-Oberfläche, z. B. „Mehrzahl“ oder „Kleines 1×1“.
+- **Inhalt einer Spielart:** woraus die Aufgaben kommen. Bei der Mehrzahl die Wortlisten, beim 1×1 die Reihen 1–10.
+- **Übungspaket:** von der Lehrkraft angelegte, benannte Auswahl, z. B. „Wochenplan 12: Klasse 3 + 1×1 Reihen 6–8“. Ein Paket kann **mehrere Spielarten mischen**: Die Aufgaben einer Burg kommen dann bunt gemischt aus allen gewählten Inhalten.
+- **Freies Spiel:** Das Kind wählt selbst eine Spielart. Was dabei drankommt, gibt die Lehrkraft vor (freigegebener Inhalt, siehe unten).
+- Das Wort „Sammlung“ bleibt für die Burgen reserviert.
+
+### Ablauf für das Kind
+- „Neue Burg bauen“ zeigt große Karten zur Auswahl: zuerst die Übungspakete, dann, wenn freies Spiel erlaubt ist, die freigegebenen Spielarten. Gibt es nur eine Möglichkeit, startet die Burg sofort ohne Auswahl.
+- Eine Burg gehört zu genau einer Auswahl (Paket oder Spielart). „Weiterbauen“ setzt sie fort. Ändert die Lehrkraft das Paket zwischendurch, kommen nur noch Aufgaben, die es noch gibt (wie bisher bei den Wortlisten).
+- Bauen, Angebote, Serie, Seltenheit und Bearbeitungsmodus sind für alle Spielarten gleich.
+- **Alle Burgen landen in einer Sammlung**, egal aus welcher Spielart.
+- **Exklusive Bauteile (geplant):** Spielarten können eigene Bauteile mitbringen, die es nur dort gibt. Ein solches Teil wird nur nach einer Aufgabe dieser Spielart angeboten, bei gemischten Paketen also passend zur gerade gelösten Aufgabe. Seltenheit und Serie gelten wie für alle Teile. Einmal gebaut, ist es ein ganz normales Teil (Burg, Speicher, Bearbeitungsmodus, Sammlung).
+- Ist weder ein Paket angelegt noch freies Spiel erlaubt, zeigt die Startseite freundlich „Frag deine Lehrkraft, was du heute üben sollst.“
+
+### Lehrkraft-Einstellungen (Erweiterung von Abschnitt 8)
+- **Kinder dürfen frei spielen** (an): Ohne diese Einstellung gibt es nur die Übungspakete.
+- **Spielarten im freien Spiel:** pro Spielart an/aus (alle an). Freigegebener Inhalt:
+  - Mehrzahl: die eingeschalteten Wortlisten (wie bisher).
+  - Kleines 1×1: die eingeschalteten Reihen (alle 1–10 an, mindestens eine bleibt an).
+- **Übungspakete:** anlegen, umbenennen, bearbeiten, löschen. Pro Paket für jede Spielart den Inhalt auswählen (Wortlisten bzw. Reihen); mindestens ein Inhalt muss gewählt sein. Pakete gelten für alle Kinder des Geräts.
+- Aufgaben pro Burg, Eingabemodus der Mehrzahl, Großschreibung, Vorlesen und Töne gelten weiter für alle Spielarten bzw. die jeweilige Spielart.
+
+### Kleines 1×1
+- **Aufgaben:** nur Malaufgaben `a · r = ?` mit a = 1–10. Die **Reihe** r ist der zweite Faktor: Die 7er-Reihe ist 1 · 7 bis 10 · 7. (3 · 7 gehört zur 7er-, 7 · 3 zur 3er-Reihe.)
+- **Eingabe:** großes Ziffernfeld (0–9, Löschen) mit Touch-Zielen ≥ 64 px; am PC geht auch die Tastatur. Keine Bildschirmtastatur nötig.
+- **Prüfung:** Zahlvergleich (Leerzeichen und führende Nullen egal). Ein **Zahlendreher** (56 statt 65) gibt „Fast!“ und einen zweiten Versuch, sonst zählt die Antwort sofort.
+- **Lösung freundlich zeigen:** „7 · 8 = 56“, das Ergebnis farbig hervorgehoben.
+- **Vorlesen:** „Wie viel ist 7 mal 8?“, danach „7 mal 8 ist 56.“
+- Wiederholung falscher Aufgaben und Lernfächer funktionieren wie bei den Wörtern.
+
+### Technik
+- **Schnittstelle Spielart:** Logik in `src/logic/exercises/` (rein, mit Unit-Tests): Aufgaben-IDs aus einem Inhalt, Antwort prüfen (Ergebnis richtig / fast / falsch wie bisher), Lösung als hervorgehobene Textstücke, Vorlesetext. Oberfläche in `src/ui/exercises/`: ein Aufgaben-Panel je Spielart. Eine Liste der Spielarten verbindet beides. Eine neue Spielart = Logik-Modul + Panel + Inhalts-Einstellung + Texte in `texts.ts`.
+- **Exklusive Bauteile:** Im Bauteil-Katalog bindet das Feld `exercises` ein Teil an Spielarten (fehlt = überall). Die Angebote bekommen die Spielart der gerade gelösten Aufgabe mit und filtern danach. Der Mechanismus kommt mit Phase 9a, die ersten exklusiven Teile mit den jeweiligen Spielarten.
+- **Aufgaben-IDs** sind über alle Spielarten eindeutig, mit Präfix: `plural:hund`, `1x1:7x8`. Wortauswahl (gemischter Topf, Wiederholungen) und Lernfächer arbeiten unverändert mit diesen IDs.
+- **Speicherformat:**
+  - Laufende Burg: Auswahl (Paket-ID oder Spielart) und `quiz.taskId` statt `wordId`. Migration: Alt = freies Spiel Mehrzahl, IDs bekommen das Präfix `plural:`.
+  - Lernfortschritt: Schlüssel mit Präfix (Migration).
+  - Einstellungen: freies Spiel, freigegebene Spielarten, 1×1-Reihen.
+  - Neuer Datensatz `packs` (Übungspakete).
+  - Burgen bleiben unverändert.

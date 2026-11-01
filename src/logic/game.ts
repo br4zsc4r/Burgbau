@@ -1,6 +1,6 @@
 import { GRID_SIZE_BY_TASKS } from '../data/grid';
 import { isMirrorable } from '../data/pieces';
-import type { Cell, GameState, PieceId, RandomFn, Settings, Word, WordBoxes } from '../types';
+import type { Cell, GameSelection, GameState, PieceId, RandomFn, Settings, Task, TaskBoxes } from '../types';
 import {
   createGrid,
   isPlaceable,
@@ -13,23 +13,29 @@ import { offerPieces } from './offers';
 import { updateBoxes } from './progress';
 import { startTask, submitAnswer } from './quiz';
 import { updateStreak } from './streak';
-import { createPicker, pickWord, scheduleRetry } from './wordPicker';
+import { createPicker, pickTask, scheduleRetry } from './taskPicker';
+import { exerciseOf } from './exercises/taskId';
 
 /** In so vielen letzten Aufgaben ist immer ein Dach im Angebot. */
 export const ROOF_GUARANTEE_TASKS = 2;
 
+/** Ohne andere Wahl: freies Spiel der Mehrzahl (bis Phase 9b die einzige Spielart). */
+export const DEFAULT_SELECTION: GameSelection = { kind: 'free', exercise: 'plural' };
+
 export function createGame(
-  wordIds: readonly string[],
+  taskIds: readonly string[],
   settings: Settings,
   random: RandomFn,
-  boxes: WordBoxes = {},
+  boxes: TaskBoxes = {},
+  selection: GameSelection = DEFAULT_SELECTION,
 ): GameState {
-  if (wordIds.length === 0) throw new Error('Partie braucht mindestens ein Wort');
-  const first = pickWord(createPicker(), wordIds, 1, random, undefined, boxes);
+  if (taskIds.length === 0) throw new Error('Partie braucht mindestens eine Aufgabe');
+  const first = pickTask(createPicker(), taskIds, 1, random, undefined, boxes);
   return {
     tasksTotal: settings.tasksPerCastle,
     taskNumber: 1,
-    quiz: startTask(first.wordId),
+    selection,
+    quiz: startTask(first.taskId),
     picker: first.picker,
     streak: 0,
     offers: [],
@@ -46,13 +52,13 @@ export function createGame(
 /** Antwort prüfen. Steht das Ergebnis fest: Serie, Wiederholung und Lernfach anpassen. */
 export function answerTask(
   state: GameState,
-  word: Word,
+  task: Task,
   input: string,
   settings: Settings,
   random: RandomFn,
 ): GameState {
-  if (state.step !== 'task') return state;
-  const quiz = submitAnswer(state.quiz, word, input, settings);
+  if (state.step !== 'task' || task.id !== state.quiz.taskId) return state;
+  const quiz = submitAnswer(state.quiz, task, input, settings);
   if (quiz.phase !== 'feedback') return { ...state, quiz };
 
   const correct = quiz.lastResult?.status === 'correct';
@@ -62,25 +68,25 @@ export function answerTask(
     streak: updateStreak(state.streak, correct),
     picker: correct
       ? state.picker
-      : scheduleRetry(state.picker, quiz.wordId, state.taskNumber, random),
-    boxes: updateBoxes(state.boxes, quiz.wordId, correct),
+      : scheduleRetry(state.picker, quiz.taskId, state.taskNumber, random),
+    boxes: updateBoxes(state.boxes, quiz.taskId, correct),
   };
 }
 
 /** Nächste Aufgabe – oder nach der letzten Aufgabe in den Bearbeitungsmodus. */
-function nextTaskOrEdit(state: GameState, wordIds: readonly string[], random: RandomFn): GameState {
+function nextTaskOrEdit(state: GameState, taskIds: readonly string[], random: RandomFn): GameState {
   const base = { ...state, offers: [], pendingPiece: null, pendingFlipped: false, lastPlacement: null };
   if (state.taskNumber >= state.tasksTotal) return { ...base, step: 'editing' };
 
   const taskNumber = state.taskNumber + 1;
-  const next = pickWord(state.picker, wordIds, taskNumber, random, state.quiz.wordId, state.boxes);
-  return { ...base, taskNumber, quiz: startTask(next.wordId), picker: next.picker, step: 'task' };
+  const next = pickTask(state.picker, taskIds, taskNumber, random, state.quiz.taskId, state.boxes);
+  return { ...base, taskNumber, quiz: startTask(next.taskId), picker: next.picker, step: 'task' };
 }
 
 /** Nach dem Feedback: 1 aus 3 anbieten. Passt gar nichts mehr hin, geht es direkt weiter. */
 export function finishTask(
   state: GameState,
-  wordIds: readonly string[],
+  taskIds: readonly string[],
   random: RandomFn,
 ): GameState {
   if (state.step !== 'task' || state.quiz.phase !== 'feedback') return state;
@@ -90,9 +96,13 @@ export function finishTask(
     state.streak,
     random,
     (id) => isPlaceable(state.grid, id),
-    { needsRoof: state.taskNumber > state.tasksTotal - ROOF_GUARANTEE_TASKS },
+    {
+      needsRoof: state.taskNumber > state.tasksTotal - ROOF_GUARANTEE_TASKS,
+      // Exklusive Bauteile gibt es nur nach Aufgaben ihrer Spielart.
+      exercise: exerciseOf(state.quiz.taskId),
+    },
   );
-  if (offers.length === 0) return nextTaskOrEdit(state, wordIds, random);
+  if (offers.length === 0) return nextTaskOrEdit(state, taskIds, random);
   return { ...state, step: 'choosing', offers };
 }
 
@@ -189,11 +199,11 @@ export function undoPlacement(state: GameState): GameState {
 /** Nächste Aufgabe oder Bearbeitungsmodus; ab hier ist das gesetzte Teil fest. */
 export function continueAfterPlacement(
   state: GameState,
-  wordIds: readonly string[],
+  taskIds: readonly string[],
   random: RandomFn,
 ): GameState {
   if (state.step !== 'placed') return state;
-  return nextTaskOrEdit(state, wordIds, random);
+  return nextTaskOrEdit(state, taskIds, random);
 }
 
 /**
@@ -242,21 +252,21 @@ export function completedTasks(state: GameState): number {
 }
 
 /**
- * Gespeicherte Partie an die aktuelle Wortliste anpassen: Wörter, die es nicht mehr gibt,
- * werden aus Wiederholungen entfernt, ein unbekanntes aktuelles Wort wird ersetzt.
- * Die Burg selbst bleibt unverändert.
+ * Gespeicherte Partie an die aktuellen Aufgaben anpassen (z. B. nach geänderten Wortlisten):
+ * Aufgaben, die es nicht mehr gibt, fallen aus den Wiederholungen, eine unbekannte aktuelle
+ * Aufgabe wird ersetzt. Die Burg selbst bleibt unverändert.
  */
-export function withKnownWords(
+export function withKnownTasks(
   state: GameState,
-  wordIds: readonly string[],
+  taskIds: readonly string[],
   random: RandomFn,
 ): GameState {
-  const known = (id: string): boolean => wordIds.includes(id);
+  const known = (id: string): boolean => taskIds.includes(id);
   const picker = {
     used: state.picker.used.filter(known),
-    retries: state.picker.retries.filter((retry) => known(retry.wordId)),
+    retries: state.picker.retries.filter((retry) => known(retry.taskId)),
   };
-  if (known(state.quiz.wordId)) return { ...state, picker };
-  const next = pickWord(picker, wordIds, state.taskNumber, random, undefined, state.boxes);
-  return { ...state, quiz: { ...state.quiz, wordId: next.wordId }, picker: next.picker };
+  if (known(state.quiz.taskId)) return { ...state, picker };
+  const next = pickTask(picker, taskIds, state.taskNumber, random, undefined, state.boxes);
+  return { ...state, quiz: { ...state.quiz, taskId: next.taskId }, picker: next.picker };
 }

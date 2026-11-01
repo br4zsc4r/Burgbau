@@ -29,7 +29,7 @@ export function gameEvents(previous: GameState | null, next: GameState): GameEve
   const events: GameEvent[] = [];
   const answered = previous.quiz.phase === 'answering' && next.quiz.phase === 'feedback';
   if (answered && next.quiz.lastResult?.status === 'correct') events.push('correct');
-  if (previous.quiz.attempt === 1 && next.quiz.attempt === 2 && previous.quiz.wordId === next.quiz.wordId) {
+  if (previous.quiz.attempt === 1 && next.quiz.attempt === 2 && previous.quiz.taskId === next.quiz.taskId) {
     events.push('almost');
   }
   if (previous.step !== 'choosing' && next.step === 'choosing') {
