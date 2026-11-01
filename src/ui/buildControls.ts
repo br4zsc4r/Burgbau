@@ -10,7 +10,7 @@ export interface BuildControlsCallbacks {
 /** Hinweis und Buttons über der Bauszene, während ein Teil gesetzt wird. */
 export function createBuildControls(callbacks: BuildControlsCallbacks): {
   element: HTMLElement;
-  render: (step: GameStep, lastTask: boolean) => void;
+  render: (step: GameStep, lastTask: boolean, decoration: boolean) => void;
 } {
   const bar = element('div', 'build-controls');
   const hint = element('p', 'build-hint', texts.placeHint);
@@ -26,7 +26,8 @@ export function createBuildControls(callbacks: BuildControlsCallbacks): {
 
   return {
     element: bar,
-    render: (step, lastTask) => {
+    render: (step, lastTask, decoration) => {
+      hint.textContent = decoration ? texts.placeHintDecoration : texts.placeHint;
       bar.hidden = step !== 'placing' && step !== 'placed';
       hint.hidden = step !== 'placing';
       undo.hidden = step !== 'placed';

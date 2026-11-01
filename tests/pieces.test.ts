@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { pieceArt, pieceArtUrl } from '../src/data/pieceArt';
-import { PIECES, getPiece, piecesOf } from '../src/data/pieces';
+import { PIECES, getPiece, isStackable, piecesOf } from '../src/data/pieces';
+import type { PieceDef } from '../src/types';
 
 describe('Bauteil-Katalog', () => {
   it('hat eindeutige IDs', () => {
@@ -16,16 +17,16 @@ describe('Bauteil-Katalog', () => {
     expect(piecesOf('premium').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('alle Grundbauteile sind stapelbar', () => {
-    expect(piecesOf('basic').every((piece) => piece.stackable)).toBe(true);
+  it('alle Grundbauteile sind Blöcke', () => {
+    expect(piecesOf('basic').every(isStackable)).toBe(true);
   });
 
-  it('beschädigte Teile beruhen auf einem normalen Teil und verhalten sich wie dieses', () => {
+  it('beschädigte Teile verhalten sich genau wie ihr Basisteil', () => {
     for (const piece of piecesOf('damaged')) {
-      expect(piece.base).toBeDefined();
       const base = getPiece(piece.base ?? 'wall');
       expect(base.category).not.toBe('damaged');
-      expect(piece.stackable).toBe(base.stackable);
+      const behaviour = (p: PieceDef) => [p.kind, p.width, p.height, p.front, p.topMount, p.slot, p.fits, p.minStreak];
+      expect(behaviour(piece)).toEqual(behaviour(base));
     }
   });
 
@@ -33,6 +34,25 @@ describe('Bauteil-Katalog', () => {
     for (const piece of PIECES.filter((p) => p.category !== 'damaged')) {
       expect(piece.base).toBeUndefined();
     }
+  });
+
+  it('Dekorationen haben eine Andockstelle, Front-Dekorationen eine passende Vorderseite', () => {
+    for (const piece of PIECES.filter((p) => p.kind === 'attachment')) {
+      expect(piece.slot).toBeDefined();
+      expect(piece.fits !== undefined).toBe(piece.slot === 'front');
+      expect([piece.width, piece.height]).toEqual([1, 1]);
+    }
+  });
+
+  it('große Teile haben eine Mindest-Serie, kleine nicht', () => {
+    for (const piece of PIECES) {
+      const large = piece.width > 1 || piece.height > 1;
+      expect(piece.minStreak !== undefined).toBe(large);
+    }
+  });
+
+  it('Umgebungsteile stehen auf dem Boden', () => {
+    expect(piecesOf('environment').map((p) => p.kind)).toEqual(['ground', 'ground', 'ground', 'ground']);
   });
 });
 

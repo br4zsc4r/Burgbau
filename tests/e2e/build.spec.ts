@@ -1,53 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
-import { GRID_SIZE_BY_TASKS } from '../../src/data/grid';
-import { getPiece } from '../../src/data/pieces';
-import { cellCenter, worldLayout } from '../../src/logic/gridLayout';
-import type { Cell, PieceId } from '../../src/types';
-
-const layout = worldLayout(GRID_SIZE_BY_TASKS[15]);
-
-/** Weltkoordinaten → Bildschirmkoordinaten des skalierten Canvas. */
-async function toScreen(page: Page, point: { x: number; y: number }) {
-  const box = await page.locator('canvas').boundingBox();
-  if (box === null) throw new Error('Canvas nicht sichtbar');
-  const scale = box.width / layout.width;
-  return { x: box.x + point.x * scale, y: box.y + point.y * scale };
-}
-
-async function tapCell(page: Page, cell: Cell): Promise<void> {
-  const { x, y } = await toScreen(page, cellCenter(layout, cell));
-  await page.mouse.click(x, y);
-}
+import { cellCenter } from '../../src/logic/gridLayout';
+import { answer, chooseOffer, isSmallBlock, layout, tapCell, toScreen, undoButton } from './helpers';
 
 const placeHint = (page: Page) => page.getByText('Setz dein Bauteil auf ein leuchtendes Feld!');
+const nextButton = (page: Page) => page.getByRole('button', { name: 'Nächstes Wort' });
 
-/** Falsch antworten, dann das erste (stapelbare) Angebot wählen. */
-async function answerAnything(page: Page): Promise<void> {
-  await page.getByLabel('Mehrzahl eintippen').fill('Xyzxyz');
-  await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Weiter' }).click();
-  await chooseStackable(page);
+/** Falsch antworten (Serie 0: nur kleine Teile) und einen 1 × 1-Block wählen. */
+async function getSmallBlock(page: Page): Promise<void> {
+  await answer(page, false);
+  await chooseOffer(page, isSmallBlock);
   await expect(placeHint(page)).toBeVisible();
 }
 
-async function chooseStackable(page: Page): Promise<void> {
-  const cards = page.locator('.offer-card');
-  await expect(cards).toHaveCount(3);
-  for (const card of await cards.all()) {
-    const id = (await card.getAttribute('data-piece')) as PieceId;
-    if (getPiece(id).stackable) {
-      await card.click();
-      return;
-    }
-  }
-  throw new Error('kein stapelbares Angebot');
-}
-const undoButton = (page: Page) => page.getByRole('button', { name: 'Rückgängig' });
-const nextButton = (page: Page) => page.getByRole('button', { name: 'Nächstes Wort' });
-
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await answerAnything(page);
+  await getSmallBlock(page);
 });
 
 test('Antippen einer Bodenzelle setzt den Block', async ({ page }) => {
@@ -83,7 +50,7 @@ test('nach „Nächstes Wort“ kommt die nächste Aufgabe', async ({ page }) =>
 test('Blöcke lassen sich stapeln', async ({ page }) => {
   await tapCell(page, { col: 2, row: 0 });
   await nextButton(page).click();
-  await answerAnything(page);
+  await getSmallBlock(page);
 
   await tapCell(page, { col: 2, row: 1 });
   await expect(undoButton(page)).toBeVisible();

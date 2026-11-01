@@ -121,6 +121,7 @@ Nach jeder Aufgabe werden **drei Bauteile** angeboten. Das Kind wählt eines und
 - **Serie (Streak):** Anzahl richtiger Antworten in Folge. Eine falsche Antwort **halbiert** die Serie (abgerundet), statt sie auf 0 zu setzen.
 - Die Serie wird sichtbar angezeigt (z. B. als Fackeln, die nacheinander aufleuchten), damit Kinder den Zusammenhang „mehr richtig in Folge → schönere Teile“ verstehen.
 - Die drei Angebote sollen sich unterscheiden (keine drei gleichen Teile).
+- **Umgebungsteile** (Baum, Brunnen, Wassergraben, Zugbrücke): Bei richtigen Antworten kann ab und zu ein Grundbauteil durch ein Umgebungsteil ersetzt werden (siehe Abschnitt 13, Vorgaben für Phase 4).
 
 ### Bauteil-Katalog
 | Kategorie | Beispiele |
@@ -143,6 +144,7 @@ Nach jeder Aufgabe werden **drei Bauteile** angeboten. Das Kind wählt eines und
 - Seitenansicht statt Isometrie: einfacher zu bedienen, einfacher zu zeichnen, und Burgen wirken von der Seite am stärksten.
 - Raster mit **12 × 8 Zellen**, passend zu ca. 15 Bauteilen pro Burg. Bei 20 Aufgaben ist das Raster entsprechend größer (z. B. 14 × 9). Die Zellen sind **groß**, damit sie auf dem Tablet gut mit dem Finger zu treffen sind.
 - **Schwerkraft-Regel:** Ein Block braucht einen Block oder den Boden darunter. Das ist intuitiv („wie Bauklötze“) und verhindert schwebende Burgen.
+- **Große Teile** (z. B. 2 × 1, 1 × 2, 2 × 2 Zellen) brauchen nur unter **einer** ihrer Spalten Halt. So lassen sich Überhänge bauen (siehe Abschnitt 13, Vorgaben für Phase 4).
 - Das gewählte Bauteil wird per **Drag & Drop oder Antippen** gesetzt. Gültige Zellen leuchten auf, ungültige werden rot.
 - **Rückgängig** ist nur für das zuletzt gesetzte Teil möglich, solange die nächste Aufgabe noch nicht begonnen hat.
 - Startszene: leere Wiese mit Hügel, Himmel, ein paar Wolken.
@@ -160,7 +162,7 @@ Drei Techniken kombiniert, statt jede Kombination einzeln zu zeichnen:
 3. **Automatische Abschlüsse und Andockpunkte**
    - Ein Mauerblock ohne Block darüber bekommt automatisch **Zinnen**.
    - Gestapelte Turmblöcke ergeben einen Turm. Ein Dach setzt man nur auf den obersten Turmblock.
-   - Dekorationen haben **Andockpunkte** (Fahne → Turmspitze/Zinnen, Balkon → Mauerseite mit freier Luft davor, Fackel → Mauerfront) und rasten dort ein.
+   - Dekorationen haben **Andockpunkte** (Fahne → Turmspitze/Zinnen, Balkon → Mauerseite mit freier Luft davor, Fackel → Mauerfront, Efeu → Mauer- oder Turmblock, Blumenkasten → Fenster) und rasten dort ein. Sie werden an **bestehende Bauteile** gesetzt und belegen keine eigene Zelle.
 
 **Rendering pro Block in Schichten:**
 ```
@@ -282,7 +284,8 @@ Grundsatz: **Spiellogik strikt von Darstellung trennen.** Alles in `logic/` ist 
 | 1 | Projekt-Setup, eine Wortliste mit 30 Wörtern, Tastatur-Modus, Antwortprüfung + Tests | spielbares Quiz ohne Burg |
 | 2 | Phaser-Szene mit Raster, Platzieren von Rechteck-Blöcken, Schwerkraft-Regel | Bauen funktioniert |
 | 3 | „1 aus 3“-Angebote, Serie, beschädigte Teile (vorerst als Farbvariante), Partie mit X Aufgaben | vollständige Kernschleife |
-| 4 | Autotiling (Bitmaske, Kanten, Zinnen), Weltkoordinaten-Textur, Schadens-Overlays, Dekorationen mit Andockpunkten | Teile verschmelzen |
+| 4a | Große Teile (2 × 1, 1 × 2, 2 × 2) mit Überhängen, Dekorationen mit Andockpunkten an bestehenden Teilen, Umgebungsteile, Fortschrittsanzeige | abwechslungsreich bauen |
+| 4b | Autotiling (Bitmaske, Kanten, Zinnen), Weltkoordinaten-Textur, Schadens-Overlays | Teile verschmelzen |
 | 5 | Profile (Auswahl, Anlegen), Burg fertig → Name → Sammlung pro Profil, „Alle Burgen“-Galerie, Speichern und Fortsetzen | mehrere Kinder pro Gerät |
 | 6 | Drag-&-Drop-Endungsmodus, Vorlesen, Wortlisten Klasse 1/2, 3, 4, Lernfortschritt pro Profil | didaktisch komplett |
 | 7 | Lehrkraft-Einstellungen (inkl. Profilverwaltung), CSV-Import, PWA | einsatzbereit im Unterricht |
@@ -326,7 +329,36 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Serie 10+:** 1 Premium-Teil + 1 Grundbauteil + 1 Dekoration oder Abschluss.
 - **Weiterbauen immer möglich:** Jedes Angebot enthält mindestens ein Teil, auf das man bauen kann, auch bei drei beschädigten Teilen.
 - **Stapelbar:** Grundbauteile, Buntglasfenster und beschädigte Mauer- und Turmteile. Auf Abschlüsse, Dekorationen und die übrigen Premium-Teile kann man nichts setzen. Bis zu den Andockpunkten (Phase 4) belegt jedes Teil eine Zelle und folgt der Schwerkraft-Regel.
-- **Umgebungsteile** (Baum, Brunnen, Wassergraben, Zugbrücke) kommen in der Angebotstabelle nicht vor und werden noch nicht angeboten.
+- **Umgebungsteile** (Baum, Brunnen, Wassergraben, Zugbrücke) werden in Phase 3 noch nicht angeboten. Ab Phase 4 gilt die Vorgabe unten.
 - **Beschädigte Teile:** Grafik des Basisteils, multiplikativ eingefärbt mit einer eigenen Farbe je Teil, dazu ein gemeinsames Riss-und-Moos-Overlay. In der Szene läuft das über Phasers `setTint`, auf den Karten über einen SVG-Farbmatrix-Filter, damit beides gleich aussieht. Bei beschädigten Angeboten steht der Hinweis: „Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!“
 - **Wortauswahl:** Ein falsch beantwortetes Wort kommt 3–5 Aufgaben später wieder. Sind mehrere fällig, kommt das älteste zuerst. Wiederholungen, die nach dem Partie-Ende fällig wären, entfallen. Ist die Liste kürzer als die Partie, dürfen Wörter wiederkommen, aber nie direkt hintereinander.
 - **Raster:** 12 × 8 bei 10 und 15 Aufgaben, 14 × 9 bei 20 Aufgaben.
+
+### Vorgaben für Phase 4 (2026-11-01, Rückmeldung nach Phase 3)
+- **Umgebungsteile im Angebot:** Bei einer richtigen Antwort kann ein Grundbauteil zufällig (etwa jedes 4. Mal) durch ein Umgebungsteil ersetzt werden. Mindestens ein Teil zum Weiterbauen bleibt immer im Angebot. Bei falschen Antworten gibt es keine Umgebungsteile.
+- **Umgebungsteile stehen nur auf dem Boden** (unterste Reihe). Darauf kann man nichts bauen.
+- **Dekorationen docken an bestehende Bauteile an**, statt eine eigene Zelle zu belegen:
+  - **Efeu** ist Bewuchs und passt auf jeden Mauer- oder Turmblock, auch auf beschädigte.
+  - **Blumenkasten** passt nur an Bauteile mit Fenster (Mauer mit Fenster, Buntglasfenster). Die Grafik sitzt genau unter dem Fenster, sodass beide wie ein Teil wirken.
+  - **Wappen, Fackel und Balkon** sind Front-Dekorationen an Mauer- oder Turmblöcken. **Fahne und Wimpel** kommen auf Turmspitze oder Zinnen (Abschnitt 5).
+  - **Pro Bauteil** sind höchstens ein Bewuchs (Efeu) und eine Front-Dekoration erlaubt. Beispiel: Mauer mit Fenster + Blumenkasten + Efeu.
+  - Die Grafiken werden so gezeichnet, dass Dekorationen an ihren Andockpunkten sauber auf dem Bauteil sitzen.
+
+**Ergänzung: große Teile und Fortschrittsanzeige (2026-11-01)**
+- **Große Teile:** Mauer 2 × 1 (für Überhänge), Turm 1 × 2, Spitzdach 1 × 2, Mauer 2 × 2 und Burgtor 2 × 2. Ein großes Teil zählt als **ein** Bauteil, also als eine Aufgabe.
+- **Schwerkraft für große Teile:** Alle Zellen des Teils müssen frei sein. Halt braucht es nur unter einer seiner Spalten, also Boden oder ein Teil, auf dem man bauen kann. Überhänge sind damit erlaubt. Auf großen Mauer- und Turmteilen kann man weiterbauen, auf dem großen Spitzdach nicht.
+- **Angebot nach Serie:** Bei richtiger Antwort kann ein Teil im Angebot durch seine große Variante ersetzt werden:
+  - **Zwei-Zellen-Teile** ab Serie 1 (Mauer 2 × 1, Turm 1 × 2), das Spitzdach 1 × 2 ab Serie 5, weil Abschlüsse erst ab dann angeboten werden.
+  - **2 × 2-Teile** (Mauer, Burgtor) ab Serie 5.
+  - Startwerte für die Häufigkeit: etwa jedes 3. Angebot enthält ein großes Teil. Nach dem Ausprobieren anpassen.
+- **Große beschädigte Teile:** Bei falschen Antworten kann ebenso eines der drei Teile eine große bröckelige Variante sein (Bröckelmauer 2 × 1, Turmblock mit fehlender Ecke 1 × 2, Ruinenmauer 2 × 2). Die Größe richtet sich auch hier nach der Serie, die nach dem Halbieren übrig bleibt.
+- **Andocken an große Teile:** Jede Zelle eines großen Mauer- oder Turmteils zählt wie ein eigener Block für Dekorationen. Ein Blumenkasten passt an ein großes Teil nur, wenn es ein Fenster hat.
+- **Fortschrittsanzeige:** Eine Punkte-Leiste mit einem Punkt je Aufgabe (bei 15 Aufgaben also 15 Punkte). Ein Punkt füllt sich, sobald eine Aufgabe beendet ist, egal ob richtig oder falsch. Es wird nur der Fortschritt gezählt, nicht das Ergebnis. Die Leiste muss sich deutlich von den Fackeln unterscheiden, in Form und Position.
+
+### Phase 4a (2026-11-01)
+- **Rasterdaten:** Gespeichert werden gesetzte Teile mit ihrer Ankerzelle (unten links) und angedockte Dekorationen mit der Zelle, an der sie hängen. Es gibt keine Zelle-für-Zelle-Liste mehr.
+- **Vorderseiten:** Mauern und Türme haben eine schlichte Vorderseite (Wappen, Fackel, Balkon, Bannerfahne). Mauer mit Fenster und Buntglasfenster haben eine Fenster-Vorderseite (Blumenkasten). Tore haben wegen der Tür keine Front-Dekoration, Efeu geht aber. Den Balkon „mit freier Luft davor“ behandle ich vereinfacht als Front-Dekoration.
+- **Oben drauf:** Fahne, Wimpel, Zerrissene Fahne und Drache stecken auf Türmen (auch hohen und beschädigten) und auf Abschlüssen, nicht auf Mauern. Die Zelle darüber bleibt frei, dort weht die Fahne. Auch ein Überhang darf dort nicht hineinragen. In der obersten Reihe ragt die Fahne in den Himmel.
+- **Setzen großer Teile:** Beim Antippen wird die getippte Zelle möglichst die untere linke des Teils, sonst wird passend verschoben. Beim Ziehen zählt die Lage des Teils unter dem Finger. Die Ablage zeigt große Teile verkleinert, beim Ziehen haben sie volle Größe. Unter dem Finger leuchtet die ganze Fläche des Teils auf.
+- **Angebote passen immer:** Es werden nur Teile angeboten, die gerade irgendwo hinpassen. Eine Dekoration erscheint also erst, wenn es ein passendes Bauteil gibt. Passt in einer Kategorie nichts, kommt Ersatz: bei richtiger Antwort aus Grundbauteil, Dekoration, Abschluss oder Umgebung, bei falscher aus den beschädigten Teilen. Ein Premium-Teil ist nie Ersatz. Passen weniger als drei Teile, gibt es weniger Karten. Passt gar nichts mehr, wird das Setzen übersprungen.
+- **Fortschritts-Leiste:** Runde Punkte oben in der Mitte, die Fackeln stehen unten. Ein Punkt füllt sich, sobald die Antwort feststeht.

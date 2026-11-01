@@ -70,7 +70,13 @@ export interface WordPickerState {
   retries: { wordId: string; dueTask: number }[];
 }
 
-export type PieceCategory = 'basic' | 'finish' | 'decoration' | 'premium' | 'damaged';
+export type PieceCategory =
+  | 'basic'
+  | 'finish'
+  | 'decoration'
+  | 'premium'
+  | 'damaged'
+  | 'environment';
 
 export type NormalPieceId =
   // Grundbauteile
@@ -78,10 +84,15 @@ export type NormalPieceId =
   | 'tower'
   | 'gate'
   | 'windowWall'
+  | 'wallWide'
+  | 'towerTall'
+  | 'wallBig'
+  | 'gateBig'
   // Abschlüsse
   | 'battlements'
   | 'pointedRoof'
   | 'coneRoof'
+  | 'pointedRoofTall'
   // Dekorationen
   | 'flag'
   | 'pennant'
@@ -94,7 +105,12 @@ export type NormalPieceId =
   | 'goldenRoof'
   | 'banner'
   | 'stainedGlass'
-  | 'dragon';
+  | 'dragon'
+  // Umgebung
+  | 'tree'
+  | 'well'
+  | 'moat'
+  | 'drawbridge';
 
 export type DamagedPieceId =
   | 'crumblingWall'
@@ -104,15 +120,42 @@ export type DamagedPieceId =
   | 'crookedRoof'
   | 'tornFlag'
   | 'plankPatch'
-  | 'rubble';
+  | 'rubble'
+  | 'crumblingWallWide'
+  | 'chippedTowerTall'
+  | 'ruinWall';
 
 export type PieceId = NormalPieceId | DamagedPieceId;
+
+/**
+ * block = belegt Zellen, man kann darauf bauen; cap = belegt Zellen, oben ist Schluss (Dächer);
+ * ground = nur auf dem Boden (Umgebung); attachment = dockt an ein bestehendes Teil an.
+ */
+export type PieceKind = 'block' | 'cap' | 'ground' | 'attachment';
+
+/** Andockstelle einer Dekoration: Bewuchs, Vorderseite oder oben drauf. */
+export type AttachSlot = 'growth' | 'front' | 'top';
+
+/** Vorderseite eines Blocks: was dort andocken darf. */
+export type FrontType = 'plain' | 'window' | 'none';
 
 export interface PieceDef {
   id: PieceId;
   category: PieceCategory;
-  /** Man kann darauf weiterbauen (Blöcke ja, Dächer und Dekorationen nein). */
-  stackable: boolean;
+  kind: PieceKind;
+  /** Größe in Zellen (Dekorationen: 1 × 1). */
+  width: number;
+  height: number;
+  /** Blöcke: welche Front-Dekoration passt. */
+  front?: FrontType;
+  /** Blöcke und Abschlüsse: Fahne, Wimpel oder Drache können oben drauf. */
+  topMount?: boolean;
+  /** Dekorationen: wo sie andocken. */
+  slot?: AttachSlot;
+  /** Front-Dekorationen: an welche Vorderseite sie passen. */
+  fits?: Exclude<FrontType, 'none'>;
+  /** Große Teile: ab welcher Serie sie angeboten werden. */
+  minStreak?: number;
   /** Nur beschädigte Teile: das normale Teil, auf dem sie beruhen. */
   base?: NormalPieceId;
 }
@@ -128,9 +171,25 @@ export interface GridSize {
   rows: number;
 }
 
+/** Gesetztes Teil; col/row ist die Zelle unten links. */
+export interface PlacedPiece extends Cell {
+  piece: PieceId;
+}
+
+/** Angedockte Dekoration; col/row ist die Zelle des Teils, an dem sie hängt. */
+export interface PlacedAttachment extends Cell {
+  piece: PieceId;
+}
+
 export interface GridState extends GridSize {
-  /** Zeilenweise von unten nach oben: Index = row * cols + col. */
-  cells: (PieceId | null)[];
+  pieces: PlacedPiece[];
+  attachments: PlacedAttachment[];
+}
+
+/** Ein möglicher Platz für das wartende Teil: Ankerzelle und alle Zellen, die es bedeckt. */
+export interface Placement {
+  anchor: Cell;
+  cells: Cell[];
 }
 
 /**
@@ -147,12 +206,12 @@ export interface GameState {
   picker: WordPickerState;
   /** Richtige Antworten in Folge; eine falsche halbiert sie. */
   streak: number;
-  /** Die drei angebotenen Teile (nur im Schritt choosing). */
+  /** Die angebotenen Teile (nur im Schritt choosing). */
   offers: PieceId[];
   /** Gewähltes Teil, das auf das Setzen wartet. */
   pendingPiece: PieceId | null;
   grid: GridState;
   step: GameStep;
   /** Zuletzt gesetztes Teil, solange es noch rückgängig gemacht werden darf. */
-  lastPlacement: { cell: Cell; piece: PieceId } | null;
+  lastPlacement: { piece: PieceId; anchor: Cell } | null;
 }

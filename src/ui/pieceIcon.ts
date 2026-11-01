@@ -1,4 +1,5 @@
-import { DAMAGE_OVERLAY_URL, pieceArt, pieceArtUrl } from '../data/pieceArt';
+import { ART_CELL, DAMAGE_OVERLAY_URL, pieceArt, pieceArtUrl } from '../data/pieceArt';
+import { getPiece } from '../data/pieces';
 import type { PieceId } from '../types';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -21,11 +22,14 @@ function tintMatrix(tint: number): string {
   return `${r} 0 0 0 0  0 ${g} 0 0 0  0 0 ${b} 0 0  0 0 0 1 0`;
 }
 
-/** Vorschau eines Bauteils als SVG (gleiche Grafiken wie in der Bauszene). */
+/** Vorschau eines Bauteils als SVG (gleiche Grafiken wie in der Bauszene, große Teile unverzerrt). */
 export function createPieceIcon(id: PieceId): SVGSVGElement {
   const art = pieceArt(id);
-  const svg = svgElement('svg', { viewBox: '0 0 96 96', class: 'piece-icon', 'aria-hidden': 'true' });
-  const image = svgElement('image', { href: pieceArtUrl(art.base), width: '96', height: '96' });
+  const { width, height } = getPiece(id);
+  const w = String(width * ART_CELL);
+  const h = String(height * ART_CELL);
+  const svg = svgElement('svg', { viewBox: `0 0 ${w} ${h}`, class: 'piece-icon', 'aria-hidden': 'true' });
+  const image = svgElement('image', { href: pieceArtUrl(art.base), width: w, height: h });
 
   if (art.tint !== null) {
     const filterId = `piece-tint-${String(++filterCount)}`;
@@ -38,7 +42,19 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
   }
   svg.append(image);
   if (art.damaged) {
-    svg.append(svgElement('image', { href: DAMAGE_OVERLAY_URL, width: '96', height: '96' }));
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        svg.append(
+          svgElement('image', {
+            href: DAMAGE_OVERLAY_URL,
+            x: String(dx * ART_CELL),
+            y: String(dy * ART_CELL),
+            width: String(ART_CELL),
+            height: String(ART_CELL),
+          }),
+        );
+      }
+    }
   }
   return svg;
 }

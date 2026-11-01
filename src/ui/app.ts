@@ -1,6 +1,8 @@
+import { getPiece } from '../data/pieces';
 import {
   answerTask,
   choosePiece,
+  completedTasks,
   continueAfterPlacement,
   createGame,
   finishTask,
@@ -8,13 +10,14 @@ import {
   placeAt,
   undoPlacement,
 } from '../logic/game';
-import { validCells } from '../logic/grid';
+import { coveredCells, resolvePlacement, validPlacements } from '../logic/grid';
 import { createBuildGame } from '../scene/createBuildGame';
 import type { GameState, RandomFn, Settings, Word, WordList } from '../types';
 import { createBuildControls } from './buildControls';
 import { element } from './dom';
 import { createFinishedPanel } from './finishedPanel';
 import { createOffersPanel } from './offersPanel';
+import { createProgressDots } from './progressDots';
 import { createStreakTorches } from './streakTorches';
 import { createTaskPanel } from './taskPanel';
 
@@ -78,13 +81,20 @@ export function mountApp(
   });
 
   const torches = createStreakTorches();
+  const progress = createProgressDots();
 
   overlay.append(taskPanel.element, offersPanel.element, finishedPanel);
-  root.replaceChildren(sceneContainer, torches.element, controls.element, overlay);
+  root.replaceChildren(
+    sceneContainer,
+    progress.element,
+    torches.element,
+    controls.element,
+    overlay,
+  );
 
   const scene = createBuildGame(sceneContainer, state.grid, {
-    onCellChosen: (cell) => {
-      update(placeAt(state, cell));
+    onPlace: (anchor) => {
+      update(placeAt(state, anchor));
     },
   });
 
@@ -98,13 +108,20 @@ export function mountApp(
 
     taskPanel.render(state.quiz, currentWord());
     offersPanel.render(state.offers);
-    controls.render(step, isLastTask(state));
+    const pending = step === 'placing' ? state.pendingPiece : null;
+    controls.render(step, isLastTask(state), pending !== null && getPiece(pending).kind === 'attachment');
     torches.render(state.streak);
+    progress.render(completedTasks(state), state.tasksTotal);
+
+    const { grid, lastPlacement } = state;
     scene.setView({
-      grid: state.grid,
-      validCells: step === 'placing' ? validCells(state.grid) : [],
-      pendingPiece: step === 'placing' ? state.pendingPiece : null,
-      lastPlacement: state.lastPlacement?.cell ?? null,
+      grid,
+      pendingPiece: pending,
+      highlightCells: pending === null ? [] : validPlacements(grid, pending).flatMap((p) => p.cells),
+      resolve: (cell, preferredAnchor) =>
+        pending === null ? null : resolvePlacement(grid, pending, cell, preferredAnchor),
+      lastPlacementCells:
+        lastPlacement === null ? null : coveredCells(lastPlacement.piece, lastPlacement.anchor),
     });
   }
 

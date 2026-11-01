@@ -1,22 +1,31 @@
 import Phaser from 'phaser';
-import { DAMAGE_OVERLAY_URL, pieceArt, pieceArtUrl } from '../data/pieceArt';
-import { PIECES } from '../data/pieces';
+import {
+  ART_CELL,
+  DAMAGE_OVERLAY_URL,
+  pieceArt,
+  pieceArtUrl,
+  topMountOffset,
+} from '../data/pieceArt';
+import { PIECES, getPiece } from '../data/pieces';
+import { pieceAt } from '../logic/grid';
 import { cellAt, cellCenter, cellOrigin, type WorldLayout } from '../logic/gridLayout';
-import type { Cell, GridState, NormalPieceId, PieceId } from '../types';
+import type { Cell, GridState, NormalPieceId, PieceId, Placement } from '../types';
 
 /** Alles, was die Szene zum Zeichnen braucht. Die Regeln dahinter kommen aus logic/. */
 export interface BuildView {
   grid: GridState;
-  /** Zellen, auf die das wartende Teil darf; leer = gerade wird nichts gesetzt. */
-  validCells: Cell[];
   /** Teil in der Ablage, das aufs Setzen wartet. */
   pendingPiece: PieceId | null;
-  /** Zuletzt gesetztes Teil (wird kurz animiert). */
-  lastPlacement: Cell | null;
+  /** Zellen, die aufleuchten, weil das wartende Teil dorthin passt. */
+  highlightCells: Cell[];
+  /** Platz für das wartende Teil an einer Zelle (bevorzugt mit dieser Ankerzelle). */
+  resolve: (cell: Cell, preferredAnchor: Cell | null) => Placement | null;
+  /** Zellen des zuletzt gesetzten Teils (werden kurz animiert). */
+  lastPlacementCells: Cell[] | null;
 }
 
 export interface BuildSceneCallbacks {
-  onCellChosen: (cell: Cell) => void;
+  onPlace: (anchor: Cell) => void;
 }
 
 // Platzhalter-Farben bis zu den echten Grafiken.
@@ -36,11 +45,16 @@ const COLORS = {
 
 const OUTLINE = 4;
 /** SVGs werden doppelt so groß gerastert, damit sie auch vergrößert scharf bleiben. */
-const TEXTURE_SIZE = 192;
+const TEXTURE_SCALE = 2;
 const DAMAGE_KEY = 'damage';
+const SLOT_ORDER = { growth: 0, front: 1, top: 2 } as const;
 
 function textureKey(base: NormalPieceId): string {
   return `piece-${base}`;
+}
+
+function sameCell(a: Cell | null, b: Cell | null): boolean {
+  return a?.col === b?.col && a?.row === b?.row;
 }
 
 export class BuildScene extends Phaser.Scene {
@@ -51,7 +65,8 @@ export class BuildScene extends Phaser.Scene {
   private trayPiece!: Phaser.GameObjects.Container;
   private traySlot!: Phaser.GameObjects.Graphics;
   private hoverCell: Cell | null = null;
-  private animatedPlacement: Cell | null = null;
+  private hoverAnchor: Cell | null = null;
+  private animatedPlacement: string | null = null;
   private ready = false;
 
   constructor(
@@ -68,10 +83,16 @@ export class BuildScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const size = { width: TEXTURE_SIZE, height: TEXTURE_SIZE };
     const bases = new Set(PIECES.map((piece) => pieceArt(piece.id).base));
-    for (const base of bases) this.load.svg(textureKey(base), pieceArtUrl(base), size);
-    this.load.svg(DAMAGE_KEY, DAMAGE_OVERLAY_URL, size);
+    for (const base of bases) {
+      const { width, height } = getPiece(base);
+      this.load.svg(textureKey(base), pieceArtUrl(base), {
+        width: width * ART_CELL * TEXTURE_SCALE,
+        height: height * ART_CELL * TEXTURE_SCALE,
+      });
+    }
+    const size = ART_CELL * TEXTURE_SCALE;
+    this.load.svg(DAMAGE_KEY, DAMAGE_OVERLAY_URL, { width: size, height: size });
   }
 
   create(): void {
@@ -90,10 +111,12 @@ export class BuildScene extends Phaser.Scene {
     });
 
     this.input.on(Phaser.Input.Events.POINTER_MOVE, (pointer: Phaser.Input.Pointer) => {
-      if (this.trayPiece.input?.dragState !== 2) this.setHover(this.cellUnder(pointer.worldX, pointer.worldY));
+      if (this.trayPiece.input?.dragState !== 2) {
+        this.setHover(this.cellUnder(pointer.worldX, pointer.worldY), null);
+      }
     });
     this.input.on(Phaser.Input.Events.GAME_OUT, () => {
-      this.setHover(null);
+      this.setHover(null, null);
     });
     this.input.on(Phaser.Input.Events.POINTER_UP, (pointer: Phaser.Input.Pointer) => {
       this.handleTap(pointer);
@@ -108,18 +131,41 @@ export class BuildScene extends Phaser.Scene {
     return cellAt(this.layout, this.view.grid, x, y);
   }
 
-  /** Bild eines Teils (bei Schaden: eingefärbt plus Overlay), Mittelpunkt bei 0/0. */
-  private pieceImages(id: PieceId): Phaser.GameObjects.Image[] {
-    const art = pieceArt(id);
-    const size = this.layout.cellSize;
-    const base = this.add.image(0, 0, textureKey(art.base)).setDisplaySize(size, size);
-    if (art.tint !== null) base.setTint(art.tint);
-    if (!art.damaged) return [base];
-    return [base, this.add.image(0, 0, DAMAGE_KEY).setDisplaySize(size, size)];
+  private resolve(cell: Cell | null, preferredAnchor: Cell | null): Placement | null {
+    if (cell === null || this.view?.pendingPiece == null) return null;
+    return this.view.resolve(cell, preferredAnchor);
   }
 
-  private isValid(cell: Cell): boolean {
-    return this.view?.validCells.some((c) => c.col === cell.col && c.row === cell.row) ?? false;
+  /**
+   * Bilder eines Teils (bei Schaden: eingefärbt plus Overlay je Zelle).
+   * Mittelpunkt bei 0/0, cellSize = Kantenlänge einer Zelle.
+   */
+  private pieceImages(id: PieceId, cellSize: number): Phaser.GameObjects.Image[] {
+    const art = pieceArt(id);
+    const { width, height } = getPiece(art.base);
+    const base = this.add
+      .image(0, 0, textureKey(art.base))
+      .setDisplaySize(width * cellSize, height * cellSize);
+    if (art.tint !== null) base.setTint(art.tint);
+    if (!art.damaged) return [base];
+
+    const overlays: Phaser.GameObjects.Image[] = [];
+    for (let dy = 0; dy < height; dy++) {
+      for (let dx = 0; dx < width; dx++) {
+        const x = (dx - (width - 1) / 2) * cellSize;
+        const y = ((height - 1) / 2 - dy) * cellSize;
+        overlays.push(this.add.image(x, y, DAMAGE_KEY).setDisplaySize(cellSize, cellSize));
+      }
+    }
+    return [base, ...overlays];
+  }
+
+  /** Mittelpunkt eines Teils mit dieser Ankerzelle (unten links). */
+  private pieceCenter(id: PieceId, anchor: Cell): { x: number; y: number } {
+    const { width, height } = getPiece(id);
+    const { x, y } = cellCenter(this.layout, anchor);
+    const size = this.layout.cellSize;
+    return { x: x + ((width - 1) * size) / 2, y: y - ((height - 1) * size) / 2 };
   }
 
   /** Antippen einer Zelle. Ziehen aus der Ablage beginnt außerhalb des Rasters und zählt nicht. */
@@ -127,11 +173,11 @@ export class BuildScene extends Phaser.Scene {
     if (this.view?.pendingPiece == null) return;
     const downCell = this.cellUnder(pointer.downX, pointer.downY);
     const upCell = this.cellUnder(pointer.worldX, pointer.worldY);
-    if (downCell === null || upCell === null) return;
-    if (downCell.col !== upCell.col || downCell.row !== upCell.row) return;
+    if (downCell === null || upCell === null || !sameCell(downCell, upCell)) return;
 
-    if (this.isValid(upCell)) {
-      this.callbacks.onCellChosen(upCell);
+    const placement = this.resolve(upCell, null);
+    if (placement !== null) {
+      this.callbacks.onPlace(placement.anchor);
     } else {
       this.flashInvalid(upCell);
     }
@@ -152,21 +198,21 @@ export class BuildScene extends Phaser.Scene {
     this.trayPiece.setInteractive({ draggable: true, useHandCursor: true });
 
     this.trayPiece.on(Phaser.Input.Events.GAMEOBJECT_DRAG_START, () => {
-      this.trayPiece.setScale(1.08);
+      this.fillTray(true);
     });
     this.trayPiece.on(
       Phaser.Input.Events.GAMEOBJECT_DRAG,
       (pointer: Phaser.Input.Pointer, dragX: number, dragY: number) => {
         this.trayPiece.setPosition(dragX, dragY);
-        this.setHover(this.cellUnder(pointer.worldX, pointer.worldY));
+        this.setHover(this.cellUnder(pointer.worldX, pointer.worldY), this.dragAnchor());
       },
     );
     this.trayPiece.on(Phaser.Input.Events.GAMEOBJECT_DRAG_END, (pointer: Phaser.Input.Pointer) => {
-      this.trayPiece.setScale(1);
       const cell = this.cellUnder(pointer.worldX, pointer.worldY);
-      this.setHover(null);
-      if (cell !== null && this.isValid(cell)) {
-        this.callbacks.onCellChosen(cell);
+      const placement = this.resolve(cell, this.dragAnchor());
+      this.setHover(null, null);
+      if (placement !== null) {
+        this.callbacks.onPlace(placement.anchor);
       } else {
         if (cell !== null) this.flashInvalid(cell);
         this.returnTrayPiece();
@@ -174,7 +220,32 @@ export class BuildScene extends Phaser.Scene {
     });
   }
 
+  /** Beim Ziehen liegt das Teil mittig unter dem Finger: Zelle unter seiner Ecke unten links. */
+  private dragAnchor(): Cell | null {
+    const id = this.view?.pendingPiece;
+    if (id == null) return null;
+    const { width, height } = getPiece(id);
+    const size = this.layout.cellSize;
+    return this.cellUnder(
+      this.trayPiece.x - ((width - 1) * size) / 2,
+      this.trayPiece.y + ((height - 1) * size) / 2,
+    );
+  }
+
+  /** Ablage: große Teile verkleinert auf eine Zelle, beim Ziehen in voller Größe. */
+  private fillTray(fullSize: boolean): void {
+    this.trayPiece.removeAll(true);
+    const id = this.view?.pendingPiece;
+    if (id == null) return;
+    const { width, height } = getPiece(id);
+    const size = this.layout.cellSize;
+    const cellSize = fullSize ? size : size / Math.max(width, height);
+    this.trayPiece.add(this.pieceImages(id, cellSize));
+    this.trayPiece.setAlpha(fullSize ? 0.85 : 1);
+  }
+
   private returnTrayPiece(): void {
+    this.fillTray(false);
     this.tweens.add({
       targets: this.trayPiece,
       x: this.layout.tray.x,
@@ -184,11 +255,10 @@ export class BuildScene extends Phaser.Scene {
     });
   }
 
-  private setHover(cell: Cell | null): void {
-    const same =
-      cell?.col === this.hoverCell?.col && cell?.row === this.hoverCell?.row;
-    if (same) return;
+  private setHover(cell: Cell | null, preferredAnchor: Cell | null): void {
+    if (sameCell(cell, this.hoverCell) && sameCell(preferredAnchor, this.hoverAnchor)) return;
     this.hoverCell = cell;
+    this.hoverAnchor = preferredAnchor;
     this.drawHover();
   }
 
@@ -196,12 +266,16 @@ export class BuildScene extends Phaser.Scene {
     this.hover.clear();
     const cell = this.hoverCell;
     if (cell === null || this.view?.pendingPiece == null) return;
-    const { x, y } = cellOrigin(this.layout, cell);
     const size = this.layout.cellSize;
-    if (this.isValid(cell)) {
+    const placement = this.resolve(cell, this.hoverAnchor);
+    if (placement !== null) {
       this.hover.fillStyle(COLORS.valid, 0.8);
-      this.hover.fillRect(x, y, size, size);
+      for (const c of placement.cells) {
+        const { x, y } = cellOrigin(this.layout, c);
+        this.hover.fillRect(x, y, size, size);
+      }
     } else {
+      const { x, y } = cellOrigin(this.layout, cell);
       this.hover.lineStyle(OUTLINE, COLORS.invalid, 1);
       this.hover.strokeRect(x + OUTLINE / 2, y + OUTLINE / 2, size - OUTLINE, size - OUTLINE);
     }
@@ -231,28 +305,44 @@ export class BuildScene extends Phaser.Scene {
     this.drawHover();
 
     const waiting = view.pendingPiece !== null;
-    this.trayPiece.removeAll(true);
-    if (view.pendingPiece !== null) this.trayPiece.add(this.pieceImages(view.pendingPiece));
+    this.fillTray(false);
     this.trayPiece.setVisible(waiting);
     this.traySlot.setVisible(waiting);
     if (this.trayPiece.input) this.trayPiece.input.enabled = waiting;
     this.trayPiece.setPosition(this.layout.tray.x, this.layout.tray.y);
 
-    this.animatePlacement(view.lastPlacement);
+    this.animatePlacement(view.lastPlacementCells);
   }
 
+  /** Reihenfolge: Teile, dann Efeu und Front-Deko, zuletzt was oben drauf steckt. */
   private drawPieces(view: BuildView): void {
     this.pieces.removeAll(true);
-    for (let row = 0; row < view.grid.rows; row++) {
-      for (let col = 0; col < view.grid.cols; col++) {
-        const id = view.grid.cells[row * view.grid.cols + col];
-        if (id == null) continue;
-        const { x, y } = cellCenter(this.layout, { col, row });
-        for (const image of this.pieceImages(id)) {
-          image.setPosition(x, y);
-          this.pieces.add(image);
-        }
+    const size = this.layout.cellSize;
+    const add = (images: Phaser.GameObjects.Image[], x: number, y: number): void => {
+      for (const image of images) {
+        image.x += x;
+        image.y += y;
+        this.pieces.add(image);
       }
+    };
+
+    for (const placed of view.grid.pieces) {
+      const { x, y } = this.pieceCenter(placed.piece, placed);
+      add(this.pieceImages(placed.piece, size), x, y);
+    }
+
+    const slotOf = (id: PieceId): number => SLOT_ORDER[getPiece(id).slot ?? 'front'];
+    const attachments = [...view.grid.attachments].sort((a, b) => slotOf(a.piece) - slotOf(b.piece));
+    for (const attachment of attachments) {
+      const { x, y } = cellCenter(this.layout, attachment);
+      let offsetY = 0;
+      if (getPiece(attachment.piece).slot === 'top') {
+        // Steckt auf der Spitze des Teils darunter und ragt eine Zelle nach oben.
+        const host = pieceAt(view.grid, attachment);
+        const mount = host === null ? 0 : topMountOffset(host.piece);
+        offsetY = -size + (mount * size) / ART_CELL;
+      }
+      add(this.pieceImages(attachment.piece, size), x, y + offsetY);
     }
   }
 
@@ -260,7 +350,7 @@ export class BuildScene extends Phaser.Scene {
     this.highlights.clear();
     if (view.pendingPiece === null) return;
     const size = this.layout.cellSize;
-    for (const cell of view.validCells) {
+    for (const cell of view.highlightCells) {
       const { x, y } = cellOrigin(this.layout, cell);
       this.highlights.fillStyle(COLORS.valid, 0.45);
       this.highlights.fillRoundedRect(x + 6, y + 6, size - 12, size - 12, 12);
@@ -270,27 +360,27 @@ export class BuildScene extends Phaser.Scene {
   }
 
   /** Kleiner „Plopp“ beim Setzen. */
-  private animatePlacement(cell: Cell | null): void {
-    if (cell === null) {
-      this.animatedPlacement = null;
-      return;
-    }
-    if (cell.col === this.animatedPlacement?.col && cell.row === this.animatedPlacement.row) return;
-    this.animatedPlacement = cell;
+  private animatePlacement(cells: Cell[] | null): void {
+    const key = cells?.map((c) => `${String(c.col)}/${String(c.row)}`).join() ?? null;
+    if (key === this.animatedPlacement) return;
+    this.animatedPlacement = key;
+    if (cells === null) return;
 
-    const { x, y } = cellCenter(this.layout, cell);
     const size = this.layout.cellSize;
-    const pop = this.add.rectangle(x, y, size, size, COLORS.valid, 0.7);
-    this.tweens.add({
-      targets: pop,
-      scale: 1.3,
-      alpha: 0,
-      duration: 350,
-      ease: 'Quad.easeOut',
-      onComplete: () => {
-        pop.destroy();
-      },
-    });
+    for (const cell of cells) {
+      const { x, y } = cellCenter(this.layout, cell);
+      const pop = this.add.rectangle(x, y, size, size, COLORS.valid, 0.7);
+      this.tweens.add({
+        targets: pop,
+        scale: 1.3,
+        alpha: 0,
+        duration: 350,
+        ease: 'Quad.easeOut',
+        onComplete: () => {
+          pop.destroy();
+        },
+      });
+    }
   }
 
   private drawBackground(): void {

@@ -5,9 +5,14 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   tower: 'Turmblock',
   gate: 'Tor',
   windowWall: 'Mauer mit Fenster',
+  wallWide: 'Lange Mauer',
+  towerTall: 'Hoher Turm',
+  wallBig: 'Große Mauer',
+  gateBig: 'Großes Burgtor',
   battlements: 'Zinnen',
   pointedRoof: 'Spitzdach',
   coneRoof: 'Kegeldach',
+  pointedRoofTall: 'Hohes Spitzdach',
   flag: 'Fahne',
   pennant: 'Wimpel',
   balcony: 'Balkon',
@@ -19,6 +24,10 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   banner: 'Bannerfahne',
   stainedGlass: 'Buntglasfenster',
   dragon: 'Drache',
+  tree: 'Baum',
+  well: 'Brunnen',
+  moat: 'Wassergraben',
+  drawbridge: 'Zugbrücke',
   crumblingWall: 'Bröckelmauer',
   holeWall: 'Mauer mit Loch',
   crackedWall: 'Mauer mit Riss',
@@ -27,6 +36,9 @@ const pieceNames: Readonly<Record<PieceId, string>> = {
   chippedTower: 'Turmblock mit fehlender Ecke',
   crookedRoof: 'Schiefes Dach',
   tornFlag: 'Zerrissene Fahne',
+  crumblingWallWide: 'Lange Bröckelmauer',
+  chippedTowerTall: 'Hoher Turm mit fehlender Ecke',
+  ruinWall: 'Ruinenmauer',
 };
 
 // Alle sichtbaren Texte zentral an einer Stelle.
@@ -48,6 +60,7 @@ export const texts = {
   imageFallbackLabel: (singular: string): string => `Bild: ${singular}`,
   loadError: 'Die Wörter konnten nicht geladen werden.',
   placeHint: 'Setz dein Bauteil auf ein leuchtendes Feld!',
+  placeHintDecoration: 'Häng die Verzierung an ein leuchtendes Bauteil!',
   undo: 'Rückgängig',
   nextTask: 'Nächstes Wort',
   finishCastle: 'Burg fertig!',
@@ -55,6 +68,8 @@ export const texts = {
   offersDamagedHint: 'Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!',
   streakLabel: (lit: number): string =>
     lit === 1 ? '1 Fackel leuchtet' : `${lit} Fackeln leuchten`,
+  progressLabel: (done: number, total: number): string =>
+    `${String(done)} von ${String(total)} Wörtern geschafft`,
   finishedTitle: 'Deine Burg ist fertig!',
   newCastle: 'Neue Burg bauen',
 } as const;

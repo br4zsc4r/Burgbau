@@ -1,42 +1,60 @@
 import type { PieceCategory, PieceDef, PieceId } from '../types';
 
+const block = { kind: 'block', width: 1, height: 1, front: 'plain' } as const;
+const tower = { ...block, topMount: true } as const;
+const cap = { kind: 'cap', width: 1, height: 1, topMount: true } as const;
+const deco = { kind: 'attachment', width: 1, height: 1 } as const;
+const ground = { kind: 'ground', width: 1, height: 1 } as const;
+
 /**
- * Bauteil-Katalog (Spezifikation Abschnitt 4).
- * Bis zu den Andockpunkten (Phase 4) belegt jedes Teil eine Rasterzelle.
- * Umgebungsteile (Baum, Brunnen …) kommen in der Angebotstabelle nicht vor und fehlen daher noch.
+ * Bauteil-Katalog (Spezifikation Abschnitt 4 und Abschnitt 13, Vorgaben für Phase 4).
+ * Große Teile haben width/height > 1 und eine Mindest-Serie.
  */
 export const PIECES: readonly PieceDef[] = [
-  { id: 'wall', category: 'basic', stackable: true },
-  { id: 'tower', category: 'basic', stackable: true },
-  { id: 'gate', category: 'basic', stackable: true },
-  { id: 'windowWall', category: 'basic', stackable: true },
+  { id: 'wall', category: 'basic', ...block },
+  { id: 'tower', category: 'basic', ...tower },
+  { id: 'gate', category: 'basic', ...block, front: 'none' },
+  { id: 'windowWall', category: 'basic', ...block, front: 'window' },
+  { id: 'wallWide', category: 'basic', ...block, width: 2, minStreak: 1 },
+  { id: 'towerTall', category: 'basic', ...tower, height: 2, minStreak: 1 },
+  { id: 'wallBig', category: 'basic', ...block, width: 2, height: 2, minStreak: 5 },
+  { id: 'gateBig', category: 'basic', ...block, width: 2, height: 2, front: 'none', minStreak: 5 },
 
-  { id: 'battlements', category: 'finish', stackable: false },
-  { id: 'pointedRoof', category: 'finish', stackable: false },
-  { id: 'coneRoof', category: 'finish', stackable: false },
+  { id: 'battlements', category: 'finish', ...cap },
+  { id: 'pointedRoof', category: 'finish', ...cap },
+  { id: 'coneRoof', category: 'finish', ...cap },
+  { id: 'pointedRoofTall', category: 'finish', ...cap, height: 2, minStreak: 5 },
 
-  { id: 'flag', category: 'decoration', stackable: false },
-  { id: 'pennant', category: 'decoration', stackable: false },
-  { id: 'balcony', category: 'decoration', stackable: false },
-  { id: 'coatOfArms', category: 'decoration', stackable: false },
-  { id: 'torch', category: 'decoration', stackable: false },
-  { id: 'ivy', category: 'decoration', stackable: false },
-  { id: 'flowerBox', category: 'decoration', stackable: false },
+  { id: 'flag', category: 'decoration', ...deco, slot: 'top' },
+  { id: 'pennant', category: 'decoration', ...deco, slot: 'top' },
+  { id: 'balcony', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
+  { id: 'coatOfArms', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
+  { id: 'torch', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
+  { id: 'ivy', category: 'decoration', ...deco, slot: 'growth' },
+  { id: 'flowerBox', category: 'decoration', ...deco, slot: 'front', fits: 'window' },
 
-  { id: 'goldenRoof', category: 'premium', stackable: false },
-  { id: 'banner', category: 'premium', stackable: false },
-  { id: 'stainedGlass', category: 'premium', stackable: true },
-  { id: 'dragon', category: 'premium', stackable: false },
+  { id: 'goldenRoof', category: 'premium', ...cap },
+  { id: 'banner', category: 'premium', ...deco, slot: 'front', fits: 'plain' },
+  { id: 'stainedGlass', category: 'premium', ...block, front: 'window' },
+  { id: 'dragon', category: 'premium', ...deco, slot: 'top' },
 
-  // Beschädigt: funktional gleich wie das Basisteil, nur weniger schön.
-  { id: 'crumblingWall', category: 'damaged', stackable: true, base: 'wall' },
-  { id: 'holeWall', category: 'damaged', stackable: true, base: 'wall' },
-  { id: 'crackedWall', category: 'damaged', stackable: true, base: 'wall' },
-  { id: 'plankPatch', category: 'damaged', stackable: true, base: 'wall' },
-  { id: 'rubble', category: 'damaged', stackable: true, base: 'wall' },
-  { id: 'chippedTower', category: 'damaged', stackable: true, base: 'tower' },
-  { id: 'crookedRoof', category: 'damaged', stackable: false, base: 'pointedRoof' },
-  { id: 'tornFlag', category: 'damaged', stackable: false, base: 'flag' },
+  { id: 'tree', category: 'environment', ...ground },
+  { id: 'well', category: 'environment', ...ground },
+  { id: 'moat', category: 'environment', ...ground },
+  { id: 'drawbridge', category: 'environment', ...ground },
+
+  // Beschädigt: verhalten sich wie ihr Basisteil, sehen nur weniger schön aus.
+  { id: 'crumblingWall', category: 'damaged', ...block, base: 'wall' },
+  { id: 'holeWall', category: 'damaged', ...block, base: 'wall' },
+  { id: 'crackedWall', category: 'damaged', ...block, base: 'wall' },
+  { id: 'plankPatch', category: 'damaged', ...block, base: 'wall' },
+  { id: 'rubble', category: 'damaged', ...block, base: 'wall' },
+  { id: 'chippedTower', category: 'damaged', ...tower, base: 'tower' },
+  { id: 'crookedRoof', category: 'damaged', ...cap, base: 'pointedRoof' },
+  { id: 'tornFlag', category: 'damaged', ...deco, slot: 'top', base: 'flag' },
+  { id: 'crumblingWallWide', category: 'damaged', ...block, width: 2, minStreak: 1, base: 'wallWide' },
+  { id: 'chippedTowerTall', category: 'damaged', ...tower, height: 2, minStreak: 1, base: 'towerTall' },
+  { id: 'ruinWall', category: 'damaged', ...block, width: 2, height: 2, minStreak: 5, base: 'wallBig' },
 ];
 
 const BY_ID = new Map(PIECES.map((piece) => [piece.id, piece]));
@@ -49,4 +67,13 @@ export function getPiece(id: PieceId): PieceDef {
 
 export function piecesOf(category: PieceCategory): PieceDef[] {
   return PIECES.filter((piece) => piece.category === category);
+}
+
+/** Man kann darauf weiterbauen. */
+export function isStackable(piece: PieceDef): boolean {
+  return piece.kind === 'block';
+}
+
+export function isLarge(piece: PieceDef): boolean {
+  return piece.width > 1 || piece.height > 1;
 }

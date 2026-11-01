@@ -15,7 +15,8 @@ export function makeWord(overrides: Partial<Word> & Pick<Word, 'singular' | 'plu
 
 /** Deterministische Zufallsfolge (LCG), für reproduzierbare Tests. */
 export function seededRandom(seed: number): RandomFn {
-  let value = seed;
+  // Startwert durchmischen, damit aufeinanderfolgende Seeds nicht ähnlich beginnen.
+  let value = (seed * 2654435761 + 12345) % 4294967296;
   return () => {
     value = (value * 1664525 + 1013904223) % 4294967296;
     return value / 4294967296;

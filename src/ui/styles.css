@@ -55,7 +55,7 @@ body {
 
 .build-controls {
   position: absolute;
-  top: 0.75rem;
+  top: 2.25rem;
   right: 0.75rem;
   left: 0.75rem;
   display: flex;
@@ -83,7 +83,7 @@ body {
   position: absolute;
   inset: 0;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 2.25rem 1rem 1rem;
   background: rgb(46 42 36 / 35%);
 }
 
@@ -388,4 +388,32 @@ button:focus-visible {
     animation: none;
     transform: none;
   }
+}
+
+/* Fortschritt: kleine runde Punkte oben in der Mitte (Fackeln stehen unten). */
+.progress-dots {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.3rem 0.5rem;
+  transform: translateX(-50%);
+  background: rgb(255 253 247 / 70%);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.progress-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  transition: background 300ms;
+}
+
+.progress-dot.done {
+  background: var(--accent);
 }

@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getPiece } from '../src/data/pieces';
+import { getPiece, isLarge, isStackable } from '../src/data/pieces';
 import { offerCategories, offerPieces } from '../src/logic/offers';
-import type { PieceCategory } from '../src/types';
+import type { PieceCategory, PieceId } from '../src/types';
 import { seededRandom } from './helpers';
 
-function categories(correct: boolean, streak: number, seed: number): PieceCategory[] {
-  return offerPieces(correct, streak, seededRandom(seed))
-    .map((id) => getPiece(id).category)
-    .sort();
+const SEEDS = Array.from({ length: 300 }, (_, i) => i);
+
+function offersFor(correct: boolean, streak: number, placeable?: (id: PieceId) => boolean) {
+  return SEEDS.map((seed) => offerPieces(correct, streak, seededRandom(seed), placeable));
+}
+
+function categoriesOf(offers: PieceId[]): PieceCategory[] {
+  return offers.map((id) => getPiece(id).category).sort();
 }
 
 describe('offerCategories', () => {
@@ -45,32 +49,84 @@ describe('offerPieces', () => {
     [true, 15],
   ];
 
-  it('liefert passende Kategorien', () => {
-    expect(categories(true, 1, 1)).toEqual(['basic', 'basic', 'basic']);
-    expect(categories(true, 6, 1)).toEqual(['basic', 'decoration', 'finish']);
-    expect(categories(false, 6, 1)).toEqual(['damaged', 'damaged', 'damaged']);
-  });
-
   it.each(situations)('richtig=%s, Serie %i: drei verschiedene Teile', (correct, streak) => {
-    for (let seed = 0; seed < 200; seed++) {
-      const offers = offerPieces(correct, streak, seededRandom(seed));
+    for (const offers of offersFor(correct, streak)) {
       expect(offers).toHaveLength(3);
       expect(new Set(offers).size).toBe(3);
     }
   });
 
-  it.each(situations)('richtig=%s, Serie %i: immer ein stapelbares Teil', (correct, streak) => {
-    for (let seed = 0; seed < 200; seed++) {
-      const offers = offerPieces(correct, streak, seededRandom(seed));
-      expect(offers.some((id) => getPiece(id).stackable)).toBe(true);
+  it.each(situations)('richtig=%s, Serie %i: immer ein Teil zum Weiterbauen', (correct, streak) => {
+    for (const offers of offersFor(correct, streak)) {
+      expect(offers.some((id) => isStackable(getPiece(id)))).toBe(true);
     }
   });
 
-  it('nutzt mit der Zeit alle beschädigten Teile', () => {
-    const seen = new Set<string>();
-    for (let seed = 0; seed < 200; seed++) {
-      for (const id of offerPieces(false, 0, seededRandom(seed))) seen.add(id);
+  it('falsche Antwort: nur beschädigte Teile', () => {
+    for (const offers of offersFor(false, 8)) {
+      expect(categoriesOf(offers)).toEqual(['damaged', 'damaged', 'damaged']);
     }
+  });
+
+  it('richtige Antwort: Umgebungsteile ersetzen ab und zu ein Grundbauteil', () => {
+    const all = offersFor(true, 1);
+    const withEnvironment = all.filter((offers) => categoriesOf(offers).includes('environment'));
+    expect(withEnvironment.length).toBeGreaterThan(20);
+    expect(withEnvironment.length).toBeLessThan(150);
+    for (const offers of withEnvironment) {
+      expect(categoriesOf(offers).filter((c) => c === 'environment')).toHaveLength(1);
+    }
+    for (const offers of offersFor(false, 1)) {
+      expect(categoriesOf(offers)).not.toContain('environment');
+    }
+  });
+
+  it('große Teile erscheinen ab und zu, höchstens eins je Angebot', () => {
+    const all = offersFor(true, 6);
+    const withLarge = all.filter((offers) => offers.some((id) => isLarge(getPiece(id))));
+    expect(withLarge.length).toBeGreaterThan(50);
+    expect(withLarge.length).toBeLessThan(200);
+    for (const offers of all) {
+      expect(offers.filter((id) => isLarge(getPiece(id))).length).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('richtet die Größe nach der Serie: 2 × 2 erst ab Serie 5', () => {
+    const big = (offers: PieceId[]) =>
+      offers.some((id) => getPiece(id).width === 2 && getPiece(id).height === 2);
+    expect(offersFor(true, 1).some(big)).toBe(false);
+    expect(offersFor(true, 4).some(big)).toBe(false);
+    expect(offersFor(true, 5).some(big)).toBe(true);
+    expect(offersFor(false, 0).some((offers) => offers.some((id) => isLarge(getPiece(id))))).toBe(false);
+    expect(offersFor(false, 2).some((offers) => offers.some((id) => isLarge(getPiece(id))))).toBe(true);
+    expect(offersFor(false, 5).some((offers) => offers.includes('ruinWall'))).toBe(true);
+  });
+
+  it('bietet nur Teile an, die irgendwo hinpassen', () => {
+    const noDecorations = (id: PieceId) => getPiece(id).kind !== 'attachment';
+    for (const offers of offersFor(true, 6, noDecorations)) {
+      expect(offers.every(noDecorations)).toBe(true);
+      expect(offers).toHaveLength(3);
+    }
+    for (const offers of offersFor(false, 0, noDecorations)) {
+      expect(offers.every(noDecorations)).toBe(true);
+    }
+  });
+
+  it('verschenkt kein Premium-Teil als Ersatz', () => {
+    const onlyBlocks = (id: PieceId) => getPiece(id).kind === 'block';
+    for (const offers of offersFor(true, 6, onlyBlocks)) {
+      expect(categoriesOf(offers)).not.toContain('premium');
+    }
+  });
+
+  it('liefert weniger Teile, wenn kaum etwas passt', () => {
+    expect(offerPieces(true, 1, seededRandom(1), (id) => id === 'tree')).toEqual(['tree']);
+    expect(offerPieces(true, 1, seededRandom(1), () => false)).toEqual([]);
+  });
+
+  it('nutzt mit der Zeit alle kleinen beschädigten Teile', () => {
+    const seen = new Set(offersFor(false, 0).flat());
     expect(seen.size).toBe(8);
   });
 
