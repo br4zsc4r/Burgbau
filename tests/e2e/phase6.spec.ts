@@ -126,7 +126,7 @@ test('Zwischenspeicher: ablegen, rückgängig, tauschen', async ({ page }) => {
 });
 
 test('letzte Aufgaben: Dach im Angebot, danach Bearbeitungsmodus', async ({ page }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(300_000);
   await startGame(page);
   for (let n = 0; n < 15; n++) {
     await answer(page, n % 3 !== 1);

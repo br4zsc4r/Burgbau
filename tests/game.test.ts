@@ -67,9 +67,11 @@ describe('game', () => {
     expect(state.grid.pieces).toEqual([]);
   });
 
-  it('nutzt für 20 Aufgaben ein größeres Raster', () => {
-    const state = createGame(ids, { ...testSettings, tasksPerCastle: 20 }, random);
-    expect(state.grid).toMatchObject({ cols: 14, rows: 9 });
+  it('nutzt für mehr Aufgaben ein größeres Raster', () => {
+    const grid = (tasksPerCastle: 20 | 25 | 30) => createGame(ids, { ...testSettings, tasksPerCastle }, random).grid;
+    expect(grid(20)).toMatchObject({ cols: 14, rows: 9 });
+    expect(grid(25)).toMatchObject({ cols: 15, rows: 10 });
+    expect(grid(30)).toMatchObject({ cols: 16, rows: 10 });
   });
 
   it('erhöht die Serie bei richtiger Antwort', () => {

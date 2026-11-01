@@ -1,11 +1,13 @@
 import Phaser from 'phaser';
 import {
   ART_CELL,
+  artOverhang,
   BATTLEMENTS_BROKEN_URL,
   BATTLEMENTS_HEIGHT,
   BATTLEMENTS_URL,
   DAMAGE_KINDS,
   TEXTURE_SIZE,
+  cutoutCoversCell,
   damageUrl,
   pieceArt,
   textureUrl,
@@ -35,8 +37,9 @@ export function preloadPieceArt(load: Phaser.Loader.LoaderPlugin): void {
     if (art.image !== null && !loaded.has(art.image)) {
       loaded.add(art.image);
       const base = getPiece(art.base);
+      // Überstehende Dächer sind breiter als ihr Teil gezeichnet.
       load.svg(art.image, art.image, {
-        width: base.width * ART_CELL * RASTER_SCALE,
+        width: (base.width + 2 * artOverhang(piece.id)) * ART_CELL * RASTER_SCALE,
         height: base.height * ART_CELL * RASTER_SCALE,
       });
     }
@@ -181,14 +184,15 @@ function cutoutImage(
       }
       const k = scale;
       const cx = cutout.cx * k;
-      const radius = cutout.half * k;
-      const centerY = (cutout.top + cutout.half) * k;
+      const half = cutout.half * k;
+      const rise = (cutout.rise ?? cutout.half) * k;
+      const centerY = cutout.top * k + rise;
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.moveTo(cx - radius, cutout.bottom * k + 1);
-      ctx.lineTo(cx - radius, centerY);
-      ctx.arc(cx, centerY, radius, Math.PI, 0);
-      ctx.lineTo(cx + radius, cutout.bottom * k + 1);
+      ctx.moveTo(cx - half, cutout.bottom * k + 1);
+      ctx.lineTo(cx - half, centerY);
+      ctx.ellipse(cx, centerY, half, rise, 0, Math.PI, 0);
+      ctx.lineTo(cx + half, cutout.bottom * k + 1);
       ctx.closePath();
       ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
@@ -318,8 +322,14 @@ export function drawPiece(
   }
 
   if (art.image !== null) {
+    // Manche Dächer ragen seitlich über ihr Teil hinaus (hoher Turmhelm).
+    const overhang = artOverhang(id) * cellSize;
     layers.base.add(
-      scene.add.image(left, top, art.image).setOrigin(0, 0).setDisplaySize(width, height).setFlipX(flipped),
+      scene.add
+        .image(left - overhang, top, art.image)
+        .setOrigin(0, 0)
+        .setDisplaySize(width + 2 * overhang, height)
+        .setFlipX(flipped),
     );
   }
 
@@ -356,7 +366,8 @@ export function drawPiece(
     const x = left + tile.dx * cellSize;
     const y = top + (piece.height - 1 - tile.dy) * cellSize;
     // Unter einem Bogen ist keine Kante: Dort ist ja die Öffnung.
-    const mask = art.cutout === null ? tile.mask : tile.mask | DOWN;
+    const open = art.cutout !== null && cutoutCoversCell(art.cutout, tile.dx);
+    const mask = open ? tile.mask | DOWN : tile.mask;
     drawEdges(layers.edges, x, y, cellSize, mask, art.rough);
     if (tile.battlements) {
       const h = BATTLEMENTS_HEIGHT * scale;

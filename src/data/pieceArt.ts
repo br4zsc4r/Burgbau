@@ -59,6 +59,8 @@ const FEATURES: readonly NormalPieceId[] = [
   'stainedGlass',
   'portcullis',
   'arch',
+  'bridgeArch',
+  'bridgeArchWide',
 ];
 
 export function featureUrl(base: NormalPieceId): string {
@@ -132,6 +134,7 @@ const TOP_MOUNT_OFFSET: Partial<Record<NormalPieceId, number>> = {
   coneRoof: 4,
   goldenRoof: 8,
   bellRoof: 4,
+  spireRoof: 8,
 };
 
 /**
@@ -143,12 +146,35 @@ export interface Cutout {
   /** Scheitel des Bogens */
   top: number;
   half: number;
+  /** Höhe der Rundung (fehlt = Halbkreis, sonst flacher Ellipsenbogen). */
+  rise?: number;
   bottom: number;
 }
 
 const CUTOUTS: Partial<Record<NormalPieceId, Cutout>> = {
   arch: { cx: 96, top: 30, half: 60, bottom: 96 },
+  // Öffnung genau über den mittleren Zellen: schließt bündig an die Türme darunter an.
+  bridgeArch: { cx: 144, top: 30, half: 48, bottom: 96 },
+  bridgeArchWide: { cx: 192, top: 30, half: 96, rise: 62, bottom: 96 },
 };
+
+/** Liegt die Öffnung in dieser Zelle (dx ab Ankerzelle)? Dort hat der Bogen unten keine Kante. */
+export function cutoutCoversCell(cutout: Cutout, dx: number): boolean {
+  const left = dx * ART_CELL;
+  return left + ART_CELL > cutout.cx - cutout.half && left < cutout.cx + cutout.half;
+}
+
+/**
+ * Wie weit die Grafik links und rechts über das Teil hinausragt (in Zellen). Der hohe
+ * Turmhelm sitzt auf einem schmalen Turm und ragt je eine halbe Zelle über.
+ */
+const OVERHANG: Partial<Record<NormalPieceId, number>> = {
+  spireRoof: 0.5,
+};
+
+export function artOverhang(id: PieceId): number {
+  return OVERHANG[pieceArt(id).base] ?? 0;
+}
 
 /** Bewegter Teil eines animierten Teils: eigene Grafik, Art der Bewegung und Drehpunkt (0–1). */
 export type AnimationKind = 'flicker' | 'wave' | 'sparkle' | 'spin' | 'swing' | 'bob' | 'splash';

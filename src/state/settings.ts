@@ -21,7 +21,7 @@ export const defaultSettings: Settings = {
   showAllCastles: true,
 };
 
-const TASK_COUNTS: readonly TasksPerCastle[] = [10, 15, 20];
+export const TASK_COUNTS: readonly TasksPerCastle[] = [10, 15, 20, 25, 30];
 const INPUT_MODES: readonly InputModeSetting[] = ['list', 'tiles', 'keyboard'];
 
 /** Nicht leere Liste, in der jeder Eintrag gültig ist (doppelte entfallen); sonst null. */

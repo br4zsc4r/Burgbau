@@ -52,9 +52,11 @@ import {
   pointedRoof,
   pointedRoofTall,
   roofBig,
+  spireRoof,
 } from './roofs.ts';
 import {
   archFeature,
+  bridgeArchFeature,
   battlements,
   gateBigFeature,
   gateFeature,
@@ -89,6 +91,8 @@ const FILES: Record<string, () => string> = {
   'features/stainedGlass.svg': stainedGlassFeature,
   'features/portcullis.svg': portcullisFeature,
   'features/arch.svg': archFeature,
+  'features/bridgeArch.svg': () => bridgeArchFeature(3),
+  'features/bridgeArchWide.svg': () => bridgeArchFeature(4),
 
   'pieces/battlements.svg': battlementsPiece,
   'pieces/pointedRoof.svg': pointedRoof,
@@ -97,6 +101,7 @@ const FILES: Record<string, () => string> = {
   'pieces/roofBig.svg': roofBig,
   'pieces/goldenRoof.svg': goldenRoof,
   'pieces/bellRoof.svg': bellRoof,
+  'pieces/spireRoof.svg': spireRoof,
   'pieces/bellRoof-moving.svg': bellRoofMoving,
   'pieces/observatory.svg': observatory,
   'pieces/observatory-moving.svg': observatoryMoving,

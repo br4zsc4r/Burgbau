@@ -7,7 +7,7 @@ import { hashPin, isValidPin } from '../logic/pin';
 import { addClass, removeProfile, renameProfile, setProfileCode } from '../logic/profiles';
 import { mergeLists, toggleList, validActiveIds, type ListEntry } from '../logic/wordlists';
 import type { Repository } from '../state/repository';
-import { DEFAULT_LIST_ID, defaultSettings } from '../state/settings';
+import { DEFAULT_LIST_ID, TASK_COUNTS, defaultSettings } from '../state/settings';
 import type {
   Article,
   ExercisePack,
@@ -191,7 +191,7 @@ export function createTeacherScreen(deps: TeacherDeps): {
       { value: 'tiles', label: texts.inputModeTiles },
       { value: 'keyboard', label: texts.inputModeKeyboard },
     ];
-    const taskOptions = (['10', '15', '20'] as const).map((n) => ({ value: n, label: n }));
+    const taskOptions = TASK_COUNTS.map((n) => ({ value: String(n), label: String(n) }));
     const save = (change: Partial<Settings>): void => {
       void saveSettings(change).catch(report);
     };
@@ -202,7 +202,7 @@ export function createTeacherScreen(deps: TeacherDeps): {
       })),
       labelled(
         texts.settingTasks,
-        select(taskOptions, String(settings.tasksPerCastle) as '10' | '15' | '20', (value) => {
+        select(taskOptions, String(settings.tasksPerCastle), (value) => {
           save({ tasksPerCastle: Number(value) as TasksPerCastle });
         }),
       ),

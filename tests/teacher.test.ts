@@ -96,6 +96,8 @@ describe('Repository für die Lehrkraft', () => {
     expect(await repo.loadSettings()).toEqual(defaultSettings);
     await repo.saveSettings({ ...defaultSettings, tasksPerCastle: 10 });
     expect((await repo.loadSettings()).tasksPerCastle).toBe(10);
+    await repo.saveSettings({ ...defaultSettings, tasksPerCastle: 30 });
+    expect((await repo.loadSettings()).tasksPerCastle).toBe(30);
 
     const list = { id: 'eigene-1', name: 'Test', inputMode: 'keyboard' as const, words: [
       { id: 'hund', singular: 'Hund', article: 'der' as const, plural: ['Hunde'], pattern: 'e' as const, umlaut: false, verified: true },

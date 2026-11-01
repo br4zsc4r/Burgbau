@@ -27,6 +27,9 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'portcullis', category: 'basic', ...block, front: 'none', rarity: 'rare' },
   // Bogen: unten offen, man sieht hindurch – eine Brücke zwischen zwei Mauerteilen.
   { id: 'arch', category: 'basic', ...block, width: 2, front: 'none', minStreak: 1, rarity: 'rare' },
+  // Brückenbögen liegen auf zwei Türmen: erste und letzte Zelle gemauert, dazwischen die Öffnung.
+  { id: 'bridgeArch', category: 'basic', ...block, width: 3, front: 'none', minStreak: 1, rarity: 'rare' },
+  { id: 'bridgeArchWide', category: 'basic', ...block, width: 4, front: 'none', minStreak: 1, rarity: 'rare' },
 
   // Zinnen entstehen inzwischen automatisch; das Teil bleibt nur für alte Burgen erhalten.
   { id: 'battlements', category: 'finish', ...cap, retired: true },
@@ -37,6 +40,8 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'roofBig', category: 'finish', ...roof, width: 2, height: 2, mountDx: 0, minStreak: 5 },
   { id: 'goldenRoof', category: 'finish', ...roof, rarity: 'rare' },
   { id: 'bellRoof', category: 'finish', ...roof, rarity: 'rare' },
+  // Hoher Turmhelm: eine Spalte breit, ragt aber links und rechts je eine halbe Zelle über.
+  { id: 'spireRoof', category: 'finish', ...roof, height: 3, minStreak: 5 },
 
   { id: 'flag', category: 'decoration', ...deco, slot: 'top', mirror: true },
   { id: 'pennant', category: 'decoration', ...deco, slot: 'top', mirror: true },

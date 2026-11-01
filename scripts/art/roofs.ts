@@ -175,3 +175,26 @@ export function battlementsPiece(): string {
   return svg(96, 96, merlons);
 }
 
+
+/**
+ * Hoher Turmhelm: drei Zellen hoch, zwei breit gezeichnet – er sitzt auf einem schmalen
+ * Turm und ragt links und rechts je eine halbe Zelle über (pieceArt: OVERHANG 0.5).
+ */
+export function spireRoof(): string {
+  const shape: RoofShape = {
+    d: 'M0 288Q70 214 96 8Q122 214 192 288Z',
+    leftEdge: 'M0 288Q70 214 96 8',
+    tipX: 96,
+    tipY: 8,
+    left: 0,
+    right: 192,
+    bottom: 288,
+    tone: ROOF_BLUE,
+    id: 'roof',
+  };
+  return svg(192, 288, [
+    ...roof(shape),
+    path('M22 266Q96 246 170 266', line(GOLD.base, 5)),
+    ...finial(96, 8, GOLD),
+  ]);
+}

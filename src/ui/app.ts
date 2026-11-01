@@ -184,7 +184,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   });
 
   const namingPanel = createNamingPanel((name) => {
-    void saveFinishedCastle(name).catch(report);
+    void saveFinishedCastle(name).catch((error: unknown) => {
+      report(error);
+      namingPanel.enable();
+    });
   });
 
   const controls = createBuildControls({
@@ -246,6 +249,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     onContinue: () => {
       if (game === null) return;
       game = { ...withKnownTasks(game, taskIdsFor(game.selection), random), boxes };
+      if (game.step === 'finished') namingPanel.reset();
       show({ kind: 'game' });
     },
     onNewCastle: () => {
@@ -423,7 +427,11 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     for (const event of gameEvents(previous, next)) {
       sound.play(event);
       if (event === 'correct') taskPanel.celebrate();
-      if (event === 'finished') celebration.play();
+      if (event === 'finished') {
+        // Jede fertige Burg bekommt ein frisches Namensfeld (der Vorschlag ist oft derselbe).
+        namingPanel.reset();
+        celebration.play();
+      }
     }
     focusGame(previous === null || previous.step !== 'task' || previous.taskNumber !== next.taskNumber);
   }

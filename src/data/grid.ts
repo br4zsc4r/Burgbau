@@ -5,6 +5,9 @@ export const GRID_SIZE_BY_TASKS: Readonly<Record<TasksPerCastle, GridSize>> = {
   10: { cols: 12, rows: 8 },
   15: { cols: 12, rows: 8 },
   20: { cols: 14, rows: 9 },
+  // Mehr Aufgaben, mehr Teile: breiter und höher (die Zellen werden auf Tablets etwas kleiner).
+  25: { cols: 15, rows: 10 },
+  30: { cols: 16, rows: 10 },
 };
 
 /** Kantenlänge einer Zelle in Weltpixeln. Phaser skaliert die Welt auf den Bildschirm. */

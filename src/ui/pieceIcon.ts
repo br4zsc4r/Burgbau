@@ -1,4 +1,4 @@
-import { ART_CELL, TEXTURE_SIZE, damageUrl, pieceArt, textureUrl } from '../data/pieceArt';
+import { ART_CELL, TEXTURE_SIZE, artOverhang, damageUrl, pieceArt, textureUrl } from '../data/pieceArt';
 import { getPiece } from '../data/pieces';
 import type { PieceId } from '../types';
 
@@ -23,8 +23,10 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
   const { width, height } = getPiece(id);
   const w = width * ART_CELL;
   const h = height * ART_CELL;
+  // Seitlich überstehende Dächer: die Vorschau zeigt das ganze Bild.
+  const overhang = artOverhang(id) * ART_CELL;
   const svg = svgElement('svg', {
-    viewBox: `0 0 ${String(w)} ${String(h)}`,
+    viewBox: `${String(-overhang)} 0 ${String(w + 2 * overhang)} ${String(h)}`,
     class: 'piece-icon',
     'aria-hidden': 'true',
   });
@@ -45,12 +47,13 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
     if (art.cutout !== null) {
       // Bogenöffnung aussparen: Maske weiß, Öffnung schwarz.
       const { cx, top, half, bottom } = art.cutout;
+      const rise = art.cutout.rise ?? half;
       const maskId = `${patternId}-cutout`;
       const mask = svgElement('mask', { id: maskId });
       mask.append(
         svgElement('rect', { width: String(w), height: String(h), fill: 'white' }),
         svgElement('path', {
-          d: `M${String(cx - half)} ${String(bottom + 1)}V${String(top + half)}A${String(half)} ${String(half)} 0 0 1 ${String(cx + half)} ${String(top + half)}V${String(bottom + 1)}Z`,
+          d: `M${String(cx - half)} ${String(bottom + 1)}V${String(top + rise)}A${String(half)} ${String(rise)} 0 0 1 ${String(cx + half)} ${String(top + rise)}V${String(bottom + 1)}Z`,
           fill: 'black',
         }),
       );
@@ -61,7 +64,9 @@ export function createPieceIcon(id: PieceId): SVGSVGElement {
   }
 
   if (art.image !== null) {
-    svg.append(svgElement('image', { href: art.image, width: String(w), height: String(h) }));
+    svg.append(
+      svgElement('image', { href: art.image, x: String(-overhang), width: String(w + 2 * overhang), height: String(h) }),
+    );
   }
 
   if (art.animation !== null) {

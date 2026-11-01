@@ -161,11 +161,11 @@ export async function placeAnywhere(page: Page): Promise<void> {
 }
 
 /** Alle 15 Aufgaben spielen (jede vierte falsch), immer einen Block setzen. */
-export async function buildWholeCastle(page: Page): Promise<void> {
-  for (let n = 0; n < 15; n++) {
+export async function buildWholeCastle(page: Page, tasks = 15): Promise<void> {
+  for (let n = 0; n < tasks; n++) {
     await answer(page, n % 4 !== 3);
     await chooseOffer(page, (piece) => piece.kind === 'block');
-    if (n < 14) {
+    if (n < tasks - 1) {
       await placeAnywhere(page);
       await page.getByRole('button', { name: 'Nächste Aufgabe' }).click();
     } else {

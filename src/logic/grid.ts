@@ -63,26 +63,74 @@ function isFree(grid: GridState, cell: Cell): boolean {
   return isInside(grid, cell) && pieceAt(grid, cell) === null && !isReserved(grid, cell);
 }
 
-function supports(grid: GridState, cell: Cell): boolean {
-  const below = pieceAt(grid, cell);
-  return below !== null && isStackable(getPiece(below.piece));
+/** So viele Teile weit darf ein Mauerteil seitlich von einem getragenen Mauerstück in die Luft ragen. */
+export const MAX_SIDE_OVERHANG = 2;
+
+/** Mauerstück (zum Draufbauen) an dieser Zelle, sonst null. */
+function stackableAt(grid: GridState, cell: Cell): PlacedPiece | null {
+  const placed = pieceAt(grid, cell);
+  return placed !== null && isStackable(getPiece(placed.piece)) ? placed : null;
 }
 
 /**
- * Schwerkraft-Regel: Alle Zellen frei, und unter mindestens einer Spalte Boden
- * oder ein Teil, auf dem man bauen kann. Große Teile dürfen so überhängen.
+ * Halt eines Teils mit dieser Ankerzelle, aus dem Halt der Nachbarn:
+ * 0 = auf dem Boden; von unten getragen = Halt des tragenden Teils;
+ * seitlich an einem Mauerstück (nur Mauerteile) = dessen Halt + 1. Infinity = kein Halt.
+ */
+function holdOf(grid: GridState, def: PieceDef, anchor: Cell, held: (placed: PlacedPiece) => number): number {
+  if (anchor.row === 0) return 0;
+  if (def.kind === 'ground') return Infinity;
+  let best = Infinity;
+  for (let dx = 0; dx < def.width; dx++) {
+    const below = stackableAt(grid, { col: anchor.col + dx, row: anchor.row - 1 });
+    if (below !== null) best = Math.min(best, held(below));
+  }
+  if (def.kind === 'block') {
+    for (let dy = 0; dy < def.height; dy++) {
+      for (const col of [anchor.col - 1, anchor.col + def.width]) {
+        const side = stackableAt(grid, { col, row: anchor.row + dy });
+        if (side !== null) best = Math.min(best, held(side) + 1);
+      }
+    }
+  }
+  return best;
+}
+
+const holdCache = new WeakMap<GridState, Map<PlacedPiece, number>>();
+
+/** Halt aller gesetzten Teile (zwischengespeichert je Raster – Raster werden nie verändert). */
+function holds(grid: GridState): Map<PlacedPiece, number> {
+  const cached = holdCache.get(grid);
+  if (cached !== undefined) return cached;
+  const hold = new Map<PlacedPiece, number>(grid.pieces.map((placed) => [placed, Infinity]));
+  const held = (placed: PlacedPiece): number => hold.get(placed) ?? Infinity;
+  // Wie bei kürzesten Wegen: so lange verbessern, bis sich nichts mehr ändert.
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const placed of grid.pieces) {
+      const value = holdOf(grid, getPiece(placed.piece), placed, held);
+      if (value < held(placed)) {
+        hold.set(placed, value);
+        changed = true;
+      }
+    }
+  }
+  holdCache.set(grid, hold);
+  return hold;
+}
+
+/**
+ * Schwerkraft-Regel: Alle Zellen frei, und das Teil hat Halt – Boden oder ein Teil zum
+ * Draufbauen unter mindestens einer Spalte (große Teile dürfen so überhängen), oder bei
+ * Mauerteilen ein Mauerstück daneben, höchstens zwei Teile weit von einem getragenen weg.
  * Umgebungsteile stehen nur auf dem Boden.
  */
 export function canPlacePiece(grid: GridState, id: PieceId, anchor: Cell): boolean {
   const piece = getPiece(id);
   if (piece.kind === 'attachment') return false;
   if (!footprint(piece, anchor).every((cell) => isFree(grid, cell))) return false;
-  if (anchor.row === 0) return true;
-  if (piece.kind === 'ground') return false;
-  for (let dx = 0; dx < piece.width; dx++) {
-    if (supports(grid, { col: anchor.col + dx, row: anchor.row - 1 })) return true;
-  }
-  return false;
+  const hold = holds(grid);
+  return holdOf(grid, piece, anchor, (placed) => hold.get(placed) ?? Infinity) <= MAX_SIDE_OVERHANG;
 }
 
 /** Andock-Regeln: Efeu auf Blöcke, Front-Deko an passende Vorderseite, Fahne oben drauf. */
@@ -186,15 +234,9 @@ export function removeFromGrid(grid: GridState, id: PieceId, anchor: Cell): Grid
   return { ...grid, pieces: grid.pieces.filter((entry) => !matches(entry)) };
 }
 
-/** Steht das Teil noch? Boden oder unter mindestens einer Spalte ein Teil zum Draufbauen. */
+/** Steht das Teil noch? Gleiche Regel wie beim Setzen (Boden, von unten, seitlich). */
 function isSupported(grid: GridState, placed: PlacedPiece): boolean {
-  if (placed.row === 0) return true;
-  const def = getPiece(placed.piece);
-  if (def.kind === 'ground') return false;
-  for (let dx = 0; dx < def.width; dx++) {
-    if (supports(grid, { col: placed.col + dx, row: placed.row - 1 })) return true;
-  }
-  return false;
+  return (holds(grid).get(placed) ?? Infinity) <= MAX_SIDE_OVERHANG;
 }
 
 const SLOT_PRIORITY = { top: 0, front: 1, growth: 2 } as const;

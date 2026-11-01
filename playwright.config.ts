@@ -4,6 +4,9 @@ const PORT = 4173;
 
 export default defineConfig({
   testDir: 'tests/e2e',
+  // Jede Instanz rendert WebGL in Software: zu viele parallel überlasten die Maschine,
+  // und lange Tests (ganze Burgen) laufen dann ins Zeitlimit.
+  workers: 6,
   use: {
     baseURL: `http://localhost:${PORT}`,
   },

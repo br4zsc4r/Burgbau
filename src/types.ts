@@ -32,7 +32,7 @@ export interface WordList {
   words: Word[];
 }
 
-export type TasksPerCastle = 10 | 15 | 20;
+export type TasksPerCastle = 10 | 15 | 20 | 25 | 30;
 
 /** Eingabemodus aus der Wortliste übernehmen oder für alle Listen festlegen. */
 export type InputModeSetting = 'list' | InputMode;
@@ -161,6 +161,8 @@ export type NormalPieceId =
   | 'towerBig'
   | 'windowWallBig'
   | 'arch'
+  | 'bridgeArch'
+  | 'bridgeArchWide'
   | 'portcullis'
   // Abschlüsse
   | 'battlements'
@@ -169,6 +171,7 @@ export type NormalPieceId =
   | 'pointedRoofTall'
   | 'roofBig'
   | 'bellRoof'
+  | 'spireRoof'
   // Dekorationen
   | 'flag'
   | 'pennant'

@@ -308,3 +308,46 @@ describe('Nachtrag Phase 8: Spiegeln und Montagepunkt', () => {
     expect(pickUpAt(grid, { col: 0, row: 0 })).toMatchObject({ picked: 'flag', flipped: true });
   });
 });
+
+describe('Seitliche Überhänge (zwei Teile weit)', () => {
+  const wide = { cols: 8, rows: 6 };
+  const tower = (): GridState =>
+    [0, 1, 2].reduce((grid, row) => placeOnGrid(grid, 'wall', { col: 3, row }), createGrid(wide));
+
+  it('ein Mauerteil darf seitlich am Turm hängen, auch zwei weit', () => {
+    let grid = tower();
+    expect(canPlacePiece(grid, 'wall', { col: 4, row: 2 })).toBe(true);
+    expect(canPlacePiece(grid, 'wall', { col: 2, row: 1 })).toBe(true);
+    grid = placeOnGrid(grid, 'wall', { col: 4, row: 2 });
+    expect(canPlacePiece(grid, 'wall', { col: 5, row: 2 })).toBe(true);
+    grid = placeOnGrid(grid, 'wall', { col: 5, row: 2 });
+    // Drei Teile weit wäre frei in der Luft.
+    expect(canPlacePiece(grid, 'wall', { col: 6, row: 2 })).toBe(false);
+  });
+
+  it('ganz frei in der Luft geht nicht', () => {
+    expect(canPlacePiece(tower(), 'wall', { col: 5, row: 2 })).toBe(false);
+    expect(canPlacePiece(tower(), 'wall', { col: 4, row: 4 })).toBe(false);
+  });
+
+  it('auf einem Überhang zählt dessen Abstand weiter', () => {
+    let grid = placeOnGrid(placeOnGrid(tower(), 'wall', { col: 4, row: 2 }), 'wall', { col: 5, row: 2 });
+    // Oben drauf ist erlaubt (getragen), aber von dort nicht noch weiter hinaus.
+    expect(canPlacePiece(grid, 'wall', { col: 5, row: 3 })).toBe(true);
+    grid = placeOnGrid(grid, 'wall', { col: 5, row: 3 });
+    expect(canPlacePiece(grid, 'wall', { col: 6, row: 3 })).toBe(false);
+  });
+
+  it('nur Mauerteile hängen seitlich; Dächer und Umgebung brauchen weiter Halt von unten', () => {
+    expect(canPlacePiece(tower(), 'pointedRoof', { col: 4, row: 2 })).toBe(false);
+    expect(canPlacePiece(tower(), 'stairs', { col: 4, row: 2 })).toBe(false);
+    expect(canPlacePiece(tower(), 'tree', { col: 4, row: 2 })).toBe(false);
+    expect(canPlacePiece(tower(), 'wallWide', { col: 4, row: 2 })).toBe(true);
+  });
+
+  it('nimmt man den Turm weg, fällt der Überhang mit', () => {
+    const grid = placeOnGrid(placeOnGrid(tower(), 'wall', { col: 4, row: 2 }), 'wall', { col: 5, row: 2 });
+    const { fallen } = pickUpAt(grid, { col: 3, row: 2 });
+    expect(fallen.sort()).toEqual(['wall', 'wall']);
+  });
+});

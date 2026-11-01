@@ -19,7 +19,7 @@ Profil wählen  →  [ Aufgabe  →  Antwort  →  1 aus 3 Bauteilen wählen  �
 
 - Jede Partie beginnt mit einer **leeren Landschaft**.
 - Nach **jeder Aufgabe** bekommt das Kind ein Bauteil, egal ob die Antwort richtig oder falsch war. Es wählt **eines aus drei angebotenen** und setzt es sofort in die Szene.
-- Nach **X Aufgaben** (Standard: 15, einstellbar 10 / 15 / 20) ist die Burg fertig und wandert in die **Sammlung**.
+- Nach **X Aufgaben** (Standard: 15, einstellbar 10 / 15 / 20 / 25 / 30) ist die Burg fertig und wandert in die **Sammlung**.
 - Wer wieder spielt, beginnt eine **neue Burg**.
 
 ### Pausentauglich
@@ -158,8 +158,8 @@ Je cooler ein Teil, desto seltener ist es. Eine Stufe kommt erst ab ihrer Serie 
 
 ### Perspektive: Seitenansicht (2D, Raster)
 - Seitenansicht statt Isometrie: einfacher zu bedienen, einfacher zu zeichnen, und Burgen wirken von der Seite am stärksten.
-- Raster mit **12 × 8 Zellen**, passend zu ca. 15 Bauteilen pro Burg. Bei 20 Aufgaben ist das Raster entsprechend größer (z. B. 14 × 9). Die Zellen sind **groß**, damit sie auf dem Tablet gut mit dem Finger zu treffen sind.
-- **Schwerkraft-Regel:** Ein Block braucht einen Block oder den Boden darunter. Das ist intuitiv („wie Bauklötze“) und verhindert schwebende Burgen.
+- Raster mit **12 × 8 Zellen**, passend zu ca. 15 Bauteilen pro Burg. Bei mehr Aufgaben ist das Raster entsprechend größer (20: 14 × 9, 25: 15 × 10, 30: 16 × 10). Die Zellen sind **groß**, damit sie auf dem Tablet gut mit dem Finger zu treffen sind.
+- **Schwerkraft-Regel:** Ein Block braucht einen Block oder den Boden darunter. Das ist intuitiv („wie Bauklötze“) und verhindert schwebende Burgen. Seit dem Nachtrag nach Phase 9 dürfen Mauerteile auch seitlich an einem Mauerstück hängen, höchstens zwei Teile weit (siehe Abschnitt 13).
 - **Große Teile** (z. B. 2 × 1, 1 × 2, 2 × 2 Zellen) brauchen nur unter **einer** ihrer Spalten Halt. So lassen sich Überhänge bauen (siehe Abschnitt 13, Vorgaben für Phase 4).
 - Das gewählte Bauteil wird per **Drag & Drop oder Antippen** gesetzt. Gültige Zellen leuchten auf, ungültige werden rot.
 - **Rückgängig** ist nur für das zuletzt gesetzte Teil möglich, solange die nächste Aufgabe noch nicht begonnen hat.
@@ -222,7 +222,7 @@ Erreichbar über einen **gesicherten Zugang**, damit Kinder sie nicht versehentl
 - **Profile verwalten:** anlegen (einzeln oder als Liste), umbenennen, löschen; „Kinder dürfen selbst Profile anlegen“ ja/nein; Bild-Code an/aus
 - Wortlisten ein- und ausschalten (= Klassenstufe), Listen anlegen und bearbeiten
 - Eingabemodus überschreiben (Bausteine / Tastatur)
-- Aufgaben pro Burg (10 / 15 / 20)
+- Aufgaben pro Burg (10 / 15 / 20 / 25 / 30)
 - Großschreibung verpflichtend ja/nein
 - Vorlesen an/aus, Sound an/aus
 - Eigene Wortliste importieren (CSV)
@@ -569,6 +569,15 @@ Umbau ohne sichtbare Änderung: Die Mehrzahl ist jetzt die erste Spielart.
 - **Startseite des Kindes:** „Neue Burg bauen“ zeigt zuerst die Pakete (Karte „Von deiner Lehrkraft“ mit enthaltenen Spielarten), dann die freien Spielarten; bei nur einer Möglichkeit geht es direkt los. Ohne jede Möglichkeit fehlt der Knopf, stattdessen steht dort „Frag deine Lehrkraft, was du heute üben sollst.“ – „Weiterbauen“ bleibt möglich.
 - **Burg mit gelöschtem oder leerem Paket:** Sie läuft mit der Mehrzahl (eingeschaltete Listen) weiter, damit keine angefangene Burg hängen bleibt.
 - **Speicherformat:** Die Auswahl der laufenden Burg kann jetzt auch `{ kind: 'pack', packId }` sein; ältere Stände bleiben gültig (keine neue Version). Neue Einstellung `freePlay` mit Standard.
+
+### Nachtrag nach Phase 9 (Rückmeldung, 2026-11-01)
+- **Fehler „Burg lässt sich nicht speichern“ behoben:** Nach dem Speichern blieb „In die Sammlung“ gesperrt. Das Namensfeld wurde nur zurückgesetzt, wenn sich der Namensvorschlag änderte – bei demselben Kind ist er aber gleich. Die zweite Burg ohne Neuladen ließ sich so nicht speichern. Jetzt bekommt jede fertige Burg ein frisches Namensfeld (Ereignis „Burg fertig“ und beim Weiterbauen einer fertigen Burg); schlägt das Speichern fehl, wird der Knopf wieder freigegeben. E2E-Test mit zwei Burgen hintereinander.
+- **25 und 30 Aufgaben pro Burg:** Raster 15 × 10 bzw. 16 × 10. Die 30 Fortschrittspunkte passen auf den Tablet-Bildschirm; die Zellen werden dort kleiner als 64 px (wie schon bei 20).
+- **Seitliche Überhänge:** Ein Mauerteil (Block) darf seitlich an einem Mauerstück hängen. Der „Halt“ eines Teils: 0 auf dem Boden, von unten getragen = Halt des tragenden Teils, seitlich = Halt des Nachbarn + 1; erlaubt ist höchstens 2 (`MAX_SIDE_OVERHANG`). Ganz frei in der Luft geht nicht; Dächer, Treppe und Umgebung brauchen weiter Halt von unten. Beim Aufnehmen im Bearbeitungsmodus fällt, was nach derselben Regel keinen Halt mehr hat. Der Halt wird je Raster einmal berechnet und zwischengespeichert.
+- **Brückenbögen** (Grundbauteile, selten): 3 und 4 Zellen breit. Sie liegen auf zwei Türmen; die erste und letzte Zelle sind gemauert, die Öffnung spannt genau über die mittleren Zellen und trifft die Turmwände darunter (beim 4er-Bogen ein flacher Ellipsenbogen). Unter der Öffnung zeichnet die Szene keine Kante, unter den gemauerten Enden schon.
+- **Hoher Turmhelm** (Abschluss, Dach, ab Serie 5): belegt eine Spalte und drei Reihen, wird aber zwei Zellen breit gezeichnet und ragt links und rechts je eine halbe Zelle über (`OVERHANG` in `pieceArt.ts`). Fahnen stecken auf der Spitze.
+- **Behoben nebenbei:** Die Lichtkante des Bogenkranzes lief als Linie quer durch die Öffnung (auch beim Burgbogen).
+- **E2E-Tests:** höchstens 6 parallele Browser (jede Instanz rendert WebGL in Software) und mehr Zeit für Tests, die ganze Burgen bauen; unter Last liefen sie sonst ins Zeitlimit.
 
 ## 14. Spielarten und Übungspakete (ab Phase 9)
 

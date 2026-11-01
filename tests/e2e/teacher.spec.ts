@@ -216,3 +216,16 @@ test('PIN festlegen klappt auch ohne sichere Verbindung (http im Schulnetz)', as
   // Beim zweiten Mal: dieselbe PIN öffnet den Bereich wieder.
   await openTeacher(page);
 });
+
+test('30 Aufgaben: Raster 16 × 10 und 30 Fortschrittspunkte, die auf den Tablet-Bildschirm passen', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 690 });
+  await setSettings(page, { tasksPerCastle: 30 });
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  await chooseExercise(page);
+  await expect(page.locator('.progress-dot')).toHaveCount(30);
+  await expect(page.locator('.progress-dots')).toBeInViewport({ ratio: 1 });
+  const box = await page.locator('canvas').boundingBox();
+  // Welt 16 × 96 + 48 = 1584 breit, 144 + 10 × 96 + 72 = 1176 hoch.
+  expect((box?.width ?? 0) / (box?.height ?? 1)).toBeCloseTo(1584 / 1176, 1);
+});

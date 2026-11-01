@@ -80,40 +80,55 @@ export function battlements(broken: boolean): string {
 }
 
 /** Bogen-Umriss: Seiten senkrecht, oben ein Halbkreis mit Scheitel bei top. */
-function archD(cx: number, top: number, half: number, bottom: number, closed = true): string {
-  const c = top + half;
-  const d = `M${String(cx - half)} ${String(bottom)}V${String(c)}A${String(half)} ${String(half)} 0 0 1 ${String(cx + half)} ${String(c)}V${String(bottom)}`;
+function archD(cx: number, top: number, half: number, bottom: number, closed = true, rise = half): string {
+  const c = top + rise;
+  const d = `M${String(cx - half)} ${String(bottom)}V${String(c)}A${String(half)} ${String(rise)} 0 0 1 ${String(cx + half)} ${String(c)}V${String(bottom)}`;
   return closed ? `${d}Z` : d;
 }
 
 /**
  * Steinkranz um eine Bogenöffnung (Keilsteine mit Fugen).
- * hollow = die Öffnung bleibt frei (man sieht hindurch).
+ * hollow = die Öffnung bleibt frei (man sieht hindurch); rise < half = flacher Ellipsenbogen.
  */
-function archRing(cx: number, top: number, half: number, ring: number, bottom: number, hollow = false): string[] {
+function archRing(
+  cx: number,
+  top: number,
+  half: number,
+  ring: number,
+  bottom: number,
+  hollow = false,
+  rise = half,
+): string[] {
   const tone = STONE[2];
   if (tone === undefined) throw new Error('Keine Steinfarbe');
-  const c = top + half;
+  const c = top + rise;
   const joints: string[] = [];
-  for (let i = 1; i < 6; i++) {
-    const a = Math.PI - (i * Math.PI) / 6;
+  // Breite Bögen bekommen mehr Keilsteine.
+  const stones = half > 60 ? 10 : 6;
+  for (let i = 1; i < stones; i++) {
+    const a = Math.PI - (i * Math.PI) / stones;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
     joints.push(
-      `M${String(cx + cos * half)} ${String(c - sin * half)}L${String(cx + cos * (half + ring))} ${String(c - sin * (half + ring))}`,
+      `M${String(cx + cos * half)} ${String(c - sin * rise)}L${String(cx + cos * (half + ring))} ${String(c - sin * (rise + ring))}`,
     );
   }
   for (let y = c + 18; y < bottom - 6; y += 22) {
     joints.push(`M${String(cx - half - ring)} ${String(y)}h${String(ring)}M${String(cx + half)} ${String(y)}h${String(ring)}`);
   }
-  const outer = archD(cx, top - ring, half + ring, bottom);
+  const outer = archD(cx, top - ring, half + ring, bottom, true, rise + ring);
   return [
     hollow
-      ? path(outer + archD(cx, top, half, bottom), { fill: tone.base, 'fill-rule': 'evenodd' })
+      ? path(outer + archD(cx, top, half, bottom, true, rise), { fill: tone.base, 'fill-rule': 'evenodd' })
       : path(outer, { fill: tone.base }),
-    path(archD(cx, top - ring + 3, half + ring - 3, bottom), { fill: 'none', stroke: tone.light, 'stroke-width': 3 }),
+    // Offen lassen: geschlossen liefe die Lichtkante unten quer durch die Öffnung.
+    path(archD(cx, top - ring + 3, half + ring - 3, bottom, false, rise + ring - 3), {
+      fill: 'none',
+      stroke: tone.light,
+      'stroke-width': 3,
+    }),
     path(joints.join(''), line(MORTAR, 3)),
-    path(archD(cx, top - ring, half + ring, bottom, false), line(OUTLINE, 4)),
+    path(archD(cx, top - ring, half + ring, bottom, false, rise + ring), line(OUTLINE, 4)),
   ];
 }
 
@@ -286,3 +301,20 @@ export function archFeature(): string {
 }
 
 export { archD, archRing, stone };
+
+/**
+ * Brückenbogen auf zwei Türmen (3 oder 4 Zellen breit): Die Öffnung liegt genau über den
+ * mittleren Zellen, ihre Seiten treffen die Turmwände darunter. Passt zu den Cutouts in pieceArt.
+ */
+export function bridgeArchFeature(cells: 3 | 4): string {
+  const width = cells * 96;
+  const cx = width / 2;
+  const top = 30;
+  const half = (cells - 2) * 48;
+  const rise = cells === 3 ? half : 62;
+  return svg(width, 96, [
+    ...archRing(cx, top, half, 10, 96, true, rise),
+    path(`M${String(cx - 10)} ${String(top - 14)}h20l-4 18h-12z`, outlined(STONE[0]?.base ?? MORTAR, 3)),
+    path(archD(cx, top, half, 96, false, rise), line(OUTLINE, 4)),
+  ]);
+}
