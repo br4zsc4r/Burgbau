@@ -136,6 +136,9 @@ export type PieceKind = 'block' | 'cap' | 'ground' | 'attachment';
 /** Andockstelle einer Dekoration: Bewuchs, Vorderseite oder oben drauf. */
 export type AttachSlot = 'growth' | 'front' | 'top';
 
+/** Material eines Blocks: gleiches Material verschmilzt beim Autotiling. */
+export type Material = 'stone' | 'towerStone';
+
 /** Vorderseite eines Blocks: was dort andocken darf. */
 export type FrontType = 'plain' | 'window' | 'none';
 
@@ -146,6 +149,8 @@ export interface PieceDef {
   /** Größe in Zellen (Dekorationen: 1 × 1). */
   width: number;
   height: number;
+  /** Blöcke: Material für Textur und Autotiling. */
+  material?: Material;
   /** Blöcke: welche Front-Dekoration passt. */
   front?: FrontType;
   /** Blöcke und Abschlüsse: Fahne, Wimpel oder Drache können oben drauf. */

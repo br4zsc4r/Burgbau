@@ -1,15 +1,11 @@
 import Phaser from 'phaser';
-import {
-  ART_CELL,
-  DAMAGE_OVERLAY_URL,
-  pieceArt,
-  pieceArtUrl,
-  topMountOffset,
-} from '../data/pieceArt';
-import { PIECES, getPiece } from '../data/pieces';
+import { ART_CELL, topMountOffset } from '../data/pieceArt';
+import { getPiece } from '../data/pieces';
+import { blockTiles, standaloneTiles, type BlockTile } from '../logic/autotile';
 import { pieceAt } from '../logic/grid';
 import { cellAt, cellCenter, cellOrigin, type WorldLayout } from '../logic/gridLayout';
-import type { Cell, GridState, NormalPieceId, PieceId, Placement } from '../types';
+import type { Cell, GridState, PieceId, Placement } from '../types';
+import { drawPiece, preloadPieceArt, type PieceLayers, type TileView } from './pieceRenderer';
 
 /** Alles, was die Szene zum Zeichnen braucht. Die Regeln dahinter kommen aus logic/. */
 export interface BuildView {
@@ -44,13 +40,15 @@ const COLORS = {
 } as const;
 
 const OUTLINE = 4;
-/** SVGs werden doppelt so groß gerastert, damit sie auch vergrößert scharf bleiben. */
-const TEXTURE_SCALE = 2;
-const DAMAGE_KEY = 'damage';
 const SLOT_ORDER = { growth: 0, front: 1, top: 2 } as const;
 
-function textureKey(base: NormalPieceId): string {
-  return `piece-${base}`;
+function toTileView(tile: BlockTile): TileView {
+  return {
+    dx: tile.cell.col - tile.anchor.col,
+    dy: tile.cell.row - tile.anchor.row,
+    mask: tile.mask,
+    battlements: tile.battlements,
+  };
 }
 
 function sameCell(a: Cell | null, b: Cell | null): boolean {
@@ -59,7 +57,8 @@ function sameCell(a: Cell | null, b: Cell | null): boolean {
 
 export class BuildScene extends Phaser.Scene {
   private view: BuildView | null = null;
-  private pieces!: Phaser.GameObjects.Container;
+  private layers!: PieceLayers;
+  private attachmentLayer!: Phaser.GameObjects.Container;
   private highlights!: Phaser.GameObjects.Graphics;
   private hover!: Phaser.GameObjects.Graphics;
   private trayPiece!: Phaser.GameObjects.Container;
@@ -83,21 +82,14 @@ export class BuildScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const bases = new Set(PIECES.map((piece) => pieceArt(piece.id).base));
-    for (const base of bases) {
-      const { width, height } = getPiece(base);
-      this.load.svg(textureKey(base), pieceArtUrl(base), {
-        width: width * ART_CELL * TEXTURE_SCALE,
-        height: height * ART_CELL * TEXTURE_SCALE,
-      });
-    }
-    const size = ART_CELL * TEXTURE_SCALE;
-    this.load.svg(DAMAGE_KEY, DAMAGE_OVERLAY_URL, { width: size, height: size });
+    preloadPieceArt(this.load);
   }
 
   create(): void {
     this.drawBackground();
-    this.pieces = this.add.container();
+    // Ebenen: Texturen und Bilder, darüber alle Kanten, dann Zinnen, zuletzt Dekorationen.
+    this.layers = { base: this.add.container(), edges: this.add.graphics(), top: this.add.container() };
+    this.attachmentLayer = this.add.container();
     this.highlights = this.add.graphics();
     this.hover = this.add.graphics();
     this.createTray();
@@ -134,38 +126,6 @@ export class BuildScene extends Phaser.Scene {
   private resolve(cell: Cell | null, preferredAnchor: Cell | null): Placement | null {
     if (cell === null || this.view?.pendingPiece == null) return null;
     return this.view.resolve(cell, preferredAnchor);
-  }
-
-  /**
-   * Bilder eines Teils (bei Schaden: eingefärbt plus Overlay je Zelle).
-   * Mittelpunkt bei 0/0, cellSize = Kantenlänge einer Zelle.
-   */
-  private pieceImages(id: PieceId, cellSize: number): Phaser.GameObjects.Image[] {
-    const art = pieceArt(id);
-    const { width, height } = getPiece(art.base);
-    const base = this.add
-      .image(0, 0, textureKey(art.base))
-      .setDisplaySize(width * cellSize, height * cellSize);
-    if (art.tint !== null) base.setTint(art.tint);
-    if (!art.damaged) return [base];
-
-    const overlays: Phaser.GameObjects.Image[] = [];
-    for (let dy = 0; dy < height; dy++) {
-      for (let dx = 0; dx < width; dx++) {
-        const x = (dx - (width - 1) / 2) * cellSize;
-        const y = ((height - 1) / 2 - dy) * cellSize;
-        overlays.push(this.add.image(x, y, DAMAGE_KEY).setDisplaySize(cellSize, cellSize));
-      }
-    }
-    return [base, ...overlays];
-  }
-
-  /** Mittelpunkt eines Teils mit dieser Ankerzelle (unten links). */
-  private pieceCenter(id: PieceId, anchor: Cell): { x: number; y: number } {
-    const { width, height } = getPiece(id);
-    const { x, y } = cellCenter(this.layout, anchor);
-    const size = this.layout.cellSize;
-    return { x: x + ((width - 1) * size) / 2, y: y - ((height - 1) * size) / 2 };
   }
 
   /** Antippen einer Zelle. Ziehen aus der Ablage beginnt außerhalb des Rasters und zählt nicht. */
@@ -240,7 +200,10 @@ export class BuildScene extends Phaser.Scene {
     const { width, height } = getPiece(id);
     const size = this.layout.cellSize;
     const cellSize = fullSize ? size : size / Math.max(width, height);
-    this.trayPiece.add(this.pieceImages(id, cellSize));
+    const layers = { base: this.add.container(), edges: this.add.graphics(), top: this.add.container() };
+    this.trayPiece.add([layers.base, layers.edges, layers.top]);
+    const tiles = standaloneTiles(id).map(toTileView);
+    drawPiece(this, layers, id, (-width * cellSize) / 2, (-height * cellSize) / 2, cellSize, tiles, null);
     this.trayPiece.setAlpha(fullSize ? 0.85 : 1);
   }
 
@@ -316,25 +279,32 @@ export class BuildScene extends Phaser.Scene {
 
   /** Reihenfolge: Teile, dann Efeu und Front-Deko, zuletzt was oben drauf steckt. */
   private drawPieces(view: BuildView): void {
-    this.pieces.removeAll(true);
+    this.layers.base.removeAll(true);
+    this.layers.edges.clear();
+    this.layers.top.removeAll(true);
+    this.attachmentLayer.removeAll(true);
     const size = this.layout.cellSize;
-    const add = (images: Phaser.GameObjects.Image[], x: number, y: number): void => {
-      for (const image of images) {
-        image.x += x;
-        image.y += y;
-        this.pieces.add(image);
-      }
-    };
 
-    for (const placed of view.grid.pieces) {
-      const { x, y } = this.pieceCenter(placed.piece, placed);
-      add(this.pieceImages(placed.piece, size), x, y);
+    const tilesByPiece = new Map<string, TileView[]>();
+    for (const tile of blockTiles(view.grid)) {
+      const key = `${String(tile.anchor.col)}/${String(tile.anchor.row)}`;
+      tilesByPiece.set(key, [...(tilesByPiece.get(key) ?? []), toTileView(tile)]);
     }
 
+    for (const placed of view.grid.pieces) {
+      const { height } = getPiece(placed.piece);
+      // Linke obere Ecke = Oberkante der obersten Reihe des Teils.
+      const { x, y } = cellOrigin(this.layout, { col: placed.col, row: placed.row + height - 1 });
+      const tiles = tilesByPiece.get(`${String(placed.col)}/${String(placed.row)}`) ?? [];
+      // Textur in Weltkoordinaten: Nachbarblöcke setzen das Fugenmuster fort.
+      drawPiece(this, this.layers, placed.piece, x, y, size, tiles, { x, y });
+    }
+
+    const attachmentLayers = { ...this.layers, base: this.attachmentLayer, top: this.attachmentLayer };
     const slotOf = (id: PieceId): number => SLOT_ORDER[getPiece(id).slot ?? 'front'];
     const attachments = [...view.grid.attachments].sort((a, b) => slotOf(a.piece) - slotOf(b.piece));
     for (const attachment of attachments) {
-      const { x, y } = cellCenter(this.layout, attachment);
+      const { x, y } = cellOrigin(this.layout, attachment);
       let offsetY = 0;
       if (getPiece(attachment.piece).slot === 'top') {
         // Steckt auf der Spitze des Teils darunter und ragt eine Zelle nach oben.
@@ -342,7 +312,7 @@ export class BuildScene extends Phaser.Scene {
         const mount = host === null ? 0 : topMountOffset(host.piece);
         offsetY = -size + (mount * size) / ART_CELL;
       }
-      add(this.pieceImages(attachment.piece, size), x, y + offsetY);
+      drawPiece(this, attachmentLayers, attachment.piece, x, y + offsetY, size, [], null);
     }
   }
 

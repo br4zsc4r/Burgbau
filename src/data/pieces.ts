@@ -1,7 +1,7 @@
 import type { PieceCategory, PieceDef, PieceId } from '../types';
 
-const block = { kind: 'block', width: 1, height: 1, front: 'plain' } as const;
-const tower = { ...block, topMount: true } as const;
+const block = { kind: 'block', width: 1, height: 1, material: 'stone', front: 'plain' } as const;
+const tower = { ...block, material: 'towerStone', topMount: true } as const;
 const cap = { kind: 'cap', width: 1, height: 1, topMount: true } as const;
 const deco = { kind: 'attachment', width: 1, height: 1 } as const;
 const ground = { kind: 'ground', width: 1, height: 1 } as const;

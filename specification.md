@@ -161,7 +161,7 @@ Drei Techniken kombiniert, statt jede Kombination einzeln zu zeichnen:
 
 3. **Automatische Abschlüsse und Andockpunkte**
    - Ein Mauerblock ohne Block darüber bekommt automatisch **Zinnen**.
-   - Gestapelte Turmblöcke ergeben einen Turm. Ein Dach setzt man nur auf den obersten Turmblock.
+   - Gestapelte Turmblöcke ergeben einen Turm. Dächer dürfen überall stehen, wo die Schwerkraft-Regel es erlaubt (auf Türmen, Mauern oder dem Boden).
    - Dekorationen haben **Andockpunkte** (Fahne → Turmspitze/Zinnen, Balkon → Mauerseite mit freier Luft davor, Fackel → Mauerfront, Efeu → Mauer- oder Turmblock, Blumenkasten → Fenster) und rasten dort ein. Sie werden an **bestehende Bauteile** gesetzt und belegen keine eigene Zelle.
 
 **Rendering pro Block in Schichten:**
@@ -362,3 +362,12 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - **Setzen großer Teile:** Beim Antippen wird die getippte Zelle möglichst die untere linke des Teils, sonst wird passend verschoben. Beim Ziehen zählt die Lage des Teils unter dem Finger. Die Ablage zeigt große Teile verkleinert, beim Ziehen haben sie volle Größe. Unter dem Finger leuchtet die ganze Fläche des Teils auf.
 - **Angebote passen immer:** Es werden nur Teile angeboten, die gerade irgendwo hinpassen. Eine Dekoration erscheint also erst, wenn es ein passendes Bauteil gibt. Passt in einer Kategorie nichts, kommt Ersatz: bei richtiger Antwort aus Grundbauteil, Dekoration, Abschluss oder Umgebung, bei falscher aus den beschädigten Teilen. Ein Premium-Teil ist nie Ersatz. Passen weniger als drei Teile, gibt es weniger Karten. Passt gar nichts mehr, wird das Setzen übersprungen.
 - **Fortschritts-Leiste:** Runde Punkte oben in der Mitte, die Fackeln stehen unten. Ein Punkt füllt sich, sobald die Antwort feststeht.
+
+### Phase 4b (2026-11-01)
+- **Materialien:** Stein (Mauer, Tor, Fenster, Buntglas und ihre beschädigten Varianten) und Turmstein (alle Türme). Nur Blöcke aus **gleichem Material** verschmelzen. Zwischen Mauer und Turm bleibt die Kontur, damit der Turm als eigenes Bauwerk erkennbar ist. Dächer, Umgebung und Dekorationen nehmen am Autotiling nicht teil.
+- **Weltkoordinaten-Textur:** Je Material gibt es eine kachelbare Textur von 2 × 2 Zellen. Jeder Block wird daraus passend zu seiner Weltposition ausgeschnitten (Phaser-TileSprite). Tür, Fenster und Schießscharte liegen als eigene Merkmal-Grafik darüber.
+- **Kanten nach Bitmaske:** Kontur, Lichtkante (oben, links) und Schattenkante (unten, rechts) gibt es nur an Seiten ohne Nachbarn aus gleichem Material. Bröckelige Teile (Bröckelmauer, Steinhaufen, Ruinenmauer) haben gezackte Kanten. Die Kanten werden gezeichnet, nicht als Kantenstück-Grafiken geladen. Das ist für die Platzhalter einfacher und an den Ecken sauberer.
+- **Automatische Zinnen:** Jede Mauerzelle ohne Teil darüber bekommt Zinnen, die in die freie Zelle darüber ragen. Beschädigte Mauern bekommen abgebrochene Zinnen. Türme bekommen keine automatischen Zinnen, sie werden mit Dächern abgeschlossen.
+- **Schadens-Overlays statt Farbe:** Die Einfärbung aus Phase 3 entfällt. Jedes beschädigte Teil hat eigene Overlays je Zelle: Riss mit Moos, abgebröckelte Steine, Loch mit Vogelnest, Bretter-Flicken, Steinhaufen, fehlende Turmecke, fehlende Dachziegel, geflickte Fahne. Große beschädigte Teile mischen mehrere davon.
+- **Vorschau-Karten** setzen Blöcke genauso zusammen (Textur als SVG-Muster, Merkmal, Schaden, Kontur).
+- **Dächer dürfen überall stehen** (Entscheidung 2026-11-01): Die frühere Vorgabe „nur auf dem obersten Turmblock“ entfällt, damit die Kinder frei bauen können. Es gilt allein die Schwerkraft-Regel.
