@@ -69,6 +69,11 @@ body {
   pointer-events: auto;
 }
 
+/* Der Hinweis ist nur Text: Antippen geht durch auf das Feld darunter. */
+.build-controls > .build-hint {
+  pointer-events: none;
+}
+
 .build-hint {
   margin: 0;
   padding: 0.75rem 1.25rem;
@@ -82,6 +87,8 @@ body {
 .overlay {
   position: absolute;
   inset: 0;
+  /* Über Fackeln und Fortschrittspunkten, unter Pause-Knopf und Speicher. */
+  z-index: 2;
   overflow-y: auto;
   padding: 2.25rem 1rem 1rem;
   background: rgb(46 42 36 / 35%);
@@ -1556,5 +1563,151 @@ button:focus-visible {
   .word-card.cheer,
   .celebration-banner {
     animation: none;
+  }
+}
+
+/* ---------- Tablets: Aufgabe passt ohne Scrollen auf den Bildschirm ---------- */
+
+/* Querformat mit wenig Höhe (Browserleiste): Wortkarte links, Antwort rechts. */
+@media (orientation: landscape) and (max-height: 820px) {
+  /* Platz für den Pause-Knopf links lassen. */
+  .overlay {
+    padding-inline: 5.25rem;
+  }
+
+  .task-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'prompt prompt'
+      'card form';
+    align-items: center;
+    column-gap: 1.25rem;
+    max-width: 60rem;
+  }
+
+  .task-panel .word-card {
+    padding: 1rem 1.25rem;
+  }
+
+  .task-prompt {
+    grid-area: prompt;
+  }
+
+  .word-card {
+    grid-area: card;
+  }
+
+  .answer-form {
+    grid-area: form;
+  }
+}
+
+/* Sehr wenig Höhe, z. B. mit eingeblendeter Bildschirmtastatur: alles enger. */
+@media (max-height: 560px) {
+  .overlay {
+    padding-top: 0.5rem;
+  }
+
+  .task-panel {
+    gap: 0.5rem;
+    padding: 0.5rem 1rem 0.75rem;
+  }
+
+  .task-prompt {
+    font-size: 1.25rem;
+  }
+
+  .word-card {
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .word-image {
+    width: 4rem;
+    height: 4rem;
+    font-size: 2.5rem;
+  }
+
+  .singular {
+    font-size: 1.75rem;
+  }
+
+  .answer-form {
+    gap: 0.75rem;
+  }
+
+  .answer-row {
+    font-size: 2rem;
+  }
+
+  .feedback {
+    min-height: 0;
+  }
+
+  .tiles-hint {
+    display: none;
+  }
+}
+
+/* Spiegeln: quadratischer Symbol-Knopf. */
+.mirror-button {
+  width: var(--touch);
+  padding: 0;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+/* Querformat im Spiel: links Platz für die Speicher-Leiste, damit sie kein Feld verdeckt. */
+@media (orientation: landscape) {
+  #app[data-screen='game'] .scene {
+    left: 7.25rem;
+  }
+}
+
+/* Querformat mit wenig Höhe: kompakte Knopfleiste, die Ablage oben links bleibt frei. */
+@media (orientation: landscape) and (max-height: 820px) {
+  .build-controls {
+    top: 2rem;
+    gap: 0.6rem;
+  }
+
+  .build-hint {
+    max-width: 22rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 1.15rem;
+  }
+
+  .build-controls .secondary-button,
+  .build-controls .primary-button {
+    min-width: var(--touch);
+    padding: 0.4rem 1rem;
+    font-size: 1.25rem;
+  }
+
+  .build-controls .mirror-button {
+    padding: 0;
+    font-size: 2rem;
+  }
+
+  /* Bearbeiten hat die meisten Knöpfe: Hinweis in eine zweite Zeile darunter. */
+  .build-controls[data-step='editing'] {
+    row-gap: 0.4rem;
+  }
+
+  .build-controls[data-step='editing'] > * {
+    order: 1;
+  }
+
+  /* Erzwungener Zeilenumbruch zwischen Knöpfen und Hinweis. */
+  .build-controls[data-step='editing']::after {
+    content: '';
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .build-controls[data-step='editing'] > .build-hint {
+    order: 3;
   }
 }

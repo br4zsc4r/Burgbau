@@ -525,3 +525,14 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Richtige Antwort: Die Wortkarte hüpft, ein kleiner Sternenregen geht von ihr aus.
 - Burg fertig: Schild „Burg fertig!“ über der Burg und Konfetti, etwa 3,5 Sekunden. Es blockiert keine Eingabe; das Namensfeld ist sofort bedienbar.
 - **Bewegung reduzieren** (`prefers-reduced-motion`): Bewegte Teile stehen auch in der Bauszene still; Sternenregen, Konfetti und Lichtstreifen entfallen.
+
+**Nachtrag zu Phase 8 (Rückmeldung, 2026-11-01)**
+- **Fahnen und Co. auf Dächern:** Oben angedockte Teile sitzen mit ihrem Fuß genau auf der Spitze des Teils darunter. Die Riesenfahne hat ihre Stange links (Fußpunkt x 16), sie wird deshalb so verschoben, dass die Stange auf der Spitze steht; das Tuch ragt in die Nachbarzelle.
+- **Großes Dach (2 × 2):** Es trägt jetzt Fahne, Wimpel, Drache oder Kristall, aber nur einmal: angedockt wird an der linken oberen Zelle (`mountDx: 0`), gezeichnet auf der Spitze, also auf der Zellgrenze.
+- **Spiegeln:** Unsymmetrische Teile (`mirror: true`: Holztreppe, Fahne, Wimpel, zerrissene Fahne, Riesenfahne, Drache, Feuerdrache, Efeu, Einhorn, Zugbrücke, Fässer und Kisten, Sternwarte) lassen sich vor dem Setzen mit einem Knopf ⇆ spiegeln. Ein neu gewähltes Teil ist nie gespiegelt; Rückgängig und Aufnehmen im Bearbeitungsmodus behalten die Richtung, Teile aus dem Speicher kommen ungespiegelt.
+- **Speicherformat:** Gesetzte Teile haben optional `flipped: true` (Burgen bleiben Version 1, ältere Burgen sind ungespiegelt). Laufende Burgen haben Version 3 mit `pendingFlipped` (Migration von Version 2).
+- **Tablets:**
+  - Im Querformat bis 820 px Höhe steht die Aufgabe zweispaltig (Wortkarte links, Antwort rechts). Unter 560 px Höhe (z. B. mit Bildschirmtastatur) wird alles enger. Der Viewport nutzt `interactive-widget=resizes-content`, damit die Tastatur die Seite verkleinert statt sie zu überdecken.
+  - Das Aufgaben-Overlay liegt über den Fackeln (vorher verdeckten sie „Fertig“).
+  - Im Querformat bekommt die Bauszene links Platz für den Speicher, damit er kein Feld verdeckt. Die Knopfleiste ist kompakter, damit die Ablage oben links frei bleibt; im Bearbeitungsmodus steht der Hinweis in einer zweiten Zeile. Der Hinweis lässt Antippen durch.
+  - E2E-Tests prüfen 1024 × 690 (beide Modi) und 1280 × 400 (Tastatur offen): „Fertig“ ist ohne Scrollen sichtbar.

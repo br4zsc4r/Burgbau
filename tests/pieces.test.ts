@@ -5,9 +5,11 @@ import {
   DAMAGE_KINDS,
   damageUrl,
   featureUrl,
+  footX,
   imageUrl,
   pieceArt,
   textureUrl,
+  topMountX,
 } from '../src/data/pieceArt';
 import { PIECES, getPiece, isStackable, piecesOf, rarityOf } from '../src/data/pieces';
 import type { PieceDef } from '../src/types';
@@ -133,5 +135,25 @@ describe('pieceArt', () => {
     for (const piece of PIECES.filter((p) => p.category !== 'damaged')) {
       expect(pieceArt(piece.id)).toMatchObject({ damage: [], rough: false, damaged: false });
     }
+  });
+});
+
+describe('Nachtrag Phase 8: Fuß- und Montagepunkte', () => {
+  it('die Riesenfahne steckt mit ihrer Stange auf der Spitze, auch gespiegelt', () => {
+    expect(footX('flag', false)).toBe(48);
+    expect(footX('giantFlag', false)).toBe(16);
+    expect(footX('giantFlag', true)).toBe(80);
+  });
+
+  it('das große Dach hat seine Spitze auf der Zellgrenze', () => {
+    expect(topMountX('roofBig')).toBe(96);
+    expect(topMountX('pointedRoof')).toBe(48);
+    expect(getPiece('roofBig').mountDx).toBe(0);
+  });
+
+  it('nur unsymmetrische Teile lassen sich spiegeln', () => {
+    expect(getPiece('stairs').mirror).toBe(true);
+    expect(getPiece('wall').mirror).toBeUndefined();
+    for (const piece of PIECES.filter((p) => p.mirror === true)) expect(piece.material, piece.id).toBeUndefined();
   });
 });

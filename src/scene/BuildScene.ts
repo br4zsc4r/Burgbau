@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ART_CELL, topMountOffset } from '../data/pieceArt';
+import { ART_CELL, footX, topMountOffset, topMountX } from '../data/pieceArt';
 import { getPiece } from '../data/pieces';
 import { blockTiles, standaloneTiles, type BlockTile } from '../logic/autotile';
 import { pieceAt } from '../logic/grid';
@@ -12,6 +12,8 @@ export interface BuildView {
   grid: GridState;
   /** Teil in der Ablage, das aufs Setzen wartet. */
   pendingPiece: PieceId | null;
+  /** Das wartende Teil ist gespiegelt. */
+  pendingFlipped: boolean;
   /** Zellen, die aufleuchten, weil das wartende Teil dorthin passt. */
   highlightCells: Cell[];
   /** Platz für das wartende Teil an einer Zelle (bevorzugt mit dieser Ankerzelle). */
@@ -307,7 +309,8 @@ export class BuildScene extends Phaser.Scene {
     const layers = { base: this.add.container(), edges: this.add.graphics(), top: this.add.container() };
     this.trayPiece.add([layers.base, layers.edges, layers.top]);
     const tiles = standaloneTiles(id).map(toTileView);
-    drawPiece(this, layers, id, (-width * cellSize) / 2, (-height * cellSize) / 2, cellSize, tiles, null);
+    const flipped = this.view?.pendingFlipped === true;
+    drawPiece(this, layers, id, (-width * cellSize) / 2, (-height * cellSize) / 2, cellSize, tiles, null, false, flipped);
     this.trayPiece.setAlpha(fullSize ? 0.85 : 1);
   }
 
@@ -433,7 +436,9 @@ export class BuildScene extends Phaser.Scene {
       const { x, y } = cellOrigin(layout, { col: placed.col, row: placed.row + height - 1 });
       const tiles = tilesByPiece.get(`${String(placed.col)}/${String(placed.row)}`) ?? [];
       // Textur in Weltkoordinaten: Nachbarblöcke setzen das Fugenmuster fort.
-      moving.push(...drawPiece(this, layers, placed.piece, x, y, size, tiles, { x, y }, animated));
+      moving.push(
+        ...drawPiece(this, layers, placed.piece, x, y, size, tiles, { x, y }, animated, placed.flipped === true),
+      );
     }
 
     const attachmentLayers = { ...layers, base: attachmentLayer, top: attachmentLayer };
@@ -441,15 +446,20 @@ export class BuildScene extends Phaser.Scene {
     const attachments = [...grid.attachments].sort((a, b) => slotOf(a.piece) - slotOf(b.piece));
     for (const attachment of attachments) {
       const { x, y } = cellOrigin(layout, attachment);
+      let offsetX = 0;
       let offsetY = 0;
+      const flipped = attachment.flipped === true;
       if (getPiece(attachment.piece).slot === 'top') {
-        // Steckt auf der Spitze des Teils darunter und ragt eine Zelle nach oben.
+        // Steckt auf der Spitze des Teils darunter und ragt eine Zelle nach oben;
+        // der Fuß (z. B. die Fahnenstange) sitzt genau auf der Spitze.
         const host = pieceAt(grid, attachment);
-        const mount = host === null ? 0 : topMountOffset(host.piece);
-        offsetY = -size + (mount * size) / ART_CELL;
+        const mountY = host === null ? 0 : topMountOffset(host.piece);
+        const mountX = host === null ? ART_CELL / 2 : topMountX(host.piece);
+        offsetX = ((mountX - footX(attachment.piece, flipped)) * size) / ART_CELL;
+        offsetY = -size + (mountY * size) / ART_CELL;
       }
       moving.push(
-        ...drawPiece(this, attachmentLayers, attachment.piece, x, y + offsetY, size, [], null, animated),
+        ...drawPiece(this, attachmentLayers, attachment.piece, x + offsetX, y + offsetY, size, [], null, animated, flipped),
       );
     }
     return moving;

@@ -278,7 +278,7 @@ function animate(scene: Phaser.Scene, image: Phaser.GameObjects.Image, kind: Pie
 /**
  * Zeichnet ein Teil. left/top = linke obere Ecke in Welt- bzw. Container-Koordinaten.
  * Blöcke: Textur (ab textureOrigin in Weltkoordinaten) → Merkmal → Schaden → Kanten → Zinnen.
- * Andere Teile: Vollbild → bewegter Teil → Schaden.
+ * Andere Teile: Vollbild → bewegter Teil → Schaden. flipped = waagerecht gespiegelt.
  * Liefert die bewegten Bilder, damit ihre Tweens beim Neuzeichnen beendet werden können.
  */
 export function drawPiece(
@@ -291,6 +291,7 @@ export function drawPiece(
   tiles: readonly TileView[],
   textureOrigin: { x: number; y: number } | null,
   animated = false,
+  flipped = false,
 ): Phaser.GameObjects.Image[] {
   const moving: Phaser.GameObjects.Image[] = [];
   const piece = getPiece(id);
@@ -317,15 +318,20 @@ export function drawPiece(
   }
 
   if (art.image !== null) {
-    layers.base.add(scene.add.image(left, top, art.image).setOrigin(0, 0).setDisplaySize(width, height));
+    layers.base.add(
+      scene.add.image(left, top, art.image).setOrigin(0, 0).setDisplaySize(width, height).setFlipX(flipped),
+    );
   }
 
   if (art.animation !== null) {
-    const { image, kind, originX, originY } = art.animation;
+    const { image, kind, originY } = art.animation;
+    // Gespiegelt liegt der Drehpunkt auf der anderen Seite (das Bild spiegelt in seinen Grenzen).
+    const originX = flipped ? 1 - art.animation.originX : art.animation.originX;
     const part = scene.add
       .image(left + originX * width, top + originY * height, image)
       .setOrigin(originX, originY)
-      .setDisplaySize(width, height);
+      .setDisplaySize(width, height)
+      .setFlipX(flipped);
     layers.base.add(part);
     if (animated && !prefersReducedMotion()) {
       animate(scene, part, kind);
@@ -334,10 +340,15 @@ export function drawPiece(
   }
 
   for (const overlay of art.damage) {
-    const x = left + overlay.dx * cellSize;
+    const dx = flipped ? piece.width - 1 - overlay.dx : overlay.dx;
+    const x = left + dx * cellSize;
     const y = top + (piece.height - 1 - overlay.dy) * cellSize;
     layers.base.add(
-      scene.add.image(x, y, damageKey(overlay.kind)).setOrigin(0, 0).setDisplaySize(cellSize, cellSize),
+      scene.add
+        .image(x, y, damageKey(overlay.kind))
+        .setOrigin(0, 0)
+        .setDisplaySize(cellSize, cellSize)
+        .setFlipX(flipped),
     );
   }
 

@@ -46,7 +46,8 @@ export function sanitizeGrid(value: unknown): GridState | null {
   if (!isRecord(value) || !isInt(value['cols']) || !isInt(value['rows'])) return null;
   const pieces = Array.isArray(value['pieces']) ? value['pieces'].filter(isPlaced) : [];
   const attachments = Array.isArray(value['attachments']) ? value['attachments'].filter(isPlaced) : [];
-  const strip = ({ piece, col, row }: PlacedPiece): PlacedPiece => ({ piece, col, row });
+  const strip = ({ piece, col, row, flipped }: PlacedPiece): PlacedPiece =>
+    flipped === true ? { piece, col, row, flipped } : { piece, col, row };
   return {
     cols: value['cols'],
     rows: value['rows'],
@@ -123,7 +124,12 @@ export function parseGameState(value: unknown): GameState | null {
         isPieceId(lastPlacement['piece']) &&
         (lastPlacement['anchor'] === null || isCell(lastPlacement['anchor']))));
   if (!valid) return null;
-  return { ...(value as unknown as GameState), grid, boxes: sanitizeBoxes(value['boxes']) };
+  return {
+    ...(value as unknown as GameState),
+    grid,
+    pendingFlipped: value['pendingFlipped'] === true,
+    boxes: sanitizeBoxes(value['boxes']),
+  };
 }
 
 export function parseProfile(value: unknown): Profile | null {

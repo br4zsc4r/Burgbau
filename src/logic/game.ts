@@ -1,4 +1,5 @@
 import { GRID_SIZE_BY_TASKS } from '../data/grid';
+import { isMirrorable } from '../data/pieces';
 import type { Cell, GameState, PieceId, RandomFn, Settings, Word, WordBoxes } from '../types';
 import {
   createGrid,
@@ -33,6 +34,7 @@ export function createGame(
     streak: 0,
     offers: [],
     pendingPiece: null,
+    pendingFlipped: false,
     grid: createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]),
     step: 'task',
     lastPlacement: null,
@@ -67,7 +69,7 @@ export function answerTask(
 
 /** Nächste Aufgabe – oder nach der letzten Aufgabe in den Bearbeitungsmodus. */
 function nextTaskOrEdit(state: GameState, wordIds: readonly string[], random: RandomFn): GameState {
-  const base = { ...state, offers: [], pendingPiece: null, lastPlacement: null };
+  const base = { ...state, offers: [], pendingPiece: null, pendingFlipped: false, lastPlacement: null };
   if (state.taskNumber >= state.tasksTotal) return { ...base, step: 'editing' };
 
   const taskNumber = state.taskNumber + 1;
@@ -96,7 +98,14 @@ export function finishTask(
 
 export function choosePiece(state: GameState, piece: PieceId): GameState {
   if (state.step !== 'choosing' || !state.offers.includes(piece)) return state;
-  return { ...state, step: 'placing', pendingPiece: piece };
+  return { ...state, step: 'placing', pendingPiece: piece, pendingFlipped: false };
+}
+
+/** Wartendes Teil spiegeln (nur unsymmetrische Teile). */
+export function flipPending(state: GameState): GameState {
+  const piece = state.pendingPiece;
+  if (piece === null || !isMirrorable(piece)) return state;
+  return { ...state, pendingFlipped: !state.pendingFlipped };
 }
 
 /** Setzt das wartende Teil mit dieser Ankerzelle; ungültige Plätze ändern nichts. */
@@ -104,15 +113,22 @@ export function placeAt(state: GameState, anchor: Cell): GameState {
   const piece = state.pendingPiece;
   if ((state.step !== 'placing' && state.step !== 'editing') || piece === null) return state;
   if (placementAt(state.grid, piece, anchor) === null) return state;
-  const grid = placeOnGrid(state.grid, piece, anchor);
-  if (state.step === 'editing') return { ...state, grid, pendingPiece: null };
+  const grid = placeOnGrid(state.grid, piece, anchor, state.pendingFlipped);
+  if (state.step === 'editing') return { ...state, grid, pendingPiece: null, pendingFlipped: false };
   // Nach dem letzten Teil geht es direkt in den Bearbeitungsmodus.
   if (isLastTask(state)) return toEditing({ ...state, grid });
-  return { ...state, grid, step: 'placed', pendingPiece: null, lastPlacement: { piece, anchor } };
+  return {
+    ...state,
+    grid,
+    step: 'placed',
+    pendingPiece: null,
+    pendingFlipped: false,
+    lastPlacement: { piece, anchor },
+  };
 }
 
 function toEditing(state: GameState): GameState {
-  return { ...state, step: 'editing', offers: [], pendingPiece: null, lastPlacement: null };
+  return { ...state, step: 'editing', offers: [], pendingPiece: null, pendingFlipped: false, lastPlacement: null };
 }
 
 /** Wartendes Teil in den Speicher legen – zählt wie gesetzt (beim Bearbeiten: einfach ablegen). */
@@ -120,12 +136,19 @@ export function stashPending(state: GameState): GameState {
   const piece = state.pendingPiece;
   if (piece === null) return state;
   if (state.step === 'editing') {
-    return { ...state, pendingPiece: null, stash: [...state.stash, piece] };
+    return { ...state, pendingPiece: null, pendingFlipped: false, stash: [...state.stash, piece] };
   }
   if (state.step !== 'placing') return state;
   const stash = [...state.stash, piece];
   if (isLastTask(state)) return toEditing({ ...state, stash });
-  return { ...state, step: 'placed', pendingPiece: null, stash, lastPlacement: { piece, anchor: null } };
+  return {
+    ...state,
+    step: 'placed',
+    pendingPiece: null,
+    pendingFlipped: false,
+    stash,
+    lastPlacement: { piece, anchor: null },
+  };
 }
 
 /**
@@ -139,7 +162,7 @@ export function takeFromStash(state: GameState, index: number): GameState {
   const stash = [...state.stash];
   if (state.pendingPiece === null) stash.splice(index, 1);
   else stash[index] = state.pendingPiece;
-  return { ...state, pendingPiece: taken, stash };
+  return { ...state, pendingPiece: taken, pendingFlipped: false, stash };
 }
 
 /** Nimmt das zuletzt gesetzte (oder abgelegte) Teil zurück in die Ablage. */
@@ -147,14 +170,20 @@ export function undoPlacement(state: GameState): GameState {
   if (state.step !== 'placed' || state.lastPlacement === null) return state;
   const { piece, anchor } = state.lastPlacement;
   let { grid, stash } = state;
+  let flipped = false;
   if (anchor === null) {
     const index = stash.lastIndexOf(piece);
     if (index === -1) return state;
     stash = stash.filter((_, i) => i !== index);
   } else {
+    // Das Teil kommt so zurück, wie es gesetzt war (auch gespiegelt).
+    const placed = [...grid.pieces, ...grid.attachments].find(
+      (entry) => entry.piece === piece && entry.col === anchor.col && entry.row === anchor.row,
+    );
+    flipped = placed?.flipped === true;
     grid = removeFromGrid(grid, piece, anchor);
   }
-  return { ...state, grid, stash, step: 'placing', pendingPiece: piece, lastPlacement: null };
+  return { ...state, grid, stash, step: 'placing', pendingPiece: piece, pendingFlipped: flipped, lastPlacement: null };
 }
 
 /** Nächste Aufgabe oder Bearbeitungsmodus; ab hier ist das gesetzte Teil fest. */
@@ -173,9 +202,9 @@ export function continueAfterPlacement(
  */
 export function pickUp(state: GameState, cell: Cell): GameState {
   if (state.step !== 'editing' || state.pendingPiece !== null) return state;
-  const { grid, picked, fallen } = pickUpAt(state.grid, cell);
+  const { grid, picked, flipped, fallen } = pickUpAt(state.grid, cell);
   if (picked === null) return state;
-  return { ...state, grid, pendingPiece: picked, stash: [...state.stash, ...fallen] };
+  return { ...state, grid, pendingPiece: picked, pendingFlipped: flipped, stash: [...state.stash, ...fallen] };
 }
 
 /** Teile im Speicher, die gerade nirgends mehr hinpassen. */

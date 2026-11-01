@@ -283,6 +283,28 @@ describe('pickUpAt (Bearbeitungsmodus)', () => {
 
   it('leere Zelle: nichts passiert', () => {
     const grid = build(['wall', 1, 0]);
-    expect(pickUpAt(grid, { col: 3, row: 0 })).toEqual({ grid, picked: null, fallen: [] });
+    expect(pickUpAt(grid, { col: 3, row: 0 })).toEqual({ grid, picked: null, flipped: false, fallen: [] });
+  });
+});
+
+describe('Nachtrag Phase 8: Spiegeln und Montagepunkt', () => {
+  it('großes Dach: Fahne nur an der Spitze (linke Zelle)', () => {
+    const grid = build(['wallBig', 0, 0], ['roofBig', 0, 2]);
+    expect(canAttach(grid, 'flag', { col: 0, row: 3 })).toBe(true);
+    expect(canAttach(grid, 'flag', { col: 1, row: 3 })).toBe(false);
+    expect(canAttach(grid, 'crystal', { col: 0, row: 3 })).toBe(true);
+  });
+
+  it('merkt sich gespiegelt nur bei unsymmetrischen Teilen', () => {
+    const grid = placeOnGrid(placeOnGrid(createGrid(size), 'stairs', { col: 0, row: 0 }, true), 'wall', { col: 1, row: 0 }, true);
+    expect(grid.pieces).toEqual([
+      { piece: 'stairs', col: 0, row: 0, flipped: true },
+      { piece: 'wall', col: 1, row: 0 },
+    ]);
+  });
+
+  it('beim Aufnehmen bleibt das Teil gespiegelt', () => {
+    const grid = placeOnGrid(build(['wall', 0, 0]), 'flag', { col: 0, row: 0 }, true);
+    expect(pickUpAt(grid, { col: 0, row: 0 })).toMatchObject({ picked: 'flag', flipped: true });
   });
 });

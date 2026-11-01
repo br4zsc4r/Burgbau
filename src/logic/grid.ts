@@ -104,6 +104,8 @@ export function canAttach(grid: GridState, id: PieceId, target: Cell): boolean {
       return hostDef.kind === 'block' && hostDef.front === deco.fits;
     case 'top': {
       if (hostDef.topMount !== true) return false;
+      // Breites Dach mit nur einer Spitze: nur an dieser Spalte.
+      if (hostDef.mountDx !== undefined && target.col !== host.col + hostDef.mountDx) return false;
       const above = { col: target.col, row: target.row + 1 };
       // Oberste Rasterreihe: Die Fahne ragt in den Himmel.
       return !isInside(grid, above) || isFree(grid, above);
@@ -162,11 +164,12 @@ export function resolvePlacement(
 }
 
 /** Setzt ein Teil oder dockt eine Dekoration an; wirft bei ungültigem Platz. */
-export function placeOnGrid(grid: GridState, id: PieceId, anchor: Cell): GridState {
+export function placeOnGrid(grid: GridState, id: PieceId, anchor: Cell, flipped = false): GridState {
   if (placementAt(grid, id, anchor) === null) {
     throw new Error(`${id} passt nicht an ${String(anchor.col)}/${String(anchor.row)}`);
   }
-  const entry = { piece: id, col: anchor.col, row: anchor.row };
+  const entry: PlacedPiece = { piece: id, col: anchor.col, row: anchor.row };
+  if (flipped && getPiece(id).mirror === true) entry.flipped = true;
   return getPiece(id).kind === 'attachment'
     ? { ...grid, attachments: [...grid.attachments, entry] }
     : { ...grid, pieces: [...grid.pieces, entry] };
@@ -204,7 +207,7 @@ const SLOT_PRIORITY = { top: 0, front: 1, growth: 2 } as const;
 export function pickUpAt(
   grid: GridState,
   cell: Cell,
-): { grid: GridState; picked: PieceId | null; fallen: PieceId[] } {
+): { grid: GridState; picked: PieceId | null; flipped: boolean; fallen: PieceId[] } {
   const decorations = attachmentsAt(grid, cell).sort(
     (a, b) =>
       SLOT_PRIORITY[getPiece(a.piece).slot ?? 'growth'] - SLOT_PRIORITY[getPiece(b.piece).slot ?? 'growth'],
@@ -214,12 +217,13 @@ export function pickUpAt(
     return {
       grid: { ...grid, attachments: grid.attachments.filter((a) => a !== decoration) },
       picked: decoration.piece,
+      flipped: decoration.flipped === true,
       fallen: [],
     };
   }
 
   const target = pieceAt(grid, cell);
-  if (target === null) return { grid, picked: null, fallen: [] };
+  if (target === null) return { grid, picked: null, flipped: false, fallen: [] };
 
   let pieces = grid.pieces.filter((p) => p !== target);
   const fallen: PieceId[] = [];
@@ -235,5 +239,5 @@ export function pickUpAt(
   const remaining: GridState = { ...grid, pieces, attachments: [] };
   const attachments = grid.attachments.filter((a) => pieceAt(remaining, a) !== null);
   fallen.push(...grid.attachments.filter((a) => !attachments.includes(a)).map((a) => a.piece));
-  return { grid: { ...remaining, attachments }, picked: target.piece, fallen };
+  return { grid: { ...remaining, attachments }, picked: target.piece, flipped: target.flipped === true, fallen };
 }

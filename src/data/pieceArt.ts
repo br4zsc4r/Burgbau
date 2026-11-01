@@ -222,3 +222,23 @@ export function topMountOffset(id: PieceId): number {
   if (getPiece(id).material === 'stone') return -(BATTLEMENTS_HEIGHT - 4);
   return TOP_MOUNT_OFFSET[pieceArt(id).base] ?? 0;
 }
+
+/** Waagerecht: Spitze ab linkem Rand der Andockzelle (großes Dach: auf der Zellgrenze). */
+const TOP_MOUNT_X: Partial<Record<NormalPieceId, number>> = {
+  roofBig: ART_CELL,
+};
+
+export function topMountX(id: PieceId): number {
+  return TOP_MOUNT_X[pieceArt(id).base] ?? ART_CELL / 2;
+}
+
+/** Fußpunkt einer oben angedockten Deko (Fahnenstange). Fehlt = Mitte. */
+const FOOT_X: Partial<Record<NormalPieceId, number>> = {
+  giantFlag: 16,
+};
+
+/** Fußpunkt in Grafik-Pixeln; gespiegelt liegt er auf der anderen Seite. */
+export function footX(id: PieceId, flipped: boolean): number {
+  const x = FOOT_X[pieceArt(id).base] ?? ART_CELL / 2;
+  return flipped ? ART_CELL - x : x;
+}

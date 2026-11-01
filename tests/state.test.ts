@@ -157,3 +157,22 @@ describe('Phase 6: Speicherformat', () => {
     expect(await repo.loadBoxes('p2')).toEqual({});
   });
 });
+
+describe('Nachtrag Phase 8: gespiegelte Teile', () => {
+  it('migriert eine laufende Burg aus Version 2 (ohne Spiegeln)', async () => {
+    const store = createMemoryStore();
+    const game = createGame(['hund'], testSettings, seededRandom(1));
+    const v2 = Object.fromEntries(Object.entries({ ...game, grid }).filter(([key]) => key !== 'pendingFlipped'));
+    await store.set('game:p1', { version: 2, game: v2 });
+    expect(await createRepository(store).loadGame('p1')).toMatchObject({ pendingFlipped: false });
+  });
+
+  it('behält gespiegelte Teile in Raster und Hand', () => {
+    const flippedGrid = {
+      ...grid,
+      pieces: [...grid.pieces, { piece: 'stairs' as const, col: 3, row: 0, flipped: true }],
+    };
+    const game = { ...createGame(['hund'], testSettings, seededRandom(1)), grid: flippedGrid, pendingFlipped: true };
+    expect(parseGameState(JSON.parse(JSON.stringify(game)))).toEqual(game);
+  });
+});

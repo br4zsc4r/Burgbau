@@ -6,7 +6,7 @@ import { isRecord } from './validate';
  */
 export const CURRENT_VERSION = {
   profiles: 1,
-  game: 2,
+  game: 3,
   castles: 1,
   progress: 1,
   settings: 2,
@@ -26,6 +26,11 @@ const MIGRATIONS: Record<RecordKind, Partial<Record<number, Migration>>> = {
     1: (record) => {
       const game = isRecord(record['game']) ? record['game'] : {};
       return { ...record, game: { stash: [], boxes: {}, ...game } };
+    },
+    // Nachtrag Phase 8: Teile lassen sich spiegeln.
+    2: (record) => {
+      const game = isRecord(record['game']) ? record['game'] : {};
+      return { ...record, game: { pendingFlipped: false, ...game } };
     },
   },
   castles: {},

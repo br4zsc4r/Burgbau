@@ -151,6 +151,7 @@ export const texts = {
   placeHint: 'Setz dein Bauteil auf ein leuchtendes Feld!',
   placeHintDecoration: 'Häng die Verzierung an ein leuchtendes Bauteil!',
   undo: 'Rückgängig',
+  mirrorPiece: 'Spiegeln',
   nextTask: 'Nächstes Wort',
   offersTitle: 'Such dir ein Bauteil aus!',
   offersDamagedHint: 'Diesmal sind die Teile etwas bröckelig. Mit richtigen Antworten werden sie wieder schön!',

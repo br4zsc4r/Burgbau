@@ -202,6 +202,13 @@ export interface PieceDef {
   front?: FrontType;
   /** Blöcke und Abschlüsse: Fahne, Wimpel oder Drache können oben drauf. */
   topMount?: boolean;
+  /**
+   * Nur eine Spitze bei breiten Dächern: In welcher Spalte (ab Ankerzelle) die Deko
+   * angedockt wird. Fehlt = auf jeder obersten Zelle.
+   */
+  mountDx?: number;
+  /** Nicht symmetrisch: lässt sich vor dem Setzen spiegeln. */
+  mirror?: boolean;
   /** Dekorationen: wo sie andocken. */
   slot?: AttachSlot;
   /** Front-Dekorationen: an welche Vorderseite sie passen. */
@@ -232,11 +239,14 @@ export interface GridSize {
 /** Gesetztes Teil; col/row ist die Zelle unten links. */
 export interface PlacedPiece extends Cell {
   piece: PieceId;
+  /** Gespiegelt (nur Teile mit mirror). Fehlt = nicht gespiegelt. */
+  flipped?: boolean;
 }
 
 /** Angedockte Dekoration; col/row ist die Zelle des Teils, an dem sie hängt. */
 export interface PlacedAttachment extends Cell {
   piece: PieceId;
+  flipped?: boolean;
 }
 
 export interface GridState extends GridSize {
@@ -272,6 +282,8 @@ export interface GameState {
   offers: PieceId[];
   /** Gewähltes Teil, das auf das Setzen wartet. */
   pendingPiece: PieceId | null;
+  /** Das wartende Teil ist gespiegelt. */
+  pendingFlipped: boolean;
   grid: GridState;
   step: GameStep;
   /**

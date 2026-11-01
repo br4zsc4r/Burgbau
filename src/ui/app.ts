@@ -1,5 +1,5 @@
 import { GRID_SIZE_BY_TASKS } from '../data/grid';
-import { getPiece } from '../data/pieces';
+import { getPiece, isMirrorable } from '../data/pieces';
 import {
   answerTask,
   canFinishEditing,
@@ -8,6 +8,7 @@ import {
   continueAfterPlacement,
   createGame,
   finishEditing,
+  flipPending,
   finishTask,
   pickUp,
   placeAt,
@@ -169,6 +170,9 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     onFinishEditing: () => {
       if (game !== null) updateGame(finishEditing(game));
     },
+    onMirror: () => {
+      if (game !== null) updateGame(flipPending(game));
+    },
   });
 
   const stashBar = createStashBar((index) => {
@@ -322,6 +326,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   function show(next: Screen): void {
     const previous = screen;
     screen = next;
+    // Für das Layout: Im Spiel bekommt die Szene im Querformat links Platz für den Speicher.
+    root.dataset['screen'] = next.kind;
     if (next.kind === 'profiles') {
       profileSelect.render(profiles, settings.allowSelfRegistration && canCreateProfile(profiles));
     }
@@ -467,7 +473,14 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     if (inGame && game !== null) {
       renderGame(game);
     } else {
-      controls.render({ step: 'task', holding: false, decoration: false, stashFilled: false, canFinish: false });
+      controls.render({
+        step: 'task',
+        holding: false,
+        decoration: false,
+        mirror: false,
+        stashFilled: false,
+        canFinish: false,
+      });
       renderGrid(screen.kind === 'castle' ? screen.castle.grid : emptyGrid);
     }
   }
@@ -483,6 +496,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       step: state.step,
       holding: pending !== null,
       decoration: pending !== null && getPiece(pending).kind === 'attachment',
+      mirror: pending !== null && isMirrorable(pending),
       stashFilled: state.stash.length > 0,
       canFinish: canFinishEditing(state),
     });
@@ -493,6 +507,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     scene.setView({
       grid,
       pendingPiece: pending,
+      pendingFlipped: state.pendingFlipped,
       highlightCells: pending === null ? [] : validPlacements(grid, pending).flatMap((p) => p.cells),
       resolve: (cell, preferredAnchor) =>
         pending === null ? null : resolvePlacement(grid, pending, cell, preferredAnchor),
@@ -508,6 +523,7 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     scene.setView({
       grid,
       pendingPiece: null,
+      pendingFlipped: false,
       highlightCells: [],
       resolve: () => null,
       lastPlacementCells: null,

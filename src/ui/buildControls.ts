@@ -7,6 +7,7 @@ export interface BuildControlsCallbacks {
   onNextTask: () => void;
   onStash: () => void;
   onFinishEditing: () => void;
+  onMirror: () => void;
 }
 
 export interface BuildControlsState {
@@ -15,13 +16,15 @@ export interface BuildControlsState {
   holding: boolean;
   /** Das wartende Teil ist eine Dekoration. */
   decoration: boolean;
+  /** Das wartende Teil lässt sich spiegeln. */
+  mirror: boolean;
   /** Bearbeiten: Im Speicher liegen noch Teile. */
   stashFilled: boolean;
   /** Bearbeiten: Alles ist gesetzt (oder der Rest passt nirgends mehr hin). */
   canFinish: boolean;
 }
 
-/** Hinweis und Buttons über der Bauszene: Setzen, Speicher, Rückgängig, Bearbeiten. */
+/** Hinweis und Buttons über der Bauszene: Setzen, Spiegeln, Speicher, Rückgängig, Bearbeiten. */
 export function createBuildControls(callbacks: BuildControlsCallbacks): {
   element: HTMLElement;
   render: (state: BuildControlsState) => void;
@@ -36,11 +39,15 @@ export function createBuildControls(callbacks: BuildControlsCallbacks): {
     b.addEventListener('click', onClick);
     return b;
   };
+  // Nur ein Symbol, damit die Leiste die Ablage oben links nicht verdeckt.
+  const mirror = button('⇆', 'secondary-button mirror-button', callbacks.onMirror);
+  mirror.setAttribute('aria-label', texts.mirrorPiece);
+  mirror.title = texts.mirrorPiece;
   const stash = button(texts.stashPiece, 'secondary-button', callbacks.onStash);
   const undo = button(texts.undo, 'secondary-button', callbacks.onUndo);
   const next = button(texts.nextTask, 'primary-button', callbacks.onNextTask);
   const done = button(texts.editDone, 'primary-button', callbacks.onFinishEditing);
-  bar.append(hint, stash, undo, next, done);
+  bar.append(hint, mirror, stash, undo, next, done);
 
   function editHint({ holding, stashFilled, canFinish }: BuildControlsState): string {
     if (holding) return texts.editHintHolding;
@@ -63,6 +70,7 @@ export function createBuildControls(callbacks: BuildControlsCallbacks): {
           : texts.placeHint;
       hint.hidden = step === 'placed';
       stash.hidden = !holding || (step !== 'placing' && !editing);
+      mirror.hidden = stash.hidden || !state.mirror;
       undo.hidden = step !== 'placed';
       next.hidden = step !== 'placed';
       done.hidden = !editing;

@@ -33,38 +33,38 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'pointedRoof', category: 'finish', ...roof },
   { id: 'coneRoof', category: 'finish', ...roof },
   { id: 'pointedRoofTall', category: 'finish', ...roof, height: 2, minStreak: 5 },
-  // Großes Dach: die Spitze liegt zwischen zwei Zellen, daher keine Fahne darauf.
-  { id: 'roofBig', category: 'finish', ...roof, width: 2, height: 2, topMount: false, minStreak: 5 },
+  // Großes Dach: eine Spitze zwischen den beiden Zellen; die Fahne dockt an der linken an.
+  { id: 'roofBig', category: 'finish', ...roof, width: 2, height: 2, mountDx: 0, minStreak: 5 },
   { id: 'goldenRoof', category: 'finish', ...roof, rarity: 'rare' },
   { id: 'bellRoof', category: 'finish', ...roof, rarity: 'rare' },
 
-  { id: 'flag', category: 'decoration', ...deco, slot: 'top' },
-  { id: 'pennant', category: 'decoration', ...deco, slot: 'top' },
+  { id: 'flag', category: 'decoration', ...deco, slot: 'top', mirror: true },
+  { id: 'pennant', category: 'decoration', ...deco, slot: 'top', mirror: true },
   { id: 'balcony', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
   { id: 'coatOfArms', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
   { id: 'torch', category: 'decoration', ...deco, slot: 'front', fits: 'plain' },
-  { id: 'ivy', category: 'decoration', ...deco, slot: 'growth' },
+  { id: 'ivy', category: 'decoration', ...deco, slot: 'growth', mirror: true },
   { id: 'flowerBox', category: 'decoration', ...deco, slot: 'front', fits: 'window' },
   { id: 'banner', category: 'decoration', ...deco, slot: 'front', fits: 'plain', rarity: 'rare' },
   // Treppe: steht wie ein Dach auf dem Boden oder einem Block, darauf kann man nicht bauen.
-  { id: 'stairs', category: 'decoration', ...cap, topMount: false },
+  { id: 'stairs', category: 'decoration', ...cap, topMount: false, mirror: true },
 
-  { id: 'dragon', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
-  { id: 'giantFlag', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
+  { id: 'dragon', category: 'premium', ...deco, slot: 'top', mirror: true, rarity: 'epic' },
+  { id: 'giantFlag', category: 'premium', ...deco, slot: 'top', mirror: true, rarity: 'epic' },
   { id: 'crystal', category: 'premium', ...deco, slot: 'top', rarity: 'epic' },
   { id: 'ghost', category: 'premium', ...deco, slot: 'front', fits: 'plain', rarity: 'epic' },
   { id: 'treasureChest', category: 'premium', ...ground, rarity: 'epic' },
-  { id: 'fireDragon', category: 'premium', ...deco, slot: 'top', rarity: 'legendary' },
+  { id: 'fireDragon', category: 'premium', ...deco, slot: 'top', mirror: true, rarity: 'legendary' },
   { id: 'windmill', category: 'premium', ...cap, width: 2, height: 2, topMount: false, minStreak: 1, rarity: 'legendary' },
   { id: 'balloon', category: 'premium', ...cap, height: 2, topMount: false, minStreak: 1, rarity: 'legendary' },
-  { id: 'observatory', category: 'premium', ...roof, topMount: false, rarity: 'legendary' },
-  { id: 'unicorn', category: 'premium', ...ground, rarity: 'legendary' },
+  { id: 'observatory', category: 'premium', ...roof, topMount: false, mirror: true, rarity: 'legendary' },
+  { id: 'unicorn', category: 'premium', ...ground, mirror: true, rarity: 'legendary' },
 
   { id: 'tree', category: 'environment', ...ground },
   { id: 'well', category: 'environment', ...ground },
   { id: 'moat', category: 'environment', ...ground },
-  { id: 'drawbridge', category: 'environment', ...ground },
-  { id: 'barrels', category: 'environment', ...ground },
+  { id: 'drawbridge', category: 'environment', ...ground, mirror: true },
+  { id: 'barrels', category: 'environment', ...ground, mirror: true },
   { id: 'fountain', category: 'environment', ...ground, rarity: 'rare' },
 
   // Beschädigt: verhalten sich wie ihr Basisteil, sehen nur weniger schön aus.
@@ -75,7 +75,7 @@ export const PIECES: readonly PieceDef[] = [
   { id: 'rubble', category: 'damaged', ...block, base: 'wall' },
   { id: 'chippedTower', category: 'damaged', ...tower, base: 'tower' },
   { id: 'crookedRoof', category: 'damaged', ...roof, base: 'pointedRoof' },
-  { id: 'tornFlag', category: 'damaged', ...deco, slot: 'top', base: 'flag' },
+  { id: 'tornFlag', category: 'damaged', ...deco, slot: 'top', mirror: true, base: 'flag' },
   { id: 'crumblingWallWide', category: 'damaged', ...block, width: 2, minStreak: 1, base: 'wallWide' },
   { id: 'chippedTowerTall', category: 'damaged', ...tower, height: 2, minStreak: 1, base: 'towerTall' },
   { id: 'ruinWall', category: 'damaged', ...block, width: 2, height: 2, minStreak: 5, base: 'wallBig' },
@@ -101,6 +101,10 @@ export function isStackable(piece: PieceDef): boolean {
 
 export function rarityOf(piece: PieceDef): Rarity {
   return piece.rarity ?? 'common';
+}
+
+export function isMirrorable(id: PieceId): boolean {
+  return getPiece(id).mirror === true;
 }
 
 export function isLarge(piece: PieceDef): boolean {

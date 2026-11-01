@@ -8,6 +8,7 @@ import {
   createGame,
   finishEditing,
   finishTask,
+  flipPending,
   pickUp,
   stashPending,
   takeFromStash,
@@ -17,7 +18,7 @@ import {
 } from '../src/logic/game';
 import { getPiece } from '../src/data/pieces';
 import { pieceAt, validPlacements } from '../src/logic/grid';
-import type { GameState, Settings, Word } from '../src/types';
+import type { GameState, PieceId, Settings, Word } from '../src/types';
 import { makeWord, seededRandom, testSettings } from './helpers';
 
 const words: Word[] = ['Hund', 'Tisch', 'Fisch', 'Schaf', 'Pferd', 'Zelt'].map((singular) =>
@@ -333,5 +334,31 @@ describe('game', () => {
     state = continueAfterPlacement(playPlacement(finishTask(state, ids, random)), ids, random);
     const second = state.quiz.wordId;
     expect(answer(state, false).boxes[second]).toBe(0);
+  });
+});
+
+describe('Nachtrag Phase 8: Spiegeln', () => {
+  const holding = (piece: PieceId): GameState => ({
+    ...createGame(ids, testSettings, random),
+    step: 'placing',
+    pendingPiece: piece,
+  });
+
+  it('spiegelt nur unsymmetrische Teile', () => {
+    expect(flipPending(holding('stairs')).pendingFlipped).toBe(true);
+    expect(flipPending(flipPending(holding('stairs'))).pendingFlipped).toBe(false);
+    expect(flipPending(holding('wall')).pendingFlipped).toBe(false);
+  });
+
+  it('setzt gespiegelt, Rückgängig bringt es gespiegelt zurück', () => {
+    const placed = placeAt(flipPending(holding('stairs')), { col: 0, row: 0 });
+    expect(placed.grid.pieces).toContainEqual({ piece: 'stairs', col: 0, row: 0, flipped: true });
+    expect(placed.pendingFlipped).toBe(false);
+    expect(undoPlacement(placed)).toMatchObject({ pendingPiece: 'stairs', pendingFlipped: true });
+  });
+
+  it('ein neu gewähltes Teil ist nicht gespiegelt', () => {
+    const choosing: GameState = { ...holding('stairs'), pendingFlipped: true, step: 'choosing', offers: ['flag'] };
+    expect(choosePiece(choosing, 'flag').pendingFlipped).toBe(false);
   });
 });
