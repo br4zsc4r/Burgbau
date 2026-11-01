@@ -48,6 +48,8 @@ export interface Settings {
   readAloud: boolean;
   /** Leise Töne bei Erfolgen (nie bei Fehlern). */
   sound: boolean;
+  /** Kinder dürfen selbst eine Spielart wählen; sonst gibt es nur die Übungspakete. */
+  freePlay: boolean;
   /** Spielarten, die Kinder im freien Spiel wählen können (mindestens eine). */
   freeExercises: ExerciseId[];
   /** Eingeschaltete Reihen des kleinen 1×1 (1–10, mindestens eine). */
@@ -103,11 +105,23 @@ export interface MultiplicationTask {
 /** Eine Aufgabe irgendeiner Spielart. */
 export type Task = PluralTask | MultiplicationTask;
 
-/** Woraus die Aufgaben einer Burg kommen: freies Spiel einer Spielart (Pakete ab Phase 9c). */
-export interface GameSelection {
-  kind: 'free';
-  exercise: ExerciseId;
+/** Inhalt eines Übungspakets je Spielart; fehlt eine Spielart, ist sie nicht dabei. */
+export interface PackContents {
+  /** Mehrzahl: Wörter dieser Wortlisten. */
+  plural?: { listIds: string[] };
+  /** Kleines 1×1: diese Reihen. */
+  multiplication?: { rows: number[] };
 }
+
+/** Übungspaket der Lehrkraft: gibt vor, was drankommt, auch aus mehreren Spielarten gemischt. */
+export interface ExercisePack {
+  id: string;
+  name: string;
+  contents: PackContents;
+}
+
+/** Woraus die Aufgaben einer Burg kommen: freies Spiel einer Spielart oder ein Übungspaket. */
+export type GameSelection = { kind: 'free'; exercise: ExerciseId } | { kind: 'pack'; packId: string };
 
 /** Zustand der laufenden Aufgabe. */
 export interface QuizState {

@@ -9,7 +9,11 @@ export function createProfileHome(callbacks: {
   onNewCastle: () => void;
   onCollection: () => void;
   onSwitchProfile: () => void;
-}): { element: HTMLElement; render: (profile: Profile, hasGame: boolean) => void } {
+}): {
+  element: HTMLElement;
+  /** canStart = false: Es gibt nichts, was das Kind neu beginnen darf (keine Pakete, kein freies Spiel). */
+  render: (profile: Profile, hasGame: boolean, canStart: boolean) => void;
+} {
   const screen = element('section', 'screen profile-home');
   const badge = element('div', 'home-badge');
   const title = element('h1', 'screen-title');
@@ -42,13 +46,16 @@ export function createProfileHome(callbacks: {
   });
   const collection = button(texts.myCastles, 'secondary-button', callbacks.onCollection);
   const switchProfile = button(texts.switchProfile, 'secondary-button', callbacks.onSwitchProfile);
-  actions.append(continueButton, newButton, collection, switchProfile);
+  const askTeacher = element('p', 'ask-teacher', texts.askTeacher);
+  actions.append(continueButton, newButton, askTeacher, collection, switchProfile);
   screen.append(badge, title, actions, confirm);
 
   return {
     element: screen,
-    render: (profile, game) => {
+    render: (profile, game, canStart) => {
       hasGame = game;
+      newButton.hidden = !canStart;
+      askTeacher.hidden = canStart;
       badge.replaceChildren(createSymbolBadge(profile.symbol));
       title.textContent = texts.hello(profile.nickname);
       continueButton.hidden = !game;

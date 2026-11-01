@@ -6,6 +6,7 @@ export const testSettings: Settings = {
   requireCapitalization: false,
   readAloud: false,
   sound: false,
+  freePlay: true,
   freeExercises: ['plural', 'multiplication'],
   multiplicationRows: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   tasksPerCastle: 15,

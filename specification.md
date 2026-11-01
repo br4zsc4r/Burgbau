@@ -561,6 +561,15 @@ Umbau ohne sichtbare Änderung: Die Mehrzahl ist jetzt die erste Spielart.
 - **Allgemeine Texte:** „Nächste Aufgabe“ statt „Nächstes Wort“ und „… von … Aufgaben geschafft“ – passt zu allen Spielarten und später zu gemischten Paketen.
 - Wiederholung falscher Aufgaben und Lernfächer gelten ohne Änderung auch fürs 1×1. Exklusive Bauteile fürs 1×1 gibt es noch nicht.
 
+### Phase 9c (2026-11-01)
+- **Übungspakete** (`ExercisePack`: ID, Name, Inhalte je Spielart – Wortlisten der Mehrzahl, Reihen des 1×1). Eigener Datensatz `packs` (Version 1), gilt für alle Kinder des Geräts. Logik in `src/logic/packs.ts`.
+- **Gemischte Pakete:** Die Aufgaben aller Inhalte kommen in einen Topf; Wortauswahl, Wiederholungen und Lernfächer arbeiten darüber wie sonst. Das Aufgaben-Panel wechselt mit der Spielart der Aufgabe, exklusive Bauteile richten sich nach der gelösten Aufgabe.
+- **Lehrkraft, Abschnitt „Übungspakete“:** Liste mit Inhalt („Mehrzahl (1 Liste) + 1×1 (Reihen 6, 7, 8)“), Bearbeiten, Löschen mit Rückfrage, „Neues Paket“. Im Editor Name, Wortlisten als Häkchen, Reihen als Schalter. Ohne Name oder ohne Inhalt wird nicht gespeichert (freundlicher Hinweis). Gelöschte Wortlisten fallen auch aus den Paketen.
+- **„Kinder dürfen frei spielen“** (an) steht im Abschnitt „Spielarten“. Gibt es weder freies Spiel noch ein Paket mit Aufgaben, warnt der Lehrkraft-Bereich.
+- **Startseite des Kindes:** „Neue Burg bauen“ zeigt zuerst die Pakete (Karte „Von deiner Lehrkraft“ mit enthaltenen Spielarten), dann die freien Spielarten; bei nur einer Möglichkeit geht es direkt los. Ohne jede Möglichkeit fehlt der Knopf, stattdessen steht dort „Frag deine Lehrkraft, was du heute üben sollst.“ – „Weiterbauen“ bleibt möglich.
+- **Burg mit gelöschtem oder leerem Paket:** Sie läuft mit der Mehrzahl (eingeschaltete Listen) weiter, damit keine angefangene Burg hängen bleibt.
+- **Speicherformat:** Die Auswahl der laufenden Burg kann jetzt auch `{ kind: 'pack', packId }` sein; ältere Stände bleiben gültig (keine neue Version). Neue Einstellung `freePlay` mit Standard.
+
 ## 14. Spielarten und Übungspakete (ab Phase 9)
 
 Burgbau wird ein Rahmen für mehrere Lernspiele: Das Bauen bleibt gleich, nur die Aufgabe wechselt. Erste weitere Spielart ist das **kleine 1×1**, später kommen weitere dazu.

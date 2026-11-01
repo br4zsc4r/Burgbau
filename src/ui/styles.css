@@ -1851,3 +1851,40 @@ button:focus-visible {
     gap: 0.4rem;
   }
 }
+
+/* ---------- Übungspakete ---------- */
+.pack-card {
+  position: relative;
+  background: linear-gradient(#e3f0ff, var(--card));
+  border-color: var(--accent);
+}
+
+.pack-badge {
+  padding: 0.15rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 1rem;
+}
+
+/* Startseite: nichts freigegeben */
+.ask-teacher {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+  background: var(--card);
+  border: 4px dashed var(--muted);
+  border-radius: 1rem;
+}
+
+.setting-warning {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  color: var(--almost);
+  background: #fff3d6;
+  border-radius: 0.75rem;
+}

@@ -2,6 +2,7 @@ import { parseCsvWordList, wordFromInput } from '../logic/csvImport';
 import { toggleKeepingOne } from '../logic/exercises/freePlay';
 import { MULTIPLICATION_ROWS } from '../logic/exercises/multiplication';
 import { EXERCISE_IDS } from '../logic/exercises/taskId';
+import { packExercises, packProblems, removePack, upsertPack, withoutMissingLists } from '../logic/packs';
 import { hashPin, isValidPin } from '../logic/pin';
 import { addClass, removeProfile, renameProfile, setProfileCode } from '../logic/profiles';
 import { mergeLists, toggleList, validActiveIds, type ListEntry } from '../logic/wordlists';
@@ -9,8 +10,10 @@ import type { Repository } from '../state/repository';
 import { DEFAULT_LIST_ID, defaultSettings } from '../state/settings';
 import type {
   Article,
+  ExercisePack,
   InputMode,
   InputModeSetting,
+  PackContents,
   Profile,
   Settings,
   TasksPerCastle,
@@ -130,10 +133,12 @@ export function createTeacherScreen(deps: TeacherDeps): {
     element('p', 'setting-note', texts.creditsGame),
   );
   const exercisesSection = element('section', 'teacher-section');
+  const packsSection = element('section', 'teacher-section');
   screen.append(
     header,
     general,
     exercisesSection,
+    packsSection,
     listsSection,
     profilesSection,
     pinSection,
@@ -145,12 +150,18 @@ export function createTeacherScreen(deps: TeacherDeps): {
   let profiles: Profile[] = [];
   /** Bearbeitete mitgelieferte Listen und eigene Listen der Lehrkraft. */
   let storedLists: WordList[] = [];
+  let packs: ExercisePack[] = [];
 
   const entries = (): ListEntry[] => mergeLists(deps.builtinLists, storedLists);
 
   async function saveSettings(change: Partial<Settings>): Promise<void> {
     settings = { ...settings, ...change };
     await repository.saveSettings(settings);
+  }
+
+  async function savePacks(next: ExercisePack[]): Promise<void> {
+    packs = next;
+    await repository.savePacks(packs);
   }
 
   async function saveProfiles(next: Profile[]): Promise<void> {
@@ -161,10 +172,15 @@ export function createTeacherScreen(deps: TeacherDeps): {
   async function saveStoredLists(next: WordList[]): Promise<void> {
     storedLists = next;
     await repository.saveCustomLists(storedLists);
-    // Gelöschte Listen dürfen nicht aktiv bleiben.
+    // Gelöschte Listen dürfen nicht aktiv bleiben und fallen aus den Paketen.
     const lists = entries().map((e) => e.list);
     const activeListIds = validActiveIds(settings.activeListIds, lists, DEFAULT_LIST_ID);
     if (activeListIds.join() !== settings.activeListIds.join()) await saveSettings({ activeListIds });
+    const cleaned = withoutMissingLists(
+      packs,
+      lists.map((list) => list.id),
+    );
+    if (JSON.stringify(cleaned) !== JSON.stringify(packs)) await savePacks(cleaned);
   }
 
   // ---------- Allgemein ----------
@@ -238,14 +254,134 @@ export function createTeacherScreen(deps: TeacherDeps): {
       });
       rows.append(toggle);
     }
+    const canStart = settings.freePlay || packs.some((pack) => packExercises(pack).length > 0);
+    const warning = element('p', 'setting-warning', texts.noStartWarning);
+    warning.hidden = canStart;
     exercisesSection.replaceChildren(
       element('h2', 'section-title', texts.sectionExercises),
+      checkbox(texts.settingFreePlay, settings.freePlay, (freePlay) => {
+        save({ freePlay });
+      }),
+      element('p', 'setting-note', texts.freePlayHint),
+      warning,
       element('p', 'setting-note', texts.exercisesHint),
       ...exerciseChecks,
       element('h3', 'subsection-title', texts.rowsTitle),
       element('p', 'setting-note', texts.rowsHint),
       rows,
     );
+  }
+
+  // ---------- Übungspakete ----------
+
+  function packSummary(pack: ExercisePack): string {
+    const parts: string[] = [];
+    const listCount = pack.contents.plural?.listIds.length ?? 0;
+    if (listCount > 0) parts.push(texts.packPluralPart(listCount));
+    const rows = pack.contents.multiplication?.rows ?? [];
+    if (rows.length > 0) parts.push(texts.packMultiplicationPart(rows));
+    return texts.packSummary(parts);
+  }
+
+  function renderPacks(): void {
+    const rows = packs.map((pack) => {
+      const row = element('div', 'list-row pack-row');
+      const info = element('span', 'list-info');
+      info.append(element('strong', '', pack.name), ' ', packSummary(pack));
+      const actions = element('span', 'list-actions');
+      actions.append(
+        button(texts.packEdit, 'secondary-button', () => {
+          renderPackEditor(pack);
+        }),
+        confirmButton(texts.packDelete, texts.confirmDelete, texts.confirmDeleteYes, () => {
+          void savePacks(removePack(packs, pack.id))
+            .then(() => {
+              renderPacks();
+              renderExercises();
+            })
+            .catch(report);
+        }),
+      );
+      row.append(info, actions);
+      return row;
+    });
+    packsSection.replaceChildren(
+      element('h2', 'section-title', texts.sectionPacks),
+      element('p', 'setting-note', texts.packsHint),
+      ...(rows.length > 0 ? rows : [element('p', 'setting-note', texts.noPacks)]),
+      button(texts.packNew, 'secondary-button', () => {
+        renderPackEditor({ id: deps.newId(), name: '', contents: {} });
+      }),
+    );
+  }
+
+  /** Paket bearbeiten: Name, Wortlisten der Mehrzahl, Reihen des 1×1. */
+  function renderPackEditor(pack: ExercisePack): void {
+    let listIds = [...(pack.contents.plural?.listIds ?? [])];
+    let rows = [...(pack.contents.multiplication?.rows ?? [])];
+    const name = element('input', 'setting-input');
+    name.value = pack.name;
+    name.maxLength = 40;
+
+    const listChecks = entries().map(({ list }) =>
+      checkbox(list.name, listIds.includes(list.id), (on) => {
+        listIds = on ? [...listIds, list.id] : listIds.filter((id) => id !== list.id);
+      }),
+    );
+
+    const rowToggles = element('div', 'row-toggles');
+    const drawRows = (): void => {
+      rowToggles.replaceChildren(
+        ...MULTIPLICATION_ROWS.map((row) => {
+          const on = rows.includes(row);
+          const toggle = element('button', `row-toggle${on ? ' on' : ''}`, String(row));
+          toggle.type = 'button';
+          toggle.setAttribute('aria-pressed', String(on));
+          toggle.setAttribute('aria-label', texts.rowLabel(row));
+          toggle.addEventListener('click', () => {
+            rows = on ? rows.filter((r) => r !== row) : [...rows, row].sort((a, b) => a - b);
+            drawRows();
+          });
+          return toggle;
+        }),
+      );
+    };
+    drawRows();
+
+    const message = element('p', 'csv-error');
+    message.setAttribute('aria-live', 'polite');
+    const save = (): void => {
+      const contents: PackContents = {};
+      const known = entries().map((e) => e.list.id);
+      const chosenLists = listIds.filter((id) => known.includes(id));
+      if (chosenLists.length > 0) contents.plural = { listIds: chosenLists };
+      if (rows.length > 0) contents.multiplication = { rows };
+      const draft: ExercisePack = { ...pack, name: name.value, contents };
+      const problems = packProblems(draft);
+      if (problems.length > 0) {
+        message.textContent = problems.includes('name') ? texts.packNameMissing : texts.packEmpty;
+        return;
+      }
+      void savePacks(upsertPack(packs, draft))
+        .then(() => {
+          renderPacks();
+          renderExercises();
+        })
+        .catch(report);
+    };
+
+    const bar = element('div', 'editor-actions');
+    bar.append(button(texts.packSave, 'primary-button', save), button(texts.cancel, 'secondary-button', renderPacks), message);
+    packsSection.replaceChildren(
+      element('h2', 'section-title', texts.packEditorTitle),
+      labelled(texts.packName, name),
+      element('h3', 'subsection-title', texts.packPluralTitle),
+      ...listChecks,
+      element('h3', 'subsection-title', texts.packMultiplicationTitle),
+      rowToggles,
+      bar,
+    );
+    name.focus();
   }
 
   // ---------- Wortlisten ----------
@@ -651,13 +787,15 @@ export function createTeacherScreen(deps: TeacherDeps): {
   return {
     element: screen,
     open: async () => {
-      [settings, profiles, storedLists] = await Promise.all([
+      [settings, profiles, storedLists, packs] = await Promise.all([
         repository.loadSettings(),
         repository.loadProfiles(),
         repository.loadCustomLists(),
+        repository.loadPacks(),
       ]);
       renderGeneral();
       renderExercises();
+      renderPacks();
       renderLists();
       renderPin();
       renderReset();

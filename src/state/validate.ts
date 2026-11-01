@@ -4,9 +4,12 @@ import type {
   AnswerResult,
   Castle,
   Cell,
+  ExercisePack,
+  GameSelection,
   GameState,
   GameStep,
   GridState,
+  PackContents,
   PieceId,
   PlacedPiece,
   Profile,
@@ -91,6 +94,24 @@ function isPicker(v: unknown): v is TaskPickerState {
   );
 }
 
+function isSelection(v: unknown): v is GameSelection {
+  if (!isRecord(v)) return false;
+  if (v['kind'] === 'free') return isExerciseId(v['exercise']);
+  return v['kind'] === 'pack' && isNonEmptyString(v['packId']);
+}
+
+/** Übungspaket aus dem Speicher; Unbrauchbares in den Inhalten fällt weg. */
+export function parsePack(value: unknown): ExercisePack | null {
+  if (!isRecord(value) || !isNonEmptyString(value['id']) || !isNonEmptyString(value['name'])) return null;
+  const contents = isRecord(value['contents']) ? value['contents'] : {};
+  const plural = isRecord(contents['plural']) ? contents['plural']['listIds'] : undefined;
+  const multiplication = isRecord(contents['multiplication']) ? contents['multiplication']['rows'] : undefined;
+  const parsed: PackContents = {};
+  if (Array.isArray(plural)) parsed.plural = { listIds: plural.filter(isNonEmptyString) };
+  if (Array.isArray(multiplication)) parsed.multiplication = { rows: multiplication.filter(isInt) };
+  return { id: value['id'], name: value['name'], contents: parsed };
+}
+
 const STEPS: readonly GameStep[] = ['task', 'choosing', 'placing', 'placed', 'editing', 'finished'];
 
 /** Lernfächer: nur ganze Zahlen 0–4 bleiben. */
@@ -107,12 +128,9 @@ export function parseGameState(value: unknown): GameState | null {
   const grid = sanitizeGrid(value['grid']);
   const lastPlacement = value['lastPlacement'];
   const pending = value['pendingPiece'];
-  const selection = value['selection'];
   const valid =
     grid !== null &&
-    isRecord(selection) &&
-    selection['kind'] === 'free' &&
-    isExerciseId(selection['exercise']) &&
+    isSelection(value['selection']) &&
     isInt(value['tasksTotal']) &&
     isInt(value['taskNumber']) &&
     isInt(value['streak']) &&

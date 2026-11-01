@@ -30,13 +30,15 @@ const BUILTIN_LISTS = Object.values(
 async function start(root: HTMLElement): Promise<void> {
   const { store, persistent } = await openStore();
   const repository = createRepository(store);
-  const [settings, customLists] = await Promise.all([
+  const [settings, customLists, packs] = await Promise.all([
     repository.loadSettings(),
     repository.loadCustomLists(),
+    repository.loadPacks(),
   ]);
   await mountApp(root, {
     builtinLists: BUILTIN_LISTS,
     customLists,
+    packs,
     settings,
     random: Math.random,
     repository,

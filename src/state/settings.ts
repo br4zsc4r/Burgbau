@@ -12,6 +12,7 @@ export const defaultSettings: Settings = {
   requireCapitalization: false,
   readAloud: true,
   sound: true,
+  freePlay: true,
   freeExercises: [...EXERCISE_IDS],
   multiplicationRows: [...MULTIPLICATION_ROWS],
   tasksPerCastle: 15,
@@ -47,6 +48,7 @@ export function parseSettings(value: unknown): Settings {
     requireCapitalization: bool('requireCapitalization'),
     readAloud: bool('readAloud'),
     sound: bool('sound'),
+    freePlay: bool('freePlay'),
     freeExercises: nonEmpty(value['freeExercises'], isExerciseId) ?? defaultSettings.freeExercises,
     multiplicationRows:
       nonEmpty(value['multiplicationRows'], (row): row is number => MULTIPLICATION_ROWS.includes(row as number)) ??

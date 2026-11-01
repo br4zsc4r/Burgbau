@@ -27,9 +27,9 @@ import {
   possessive,
   setProfileCode,
 } from '../logic/profiles';
-import { freeExercises } from '../logic/exercises/freePlay';
 import { multiplicationTasks } from '../logic/exercises/multiplication';
 import { pluralTasks } from '../logic/exercises/plural';
+import { packExercises, packTasks, startOptions } from '../logic/packs';
 import { activePool, mergeLists, validActiveIds } from '../logic/wordlists';
 import { createBuildGame } from '../scene/createBuildGame';
 import { DEFAULT_LIST_ID } from '../state/settings';
@@ -37,6 +37,7 @@ import type { Repository } from '../state/repository';
 import type {
   Castle,
   ExerciseId,
+  ExercisePack,
   GameSelection,
   GameState,
   GridState,
@@ -52,7 +53,7 @@ import { createCastleViewBar } from './castleViewBar';
 import { createCelebration } from './celebration';
 import { createCollectionScreen, type CollectionScope } from './collectionScreen';
 import { element } from './dom';
-import { createExerciseSelect } from './exerciseSelect';
+import { createExerciseSelect, type StartChoice } from './exerciseSelect';
 import { createNamingPanel } from './namingPanel';
 import { createNewProfile } from './newProfile';
 import { createOffersPanel } from './offersPanel';
@@ -85,6 +86,8 @@ export interface AppDeps {
   builtinLists: readonly WordList[];
   /** Gespeicherte Listen: bearbeitete mitgelieferte und eigene Listen der Lehrkraft. */
   customLists: readonly WordList[];
+  /** Übungspakete der Lehrkraft. */
+  packs: readonly ExercisePack[];
   /** Neu laden, damit geänderte Lehrkraft-Einstellungen überall wirken. */
   reload: () => void;
   settings: Settings;
@@ -114,13 +117,29 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     plural: pluralTasks(pool, settings),
     multiplication: multiplicationTasks(settings.multiplicationRows),
   };
-  const tasksById = new Map<string, Task>(
-    Object.values(tasksByExercise).flatMap((tasks) => tasks.map((task) => [task.id, task] as const)),
-  );
-  /** Aufgaben-IDs, aus denen eine Burg mit dieser Auswahl zieht. */
-  const taskIdsFor = (selection: GameSelection): string[] =>
-    tasksByExercise[selection.exercise].map((task) => task.id);
+  // Übungspakete der Lehrkraft: Aufgaben gemischt aus ihren Spielarten.
+  const packsById = new Map(deps.packs.map((pack) => [pack.id, pack]));
+  const tasksByPack = new Map(deps.packs.map((pack) => [pack.id, packTasks(pack, lists, settings)]));
+  /** Aufgaben, aus denen eine Burg mit dieser Auswahl zieht. */
+  const tasksFor = (selection: GameSelection): readonly Task[] => {
+    const tasks =
+      selection.kind === 'free' ? tasksByExercise[selection.exercise] : (tasksByPack.get(selection.packId) ?? []);
+    // Paket gelöscht oder leer: mit der Mehrzahl weiter, damit keine angefangene Burg hängen bleibt.
+    return tasks.length > 0 ? tasks : tasksByExercise.plural;
+  };
+  const taskIdsFor = (selection: GameSelection): string[] => tasksFor(selection).map((task) => task.id);
   const gameTaskIds = (): string[] => (game === null ? [] : taskIdsFor(game.selection));
+  /** Was das Kind bei „Neue Burg bauen“ wählen kann (leer: Lehrkraft fragen). */
+  const options = startOptions(settings, deps.packs, (pack) => (tasksByPack.get(pack.id)?.length ?? 0) > 0);
+  const choiceOf = (selection: GameSelection): StartChoice => {
+    if (selection.kind === 'free') {
+      const { exercise } = selection;
+      return { selection, name: texts.exerciseNames[exercise], detail: texts.exerciseSamples[exercise] };
+    }
+    const pack = packsById.get(selection.packId);
+    const detail = pack === undefined ? '' : packExercises(pack).map((e) => texts.exerciseNames[e]).join(' + ');
+    return { selection, name: pack?.name ?? '', detail };
+  };
   const emptyGrid = createGrid(GRID_SIZE_BY_TASKS[settings.tasksPerCastle]);
 
   let profiles: Profile[] = await repository.loadProfiles();
@@ -137,8 +156,11 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     console.error(error);
   };
 
-  const currentTask = (): Task | null =>
-    game === null ? null : (tasksById.get(game.quiz.taskId) ?? null);
+  const currentTask = (): Task | null => {
+    if (game === null) return null;
+    const { taskId } = game.quiz;
+    return tasksFor(game.selection).find((task) => task.id === taskId) ?? null;
+  };
 
   // ---------- Bausteine ----------
 
@@ -227,10 +249,10 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
       show({ kind: 'game' });
     },
     onNewCastle: () => {
-      // Mehrere Spielarten: erst wählen lassen; sonst gleich los.
-      const exercises = freeExercises(settings);
-      if (exercises.length > 1) show({ kind: 'chooseExercise' });
-      else startNewGame({ kind: 'free', exercise: exercises[0] ?? 'plural' });
+      // Mehrere Möglichkeiten: erst wählen lassen; eine: gleich los; keine: Startseite zeigt den Hinweis.
+      const [only] = options;
+      if (options.length > 1) show({ kind: 'chooseExercise' });
+      else if (only !== undefined) startNewGame(only);
     },
     onCollection: () => {
       void openCollection('mine').catch(report);
@@ -282,8 +304,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
   profileSelect.element.append(gate.gear, gate.dialog);
 
   const exerciseSelect = createExerciseSelect({
-    onChoose: (exercise) => {
-      startNewGame({ kind: 'free', exercise });
+    onChoose: (selection) => {
+      startNewGame(selection);
     },
     onBack: () => {
       show({ kind: 'home' });
@@ -354,8 +376,8 @@ export async function mountApp(root: HTMLElement, deps: AppDeps): Promise<void> 
     }
     if (next.kind === 'code') pictureCode.render(next.profile, next.mode, next.wrong);
     if (next.kind === 'newProfile') newProfile.render(availableSymbols(profiles));
-    if (next.kind === 'home' && profile !== null) profileHome.render(profile, game !== null);
-    if (next.kind === 'chooseExercise') exerciseSelect.render(freeExercises(settings));
+    if (next.kind === 'home' && profile !== null) profileHome.render(profile, game !== null, options.length > 0);
+    if (next.kind === 'chooseExercise') exerciseSelect.render(options.map(choiceOf));
     if (next.kind === 'castle') castleViewBar.render(next.castle.name);
     render();
     if (next.kind === 'game' && previous.kind !== 'game') focusGame(true);

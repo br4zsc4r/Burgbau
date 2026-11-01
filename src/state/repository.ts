@@ -1,14 +1,15 @@
 import { addCastle, newestFirst } from '../logic/collection';
-import type { Castle, GameState, Profile, Settings, TaskBoxes, WordList } from '../types';
+import type { Castle, ExercisePack, GameState, Profile, Settings, TaskBoxes, WordList } from '../types';
 import { validateWordList } from '../logic/wordlist';
 import { parseSettings } from './settings';
 import { migrate, withVersion } from './migrations';
 import type { KeyValueStore } from './storage';
-import { parseCastle, parseGameState, parseProfile, sanitizeBoxes } from './validate';
+import { parseCastle, parseGameState, parsePack, parseProfile, sanitizeBoxes } from './validate';
 
 const PROFILES_KEY = 'profiles';
 const SETTINGS_KEY = 'settings';
 const WORDLISTS_KEY = 'wordlists';
+const PACKS_KEY = 'packs';
 const gameKey = (profileId: string): string => `game:${profileId}`;
 const castlesKey = (profileId: string): string => `castles:${profileId}`;
 const progressKey = (profileId: string): string => `progress:${profileId}`;
@@ -49,6 +50,15 @@ export function createRepository(store: KeyValueStore) {
 
     saveCustomLists(lists: readonly WordList[]): Promise<void> {
       return store.set(WORDLISTS_KEY, withVersion('wordlists', { lists }));
+    },
+
+    /** Übungspakete der Lehrkraft (gelten für alle Kinder des Geräts). */
+    async loadPacks(): Promise<ExercisePack[]> {
+      return listOf(migrate('packs', await store.get(PACKS_KEY)), 'packs', parsePack);
+    },
+
+    savePacks(packs: readonly ExercisePack[]): Promise<void> {
+      return store.set(PACKS_KEY, withVersion('packs', { packs }));
     },
 
     async loadProfiles(): Promise<Profile[]> {

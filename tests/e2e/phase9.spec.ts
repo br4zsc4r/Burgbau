@@ -127,3 +127,81 @@ test('Tablet 1024 × 690: 1×1 mit Ziffernfeld passt ohne Scrollen', async ({ pa
   await expect(page.locator('.task-panel:visible .primary-button')).toBeInViewport({ ratio: 1 });
   expect(await page.locator('.overlay').evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(false);
 });
+
+/** Paket im Lehrkraft-Bereich anlegen (Lehrkraft-Bereich muss offen sein). */
+async function createPack(page: Page, name: string, list: string | null, rows: number[]): Promise<void> {
+  await page.getByRole('button', { name: 'Neues Paket' }).click();
+  await page.getByLabel('Name').fill(name);
+  if (list !== null) await page.getByRole('checkbox', { name: list, exact: true }).check();
+  const editor = page.locator('.teacher-section', { has: page.getByRole('heading', { name: 'Übungspaket' }) });
+  for (const row of rows) await editor.getByRole('button', { name: `${String(row)}er-Reihe` }).click();
+  await editor.getByRole('button', { name: 'Speichern' }).click();
+  await expect(page.locator('.pack-row', { hasText: name })).toBeVisible();
+}
+
+test('Übungspaket ohne freies Spiel: Kind startet direkt im Paket', async ({ page }) => {
+  await page.goto('/');
+  await openTeacher(page);
+  await createPack(page, 'Wochenplan', 'Klasse 3 – Umlaute', [7]);
+  await page.getByRole('checkbox', { name: 'Kinder dürfen frei spielen' }).uncheck();
+  await page.getByRole('button', { name: 'Fertig' }).click();
+
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  // Nur eine Möglichkeit: keine Auswahl.
+  const panel = page.locator('.task-panel:visible');
+  await expect(panel).toBeVisible();
+  if ((await panel.getAttribute('data-exercise')) === 'multiplication') {
+    expect((await currentProduct(page)).row).toBe(7);
+  } else {
+    await expect(panel.locator('.singular')).toBeVisible();
+  }
+});
+
+test('Pakete stehen zuerst, danach die freien Spielarten', async ({ page }) => {
+  await page.goto('/');
+  await openTeacher(page);
+  await createPack(page, 'Nur Siebener', null, [7]);
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  await createProfile(page, 'Lena');
+  await page.getByRole('button', { name: 'Neue Burg bauen' }).click();
+  const cards = page.locator('.exercise-card');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first()).toContainText('Nur Siebener');
+  await expect(cards.first()).toContainText('Von deiner Lehrkraft');
+  await cards.first().click();
+  expect((await currentProduct(page)).row).toBe(7);
+});
+
+test('ohne Paket und ohne freies Spiel: freundlicher Hinweis statt „Neue Burg bauen“', async ({ page }) => {
+  await page.goto('/');
+  await openTeacher(page);
+  await page.getByRole('checkbox', { name: 'Kinder dürfen frei spielen' }).uncheck();
+  await expect(page.getByText('Ohne freies Spiel und ohne Übungspaket', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Fertig' }).click();
+  await createProfile(page, 'Lena');
+  await expect(page.getByText('Frag deine Lehrkraft, was du heute üben sollst.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Neue Burg bauen' })).toBeHidden();
+});
+
+test('Paket bearbeiten und löschen; leere Pakete lassen sich nicht speichern', async ({ page }) => {
+  await page.goto('/');
+  await openTeacher(page);
+  await page.getByRole('button', { name: 'Neues Paket' }).click();
+  await page.getByLabel('Name').fill('Leer');
+  await page.getByRole('button', { name: 'Speichern' }).first().click();
+  await expect(page.getByText('Wähle mindestens eine Wortliste oder eine Reihe.')).toBeVisible();
+  await page.getByRole('button', { name: 'Abbrechen' }).first().click();
+
+  await createPack(page, 'Probe', null, [3]);
+  const row = page.locator('.pack-row', { hasText: 'Probe' });
+  await row.getByRole('button', { name: 'Bearbeiten' }).click();
+  await page.getByLabel('Name').fill('Dreier und Vierer');
+  await page.getByRole('button', { name: '4er-Reihe' }).last().click();
+  await page.getByRole('button', { name: 'Speichern' }).first().click();
+  await expect(page.locator('.pack-row', { hasText: 'Dreier und Vierer' })).toContainText('Reihen 3, 4');
+
+  await page.locator('.pack-row').getByRole('button', { name: 'Löschen' }).click();
+  await page.locator('.pack-row').getByRole('button', { name: 'Ja, löschen' }).click();
+  await expect(page.getByText('Noch keine Übungspakete.')).toBeVisible();
+});
