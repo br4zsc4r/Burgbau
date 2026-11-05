@@ -12,7 +12,7 @@ const VERSION = '15.1.0';
 const SOURCE = `https://raw.githubusercontent.com/hfg-gmuend/openmoji/${VERSION}/color/svg/`;
 const ROOT = join(import.meta.dirname, '..', '..');
 const OUT = join(ROOT, 'public', 'assets', 'words');
-const LISTS = ['klasse-1-2', 'klasse-3', 'klasse-4'];
+const LISTS = ['klasse-1-2', 'klasse-3', 'klasse-4', 'klasse-3-semester-1'];
 
 /** Wort-ID → OpenMoji-Datei (Unicode-Codepunkte). */
 const IMAGES: Record<string, string> = {
@@ -180,6 +180,25 @@ const IMAGES: Record<string, string> = {
   zahn: '1F9B7',
   bahnhof: '1F689',
   flughafen: '1F6EB',
+  // Lernwörter 3. Klasse 1. Semester
+  vulkan: '1F30B',
+  vampir: '1F9DB',
+  vase: '1F3FA',
+  feuer: '1F525',
+  flugzeug: '2708',
+  spritze: '1F489',
+  fluegel: '1FABD',
+  gewitter: '1F329',
+  schuessel: '1F963',
+  karte: '1F5FA',
+  campingplatz: '1F3D5',
+  teddy: '1F9F8',
+  party: '1F389',
+  brille: '1F453',
+  huette: '1F6D6',
+  herr: '1F935',
+  brot: '1F956',
+  netz: '1F578',
 };
 
 interface ListFile {

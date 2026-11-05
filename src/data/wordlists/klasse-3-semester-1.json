@@ -1,0 +1,439 @@
+{
+  "id": "klasse-3-semester-1",
+  "name": "Lernwörter 3. Klasse 1. Semester",
+  "inputMode": "tiles",
+  "words": [
+    {
+      "id": "vulkan",
+      "singular": "Vulkan",
+      "article": "der",
+      "plural": [
+        "Vulkane"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false,
+      "image": "vulkan.svg"
+    },
+    {
+      "id": "vampir",
+      "singular": "Vampir",
+      "article": "der",
+      "plural": [
+        "Vampire"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false,
+      "image": "vampir.svg"
+    },
+    {
+      "id": "vase",
+      "singular": "Vase",
+      "article": "die",
+      "plural": [
+        "Vasen"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "vase.svg"
+    },
+    {
+      "id": "verkehr",
+      "singular": "Verkehr",
+      "article": "der",
+      "plural": [
+        "Verkehre"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false
+    },
+    {
+      "id": "abenteuer",
+      "singular": "Abenteuer",
+      "article": "das",
+      "plural": [
+        "Abenteuer"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false
+    },
+    {
+      "id": "feuer",
+      "singular": "Feuer",
+      "article": "das",
+      "plural": [
+        "Feuer"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false,
+      "image": "feuer.svg"
+    },
+    {
+      "id": "flugzeug",
+      "singular": "Flugzeug",
+      "article": "das",
+      "plural": [
+        "Flugzeuge"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false,
+      "image": "flugzeug.svg"
+    },
+    {
+      "id": "spritze",
+      "singular": "Spritze",
+      "article": "die",
+      "plural": [
+        "Spritzen"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "spritze.svg"
+    },
+    {
+      "id": "strauch",
+      "singular": "Strauch",
+      "article": "der",
+      "plural": [
+        "Sträucher"
+      ],
+      "pattern": "er",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "fluegel",
+      "singular": "Flügel",
+      "article": "der",
+      "plural": [
+        "Flügel"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false,
+      "image": "fluegel.svg"
+    },
+    {
+      "id": "gewitter",
+      "singular": "Gewitter",
+      "article": "das",
+      "plural": [
+        "Gewitter"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false,
+      "image": "gewitter.svg"
+    },
+    {
+      "id": "schuessel",
+      "singular": "Schüssel",
+      "article": "die",
+      "plural": [
+        "Schüsseln"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "schuessel.svg"
+    },
+    {
+      "id": "karte",
+      "singular": "Karte",
+      "article": "die",
+      "plural": [
+        "Karten"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "karte.svg"
+    },
+    {
+      "id": "clown",
+      "singular": "Clown",
+      "article": "der",
+      "plural": [
+        "Clowns"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false,
+      "image": "clown.svg"
+    },
+    {
+      "id": "campingplatz",
+      "singular": "Campingplatz",
+      "article": "der",
+      "plural": [
+        "Campingplätze"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": true,
+      "image": "campingplatz.svg"
+    },
+    {
+      "id": "teddy",
+      "singular": "Teddy",
+      "article": "der",
+      "plural": [
+        "Teddys"
+      ],
+      "verified": false,
+      "pattern": "s",
+      "umlaut": false,
+      "image": "teddy.svg"
+    },
+    {
+      "id": "party",
+      "singular": "Party",
+      "article": "die",
+      "plural": [
+        "Partys"
+      ],
+      "verified": false,
+      "pattern": "s",
+      "umlaut": false,
+      "image": "party.svg"
+    },
+    {
+      "id": "hobby",
+      "singular": "Hobby",
+      "article": "das",
+      "plural": [
+        "Hobbys"
+      ],
+      "verified": false,
+      "pattern": "s",
+      "umlaut": false
+    },
+    {
+      "id": "baby",
+      "singular": "Baby",
+      "article": "das",
+      "plural": [
+        "Babys"
+      ],
+      "pattern": "s",
+      "umlaut": false,
+      "verified": false,
+      "image": "baby.svg"
+    },
+    {
+      "id": "sommer",
+      "singular": "Sommer",
+      "article": "der",
+      "plural": [
+        "Sommer"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false
+    },
+    {
+      "id": "koffer",
+      "singular": "Koffer",
+      "article": "der",
+      "plural": [
+        "Koffer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false,
+      "image": "koffer.svg"
+    },
+    {
+      "id": "teller",
+      "singular": "Teller",
+      "article": "der",
+      "plural": [
+        "Teller"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false,
+      "image": "teller.svg"
+    },
+    {
+      "id": "loeffel",
+      "singular": "Löffel",
+      "article": "der",
+      "plural": [
+        "Löffel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false,
+      "image": "loeffel.svg"
+    },
+    {
+      "id": "schluessel",
+      "singular": "Schlüssel",
+      "article": "der",
+      "plural": [
+        "Schlüssel"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false,
+      "image": "schluessel.svg"
+    },
+    {
+      "id": "brille",
+      "singular": "Brille",
+      "article": "die",
+      "plural": [
+        "Brillen"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "brille.svg"
+    },
+    {
+      "id": "fluss",
+      "singular": "Fluss",
+      "article": "der",
+      "plural": [
+        "Flüsse"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "messer",
+      "singular": "Messer",
+      "article": "das",
+      "plural": [
+        "Messer"
+      ],
+      "pattern": "none",
+      "umlaut": false,
+      "verified": false,
+      "image": "messer.svg"
+    },
+    {
+      "id": "ritter",
+      "singular": "Ritter",
+      "article": "der",
+      "plural": [
+        "Ritter"
+      ],
+      "verified": false,
+      "pattern": "none",
+      "umlaut": false
+    },
+    {
+      "id": "huette",
+      "singular": "Hütte",
+      "article": "die",
+      "plural": [
+        "Hütten"
+      ],
+      "verified": false,
+      "pattern": "n",
+      "umlaut": false,
+      "image": "huette.svg"
+    },
+    {
+      "id": "herr",
+      "singular": "Herr",
+      "article": "der",
+      "plural": [
+        "Herren"
+      ],
+      "verified": false,
+      "pattern": "en",
+      "umlaut": false,
+      "image": "herr.svg"
+    },
+    {
+      "id": "platz",
+      "singular": "Platz",
+      "article": "der",
+      "plural": [
+        "Plätze"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "schatz",
+      "singular": "Schatz",
+      "article": "der",
+      "plural": [
+        "Schätze"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": true
+    },
+    {
+      "id": "netz",
+      "singular": "Netz",
+      "article": "das",
+      "plural": [
+        "Netze"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false,
+      "image": "netz.svg"
+    },
+    {
+      "id": "stueck",
+      "singular": "Stück",
+      "article": "das",
+      "plural": [
+        "Stücke"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false
+    },
+    {
+      "id": "brot",
+      "singular": "Brot",
+      "article": "das",
+      "plural": [
+        "Brote"
+      ],
+      "verified": false,
+      "pattern": "e",
+      "umlaut": false,
+      "image": "brot.svg"
+    },
+    {
+      "id": "traum",
+      "singular": "Traum",
+      "article": "der",
+      "plural": [
+        "Träume"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    },
+    {
+      "id": "raum",
+      "singular": "Raum",
+      "article": "der",
+      "plural": [
+        "Räume"
+      ],
+      "pattern": "e",
+      "umlaut": true,
+      "verified": false
+    }
+  ]
+}

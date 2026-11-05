@@ -68,6 +68,7 @@ Die Klassenstufe wird **nicht** separat eingestellt, sondern über die **eingesc
 | `klasse-1-2.json` | ca. 60 häufige, meist regelmäßige Nomen (Hund, Katze, Auto, Ball) | Bausteine |
 | `klasse-3.json` | ca. 80 Nomen, mehr Umlaute (Baum → Bäume, Haus → Häuser) | Bausteine oder Tastatur |
 | `klasse-4.json` | ca. 80 Nomen, inkl. Sonderfälle (Museum → Museen, Lehrer → Lehrer) | Tastatur |
+| `klasse-3-semester-1.json` | „Lernwörter 3. Klasse 1. Semester“: 37 Lernwörter der Klasse (Vulkan, Teddy, Schatz); **standardmäßig eingeschaltet** | Bausteine |
 
 ### Dateiformat
 ```json
@@ -277,7 +278,7 @@ burgbau/
 ├─ public/assets/             # SVG/PNG, Sounds
 ├─ src/
 │  ├─ main.ts
-│  ├─ data/wordlists/         # klasse-1-2.json, klasse-3.json, klasse-4.json
+│  ├─ data/wordlists/         # klasse-1-2.json, klasse-3.json, klasse-4.json, klasse-3-semester-1.json
 │  ├─ data/pieces.ts          # Bauteil-Katalog (Kategorie, Zustand, Andockpunkte)
 │  ├─ logic/                  # reine, getestete Logik – KEIN Phaser-Import
 │  │  ├─ plural.ts            # Antwortprüfung
@@ -465,7 +466,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Fehlerhafte Zeilen werden mit Zeilennummer und Grund gemeldet, der Rest wird importiert.
 - Muster und Umlaut werden automatisch abgeleitet. Sonderfälle (Museum → Museen) bekommen einen Pluralstamm und laufen nur im Tastatur-Modus.
 - Importierte Wörter gelten als geprüft (`verified: true`), weil die Lehrkraft sie verantwortet. Die Liste startet im Tastatur-Modus, die Einstellung „Eingabemodus“ kann das ändern.
-- Wird eine eingeschaltete Liste gelöscht und ist danach keine mehr an, gilt wieder Klasse 1/2.
+- Wird eine eingeschaltete Liste gelöscht und ist danach keine mehr an, gilt wieder die Standardliste (seit 2026-11-05 „Lernwörter 3. Klasse 1. Semester“, vorher Klasse 1/2).
 
 **20 Aufgaben (14 × 9)**
 - Die Bauszene passt Welt und Hintergrund an die Rastergröße der gezeigten Burg an. Vorschaubilder nutzen das Layout der jeweiligen Burg, Burgen verschiedener Größe stehen also nebeneinander in der Galerie.
@@ -477,6 +478,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 
 **Bereitstellung (2026-11-05)**
 - GitHub Pages über `.github/workflows/deploy.yml`: Jeder Push auf `main` führt Lint, Unit-Tests und Build aus und veröffentlicht `dist/`. E2E-Tests laufen nur lokal.
+- **Standardliste (2026-11-05):** Auf neuen Geräten ist nur „Lernwörter 3. Klasse 1. Semester“ (`klasse-3-semester-1`, aus der CSV der Lehrkraft) eingeschaltet. Geräte mit gespeicherten Einstellungen behalten ihre Auswahl; die Liste erscheint dort ausgeschaltet. Wörter, die es schon in anderen Listen gibt, haben dieselbe ID und teilen sich den Lernfortschritt.
 - Die Spielstände hängen am Ursprung (`<nutzer>.github.io`), die installierte App am Pfad (`/<repo>/`). Eine nachträgliche eigene Domain macht die Burgen auf den Geräten unsichtbar; ein umbenanntes Repo behält die Daten, die App muss aber neu installiert werden. Die Adresse daher einmal festlegen und behalten.
 - Alle Pages-Projekte eines Nutzers teilen sich den Ursprung. Deshalb nutzt das Spiel eine eigene IndexedDB-Datenbank (`burgbau`) und darf sie nie mit einem anderen Projekt teilen.
 
@@ -516,7 +518,7 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - Goldenes Dach, Bannerfahne und Buntglasfenster sind jetzt seltene Teile ihrer Kategorie statt Premium.
 
 **Wort-Bilder**
-- 161 von 226 Wörtern haben ein Bild von **OpenMoji 15.1.0** (CC BY-SA 4.0). `npm run words` lädt sie einmalig nach `public/assets/words/<Wort-ID>.svg` und trägt `image` in die Wortlisten ein. Zur Laufzeit gibt es keine Netzwerkanfragen.
+- 179 von 251 Wörtern haben ein Bild von **OpenMoji 15.1.0** (CC BY-SA 4.0). `npm run words` lädt sie einmalig nach `public/assets/words/<Wort-ID>.svg` und trägt `image` in die Wortlisten ein. Zur Laufzeit gibt es keine Netzwerkanfragen.
 - Nur eindeutige Bilder: Abstraktes (Thema, Problem, Woche …) und Missverständliches (Gabel: das Emoji zeigt Messer und Gabel) behält den Anfangsbuchstaben.
 - Bearbeitete mitgelieferte Listen behalten die Bilder der Originalwörter; ein im Editor korrigiertes Wort behält sein Bild.
 - Namensnennung: Abschnitt „Bildnachweis“ im Lehrkraft-Bereich und `public/assets/words/LIZENZ.md`.

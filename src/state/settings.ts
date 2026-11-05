@@ -4,7 +4,7 @@ import type { InputModeSetting, Settings, TasksPerCastle } from '../types';
 import { isRecord } from './validate';
 
 /** Diese Liste ist an, solange nichts anderes eingestellt ist. */
-export const DEFAULT_LIST_ID = 'klasse-1-2';
+export const DEFAULT_LIST_ID = 'klasse-3-semester-1';
 
 export const defaultSettings: Settings = {
   activeListIds: [DEFAULT_LIST_ID],

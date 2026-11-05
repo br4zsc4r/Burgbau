@@ -83,7 +83,7 @@ test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinde
   await expect(page.getByText('Zeile 4: Artikel muss der, die oder das sein')).toBeVisible();
   await page.getByRole('button', { name: 'Als neue Liste übernehmen' }).click();
   await page.getByLabel('tiere einschalten').check();
-  await page.getByLabel('Klasse 1/2 – Grundwortschatz einschalten').uncheck();
+  await page.getByLabel('Lernwörter 3. Klasse 1. Semester einschalten').uncheck();
   await closeDialog(page);
   await expect(page.locator('.exercise-row[data-exercise="plural"]')).toContainText('1 Liste');
   await page.getByRole('button', { name: 'Fertig' }).click();
@@ -97,10 +97,10 @@ test('eigene Wortliste per CSV importieren und einschalten: gilt für alle Kinde
 test('die letzte eingeschaltete Liste lässt sich nicht ausschalten', async ({ page }) => {
   await openTeacher(page);
   await openExerciseSettings(page, 'Mehrzahl');
-  const k12 = page.getByLabel('Klasse 1/2 – Grundwortschatz einschalten');
-  await expect(k12).toBeChecked();
-  await k12.click();
-  await expect(k12).toBeChecked();
+  const standard = page.getByLabel('Lernwörter 3. Klasse 1. Semester einschalten');
+  await expect(standard).toBeChecked();
+  await standard.click();
+  await expect(standard).toBeChecked();
 });
 
 test('Liste bearbeiten: Wort ändern, hinzufügen, Fehler markieren, Original wiederherstellen', async ({ page }) => {

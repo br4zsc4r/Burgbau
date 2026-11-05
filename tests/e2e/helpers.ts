@@ -8,8 +8,9 @@ import type { Cell, PieceCategory, PieceDef, PieceId, Settings } from '../../src
 import klasse12 from '../../src/data/wordlists/klasse-1-2.json' with { type: 'json' };
 import klasse3 from '../../src/data/wordlists/klasse-3.json' with { type: 'json' };
 import klasse4 from '../../src/data/wordlists/klasse-4.json' with { type: 'json' };
+import klasse3s1 from '../../src/data/wordlists/klasse-3-semester-1.json' with { type: 'json' };
 
-const ALL_WORDS = [...klasse12.words, ...klasse3.words, ...klasse4.words];
+const ALL_WORDS = [...klasse12.words, ...klasse3.words, ...klasse4.words, ...klasse3s1.words];
 
 /** Das Wort der aktuellen Aufgabe (aus allen Listen gesucht). */
 export async function currentWord(page: Page) {

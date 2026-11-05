@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { chooseExercise, closeDialog, createProfile, openExerciseSettings, openTeacher, setSettings } from './helpers';
 
 test('eine laufende Burg aus der Zeit vor den Spielarten lässt sich weiterbauen', async ({ page }) => {
-  await page.goto('/');
+  // Damals war Klasse 1/2 die Standardliste; der Spielstand nutzt ihre Wörter.
+  await setSettings(page, { activeListIds: ['klasse-1-2'] });
   await createProfile(page, 'Lena');
   // Spielstand im Format vor Phase 9a (Version 3: Wort-IDs ohne Präfix) und alter Lernstand.
   await page.evaluate(async () => {
