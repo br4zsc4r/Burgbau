@@ -475,6 +475,11 @@ Jede Phase in Claude Code einzeln anstoßen und vor der nächsten testen.
 - `vite-plugin-pwa` im Modus generateSW mit automatischem Update. Alle Dateien der App werden vorab gespeichert (keine Laufzeitanfragen an fremde Server).
 - Manifest mit App-Symbolen (192, 512, maskable). Ein E2E-Test prüft den Start ohne Netz.
 
+**Bereitstellung (2026-11-05)**
+- GitHub Pages über `.github/workflows/deploy.yml`: Jeder Push auf `main` führt Lint, Unit-Tests und Build aus und veröffentlicht `dist/`. E2E-Tests laufen nur lokal.
+- Die Spielstände hängen am Ursprung (`<nutzer>.github.io`), die installierte App am Pfad (`/<repo>/`). Eine nachträgliche eigene Domain macht die Burgen auf den Geräten unsichtbar; ein umbenanntes Repo behält die Daten, die App muss aber neu installiert werden. Die Adresse daher einmal festlegen und behalten.
+- Alle Pages-Projekte eines Nutzers teilen sich den Ursprung. Deshalb nutzt das Spiel eine eigene IndexedDB-Datenbank (`burgbau`) und darf sie nie mit einem anderen Projekt teilen.
+
 **Nicht umgesetzt** (in Abschnitt 8 als Ausbaustufe markiert): Übersicht der oft falschen Wörter und Backup als Datei.
 
 **Nachtrag zu Phase 7 (Rückmeldung, 2026-11-01)**
